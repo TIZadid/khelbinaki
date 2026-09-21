@@ -75,7 +75,7 @@ CREATE TABLE posts (
 
 ## Build order (do in this sequence)
 
-1. D1 schema + migration (`schema.sql`), apply with `wrangler d1 execute`.
+1. D1 schema as migrations (`api/migrations/0001_init.sql`), apply with `wrangler d1 migrations apply`.
 2. Worker API: `POST /posts`, `GET /posts` (feed-filtered per above), `PATCH /posts/:id`.
 3. Frontend: feed page, post-detail page (WhatsApp/tel links), post-creation form
    with Turnstile.
@@ -92,8 +92,9 @@ cd api && npm test             # API tests (Workers runtime, local D1)
 cd web && npm test             # frontend tests
 npx wrangler login
 npx wrangler d1 create khelbinaki-db
-npx wrangler d1 execute khelbinaki-db --file=./schema.sql --local
-npx wrangler d1 execute khelbinaki-db --file=./schema.sql --remote
+cd api && npx wrangler d1 migrations create khelbinaki-db <name>   # new schema change
+cd api && npx wrangler d1 migrations apply khelbinaki-db --local
+cd api && npx wrangler d1 migrations apply khelbinaki-db --remote
 npx wrangler dev              # local API dev
 npm run dev                   # local frontend dev
 npx wrangler deploy           # deploy API
