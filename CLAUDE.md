@@ -88,6 +88,7 @@ CREATE TABLE posts (
 
 ```
 nvm use                        # always first: selects Node 22 from .nvmrc
+npx npm@11 install <pkg>       # in api/: npm 10.9 crashes ("edgesOut") resolving vitest 4 peers
 cd api && npm test             # API tests (Workers runtime, local D1)
 cd web && npm test             # frontend tests
 npx wrangler login
