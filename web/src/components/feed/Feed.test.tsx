@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import type { AsyncState } from "@/hooks/useAsync";
 import type { PublicPost } from "@/lib/api";
 import { Feed } from "./Feed";
 
@@ -31,47 +32,42 @@ const POSTS = [
   post({ id: "tmrw", area: "Agrabad", turf_name: null, cost_per_head: null, start_datetime: "2026-10-02T12:00:00.000Z" }), // 6:00 PM
 ];
 
-const json = (body: unknown) => new Response(JSON.stringify(body), { status: 200 });
+const ready = (data: PublicPost[]): AsyncState<PublicPost[]> => ({ status: "ready", data });
+const renderFeed = (state: AsyncState<PublicPost[]>, retry = vi.fn()) =>
+  render(<Feed state={state} retry={retry} now={NOW} />);
 
-function mockFetch(...replies: (unknown | Error)[]) {
-  const fn = vi.fn();
-  for (const r of replies) {
-    if (r instanceof Error) fn.mockRejectedValueOnce(r);
-    else fn.mockImplementationOnce(async () => json(r));
-  }
-  vi.stubGlobal("fetch", fn);
-  return fn;
-}
-
-const cardFor = (time: string) => screen.getByText(time).closest(".glow-card") as HTMLElement;
-
-afterEach(() => vi.unstubAllGlobals());
+const rowFor = (time: string) => screen.getByText(time).closest("li") as HTMLElement;
 
 describe("Feed", () => {
-  it("groups by Dhaka day and highlights only the soonest open game", async () => {
-    mockFetch({ posts: POSTS });
-    render(<Feed now={NOW} />);
+  it("groups by Dhaka day and marks only the soonest open game", () => {
+    renderFeed(ready(POSTS));
 
-    expect(await screen.findByRole("heading", { name: /^today/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /^today/i })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /^tomorrow/i })).toBeInTheDocument();
-    expect(cardFor("7:30 PM")).toHaveClass("bg-primary");
-    expect(cardFor("10:00 PM")).not.toHaveClass("bg-primary");
-    expect(screen.getByText("Starts in 1h 30m")).toBeInTheDocument();
-    expect(cardFor("8:00 PM")).toHaveTextContent("Filled");
-    expect(screen.getByText("3 open games")).toBeInTheDocument();
-    expect(cardFor("6:00 PM")).toHaveTextContent("Cost: ask host");
-    const soonCard = cardFor("7:30 PM");
-    expect(within(soonCard).getByRole("link", { name: "Mirpur" })).toHaveAttribute("href", "/p/soon");
-    expect(within(soonCard).getByRole("link", { name: /whatsapp rafi/i }).getAttribute("href")).toMatch(/^https:\/\/wa\.me\/8801712345678\?text=/);
-    expect(within(soonCard).getByRole("link", { name: /call rafi/i })).toHaveAttribute("href", "tel:+8801712345678");
-    expect(within(cardFor("8:00 PM")).queryByRole("link", { name: /whatsapp/i })).toBeNull();
+    expect(screen.getByRole("heading", { name: /open games/i })).toHaveTextContent("3");
+    expect(within(rowFor("7:30 PM")).getByText("In 1h 30m")).toBeInTheDocument();
+    expect(rowFor("7:30 PM").firstElementChild).toHaveAttribute("data-soonest", "true");
+    expect(rowFor("10:00 PM").firstElementChild).not.toHaveAttribute("data-soonest");
+    expect(rowFor("8:00 PM")).toHaveTextContent("Filled");
+    expect(rowFor("6:00 PM")).toHaveTextContent("Ask");
   });
 
-  it("filters by area chip", async () => {
-    mockFetch({ posts: POSTS });
-    render(<Feed now={NOW} />);
+  it("links each row to its game and to the host", () => {
+    renderFeed(ready(POSTS));
 
-    fireEvent.click(await screen.findByRole("button", { name: /^agrabad/i }));
+    const soon = rowFor("7:30 PM");
+    expect(within(soon).getByRole("link", { name: "Mirpur" })).toHaveAttribute("href", "/p/soon");
+    expect(within(soon).getByRole("link", { name: /whatsapp rafi/i }).getAttribute("href")).toMatch(
+      /^https:\/\/wa\.me\/8801712345678\?text=/,
+    );
+    expect(within(soon).getByRole("link", { name: /call rafi/i })).toHaveAttribute("href", "tel:+8801712345678");
+    expect(within(rowFor("8:00 PM")).queryByRole("link", { name: /whatsapp/i })).toBeNull();
+  });
+
+  it("filters by area chip", () => {
+    renderFeed(ready(POSTS));
+
+    fireEvent.click(screen.getByRole("button", { name: /^agrabad/i }));
     expect(screen.queryByText("10:00 PM")).toBeNull();
     expect(screen.getByText("6:00 PM")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^agrabad/i })).toHaveAttribute("aria-pressed", "true");
@@ -80,18 +76,16 @@ describe("Feed", () => {
     expect(screen.getByText("10:00 PM")).toBeInTheDocument();
   });
 
-  it("shows an empty state", async () => {
-    mockFetch({ posts: [] });
-    render(<Feed now={NOW} />);
-    expect(await screen.findByText(/no upcoming games/i)).toBeInTheDocument();
-  });
+  it("shows loading, empty and error states", () => {
+    const retry = vi.fn();
+    const { rerender } = renderFeed({ status: "loading" });
+    expect(screen.getByLabelText(/loading games/i)).toBeInTheDocument();
 
-  it("shows an error with retry", async () => {
-    const fetchMock = mockFetch(new Error("offline"), { posts: POSTS });
-    render(<Feed now={NOW} />);
+    rerender(<Feed state={ready([])} retry={retry} now={NOW} />);
+    expect(screen.getByText(/no upcoming games/i)).toBeInTheDocument();
 
-    fireEvent.click(await screen.findByRole("button", { name: /try again/i }));
-    expect(await screen.findByText("7:30 PM")).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    rerender(<Feed state={{ status: "error" }} retry={retry} now={NOW} />);
+    fireEvent.click(screen.getByRole("button", { name: /try again/i }));
+    expect(retry).toHaveBeenCalledOnce();
   });
 });

@@ -82,6 +82,16 @@ grid on 2026-09-22 at the owner's request. Cards are `GlowCard`s: bordered, semi
 with a cursor-following spotlight on hover. The "starting soon" post in the
 feed uses the solid-lime highlighted variant (like the reference's middle card).
 
+### 4a. Redesign synced (2026-09-22)
+
+The live site follows the design canvas https://claude.ai/artifact/LvyPfzuNcjuk76DmDZ7tgi ("moody minimal").
+Fonts: **Barlow** (body) and **Barlow Condensed** (`font-display`: headlines, times, prices) replace Inter/Sora.
+Tokens: background `#0a0c09`, card `#111410`, hairlines `#1d2219`, button outlines `--line #2b3226`, secondary text
+`#a3ab98`, captions `--subtle #8d977f`. No glow cards: the feed is thin-ruled rows, the hero has a "Next up" ticket
+with a countdown, step numbers are outlined numerals, the game page has a sticky action bar on phones. Shared
+helpers: `page-x` / `eyebrow` utilities (index.css) and `btn` class sets (`web/src/lib/ui.ts`). Screens for 4a–4e
+(contact modes, keeper profile, post, manage, share) are already drawn on the canvas; build them to match.
+
 ### 4b. Reference round 2 (2026-09-22) — adopt without changing the palette
 
 Owner shared five references (dark coffee-machine UI, brutalist "We design

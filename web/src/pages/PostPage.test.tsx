@@ -42,7 +42,7 @@ describe("PostPage", () => {
     expect(await screen.findByRole("heading", { level: 1, name: "Mirpur" })).toBeInTheDocument();
     expect(fetchMock.mock.calls[0][0]).toMatch(/\/posts\/p1$/);
     expect(screen.getByText("Kings Arena")).toBeInTheDocument();
-    expect(screen.getByText("7:30 PM")).toBeInTheDocument();
+    expect(screen.getByText("7:30")).toBeInTheDocument();
     expect(screen.getByText("Bring gloves")).toBeInTheDocument();
     expect(screen.getByText("01712-345678")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /whatsapp rafi/i }).getAttribute("href")).toMatch(

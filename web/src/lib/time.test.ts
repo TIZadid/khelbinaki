@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatCountdown, formatDay, formatTime, groupKey, groupPosts, isStartingSoon } from "./time";
+import { countdownParts, formatCountdown, formatDay, formatTime, groupKey, groupPosts, isStartingSoon } from "./time";
 
 const NOW = new Date("2026-10-01T12:00:00.000Z"); // Thu 1 Oct, 6:00 PM in Dhaka (UTC+6)
 const at = (iso: string) => new Date(iso);
@@ -51,5 +51,22 @@ describe("formatting", () => {
     expect(formatCountdown(at("2026-10-01T13:30:00Z"), NOW)).toBe("in 1h 30m");
     expect(formatCountdown(at("2026-10-01T12:25:00Z"), NOW)).toBe("in 25m");
     expect(formatCountdown(at("2026-10-01T15:00:00Z"), NOW)).toBe("in 3h 00m");
+  });
+});
+
+describe("countdownParts", () => {
+  it("shows hours and minutes under a day", () => {
+    expect(countdownParts(at("2026-10-01T13:15:00Z"), NOW)).toEqual([
+      { value: "01", label: "HRS" },
+      { value: "15", label: "MIN" },
+    ]);
+  });
+
+  it("shows days and hours from a day out", () => {
+    expect(countdownParts(at("2026-10-03T15:00:00Z"), NOW)).toEqual([
+      { value: "02", label: "DAYS" },
+      { value: "03", label: "HRS" },
+    ]);
+    expect(countdownParts(at("2026-10-02T12:00:00Z"), NOW)[0]).toEqual({ value: "01", label: "DAY" });
   });
 });

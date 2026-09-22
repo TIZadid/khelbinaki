@@ -16,7 +16,7 @@
 - Storage may be unavailable or throw (private mode, blocked site data): the site must work without it and say so when saving fails.
 - Phone rule identical to the API: Bangladeshi mobile `01[3-9]` + 8 digits, optional `88`, stored as `8801XXXXXXXXX`.
 - Limits: name 1–60, up to 5 areas (each ≤40, deduped case-insensitively), note ≤200 — matching the API's interest limits (name 60, note 200).
-- Keep the current visual system (dark + lime tokens, Barlow Condensed numerals); the full redesign sync happens after 4d.
+- Use the redesigned visual system (synced 2026-09-22): Barlow / Barlow Condensed (`font-display`), `eyebrow` and `page-x` utilities, `btn` class sets from `@/lib/ui`. There is no `GlowCard` any more.
 - Commit messages end with `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>`.
 
 ## File Map
@@ -377,7 +377,6 @@ it("links keepers to their profile from the header", () => {
 ```tsx
 import { X } from "lucide-react";
 import { type FormEvent, type KeyboardEvent, useState } from "react";
-import { GlowCard } from "@/components/GlowCard";
 import { useKeeperProfile } from "@/hooks/useKeeperProfile";
 import { formatPhone } from "@/lib/contact";
 import {
@@ -450,14 +449,15 @@ export function KeeperPage() {
   };
 
   return (
-    <div className="mx-auto max-w-xl py-10 pb-20">
-      <h1 className="text-3xl font-bold sm:text-4xl">Your keeper profile</h1>
+    <div className="mx-auto w-full max-w-xl px-5 pt-10 pb-20 md:px-10">
+      <p className="eyebrow text-primary">For goalkeepers</p>
+      <h1 className="mt-3.5 font-display text-6xl leading-[0.88] font-extrabold uppercase">Your keeper profile</h1>
       <p className="mt-3 text-muted-foreground">
         Save your details once. They stay on this phone and fill in "I'm interested" for you. A host only sees them
         when you send a request.
       </p>
 
-      <GlowCard className="mt-8 p-6 sm:p-8">
+      <div className="mt-8 rounded-3xl border border-[#242a1f] bg-card p-6 sm:p-8">
         <form noValidate onSubmit={onSubmit} className="flex flex-col gap-6">
           <div>
             <label htmlFor="keeper-name" className={labelStyle}>
@@ -588,7 +588,7 @@ export function KeeperPage() {
             </p>
           )}
         </form>
-      </GlowCard>
+      </div>
     </div>
   );
 }
@@ -618,23 +618,20 @@ export default function App() {
 }
 ```
 
-In `web/src/components/AppShell.tsx`: import `useKeeperProfile` from `@/hooks/useKeeperProfile`; inside the component, `const keeper = useKeeperProfile();`; change the header's class to `mx-auto flex w-full max-w-5xl items-center justify-between px-4 py-5` and add after the brand `Link`:
+In `web/src/components/AppShell.tsx`: import `useKeeperProfile` from `@/hooks/useKeeperProfile`; inside the component, `const keeper = useKeeperProfile();`; wrap the existing `<nav aria-label="Main">` and a new link in `<div className="flex items-center gap-9">…</div>`, the link placed after the nav (so it also shows on phones, where the nav is hidden):
 
 ```tsx
-          <Link to="/keeper" className="text-sm font-semibold text-muted-foreground hover:text-foreground">
-            {keeper ? "My profile" : "I'm a keeper"}
-          </Link>
+            <Link to="/keeper" className="text-sm font-semibold text-muted-foreground hover:text-foreground md:text-[15px]">
+              {keeper ? "My profile" : "I'm a keeper"}
+            </Link>
 ```
 
-In `web/src/pages/HomePage.tsx`: import `Link` from `@/lib/router`; wrap the existing "See open games" `<a>` in `<div className="mt-8 flex flex-wrap items-center justify-center gap-3">…</div>` (removing `mt-8` from the `<a>`), and add inside it after the `<a>`:
+In `web/src/pages/HomePage.tsx`: import `Link` from `@/lib/router`; inside the `FadeUp` that holds the "See open games" `<a>`, wrap that `<a>` in `<div className="flex flex-col gap-3 sm:flex-row">…</div>` and add after it:
 
 ```tsx
-            <Link
-              to="/keeper"
-              className="inline-flex items-center rounded-full border px-5 py-2.5 font-semibold hover:border-primary hover:text-primary"
-            >
-              I'm a keeper
-            </Link>
+              <Link to="/keeper" className={cn(btn.outline, "h-14 px-7 text-[17px]")}>
+                I'm a keeper
+              </Link>
 ```
 
 In `App.test.tsx`, the existing brand assertion stays valid (`toHaveTextContent` matches a substring). Add `within` to its Testing Library import if not already there.

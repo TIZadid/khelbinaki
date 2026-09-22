@@ -1,4 +1,3 @@
-import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 
 export type AreaOption = { key: string; label: string; count: number };
@@ -33,26 +32,19 @@ export function AreaChips({
         aria-pressed={active}
         onClick={() => onSelect(key)}
         className={cn(
-          "relative isolate rounded-full border px-4 py-1.5 text-sm transition-colors",
-          active ? "border-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+          "h-10 shrink-0 rounded-full border px-[18px] text-sm font-medium transition-colors",
+          active ? "border-foreground text-foreground" : "border-[#242a1f] text-muted-foreground hover:text-foreground",
         )}
       >
-        {active && (
-          <motion.span
-            layoutId="area-chip"
-            className="absolute inset-0 -z-10 rounded-full bg-primary"
-            transition={{ type: "spring", stiffness: 420, damping: 34 }}
-          />
-        )}
         {label}
-        {count !== undefined && <sup className="ml-0.5">{count}</sup>}
+        {count !== undefined && <sup className="ml-0.5 text-[10px]">{count}</sup>}
       </button>
     );
   };
 
   return (
     <div role="group" aria-label="Filter by area" className="flex flex-wrap gap-2">
-      {chip(null, "All")}
+      {chip(null, "All areas")}
       {options.map((o) => chip(o.key, o.label, o.count))}
     </div>
   );

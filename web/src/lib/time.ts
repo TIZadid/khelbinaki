@@ -64,3 +64,20 @@ export function formatCountdown(start: Date, now: Date): string {
   const m = mins % 60;
   return h > 0 ? `in ${h}h ${String(m).padStart(2, "0")}m` : `in ${m}m`;
 }
+
+// Two countdown boxes for the "Next up" ticket: HRS:MIN under a day, DAYS:HRS after.
+export function countdownParts(start: Date, now: Date): [{ value: string; label: string }, { value: string; label: string }] {
+  const mins = Math.max(0, Math.floor((start.getTime() - now.getTime()) / MINUTE));
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const days = Math.floor(mins / (24 * 60));
+  if (days >= 1) {
+    return [
+      { value: pad(days), label: days === 1 ? "DAY" : "DAYS" },
+      { value: pad(Math.floor(mins / 60) % 24), label: "HRS" },
+    ];
+  }
+  return [
+    { value: pad(Math.floor(mins / 60)), label: "HRS" },
+    { value: pad(mins % 60), label: "MIN" },
+  ];
+}
