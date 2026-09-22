@@ -9,7 +9,7 @@ const base: PublicPost = {
   id: "p1",
   listing_type: "gk_needed",
   host_name: "Rafi",
-  phone: "8801712345678",
+  contact_mode: "direct",
   area: "Mirpur",
   turf_name: "Kings Arena",
   start_datetime: "2026-10-01T13:30:00.000Z",
@@ -35,7 +35,7 @@ function serve(post: PublicPost | null | Error) {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("PostPage", () => {
-  it("shows the post with WhatsApp, call and share actions", async () => {
+  it("shows the post and offers to contact the host", async () => {
     const fetchMock = serve(base);
     render(<PostPage id="p1" now={NOW} />);
 
@@ -44,20 +44,24 @@ describe("PostPage", () => {
     expect(screen.getByText("Kings Arena")).toBeInTheDocument();
     expect(screen.getByText("7:30")).toBeInTheDocument();
     expect(screen.getByText("Bring gloves")).toBeInTheDocument();
-    expect(screen.getByText("01712-345678")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /whatsapp rafi/i }).getAttribute("href")).toMatch(
-      /^https:\/\/wa\.me\/8801712345678\?text=/,
-    );
-    expect(screen.getByRole("link", { name: /^call/i })).toHaveAttribute("href", "tel:+8801712345678");
+    expect(screen.getByRole("button", { name: /contact host/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /share to a group/i }).getAttribute("href")).toMatch(/^https:\/\/wa\.me\/\?text=/);
+    expect(screen.queryByText(/01712/)).toBeNull();
     expect(document.title).toMatch(/^Mirpur · 7:30 PM/);
+  });
+
+  it("asks keepers to send their number on requests-mode posts", async () => {
+    serve({ ...base, contact_mode: "requests" });
+    render(<PostPage id="p1" now={NOW} />);
+    expect(await screen.findByRole("heading", { name: /i'm interested/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /contact host/i })).toBeNull();
   });
 
   it("hides contact actions once the game is filled", async () => {
     serve({ ...base, status: "filled" });
     render(<PostPage id="p1" now={NOW} />);
     expect(await screen.findByText(/host has found a keeper/i)).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /whatsapp/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /contact host/i })).toBeNull();
     expect(screen.queryByRole("link", { name: /share/i })).toBeNull();
   });
 
@@ -65,7 +69,7 @@ describe("PostPage", () => {
     serve({ ...base, start_datetime: "2026-10-01T11:00:00.000Z" });
     render(<PostPage id="p1" now={NOW} />);
     expect(await screen.findByText(/match has already started/i)).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /^call/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /contact host/i })).toBeNull();
   });
 
   it("says when a post does not exist", async () => {

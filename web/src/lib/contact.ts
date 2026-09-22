@@ -18,11 +18,11 @@ function when(post: PublicPost): string {
   return `${formatDay(start)} at ${formatTime(start)}`;
 }
 
-export function whatsappContactUrl(post: PublicPost, origin: string): string {
+export function whatsappContactUrl(post: PublicPost, origin: string, phone: string): string {
   const text =
     `Hi ${post.host_name}, I saw your Khelbi Naki post for ${place(post)} on ${when(post)}. ` +
     `I can play in goal. Is the spot still open?\n${postUrl(post.id, origin)}`;
-  return `https://wa.me/${post.phone}?text=${encodeURIComponent(text)}`;
+  return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
 }
 
 export function whatsappShareUrl(post: PublicPost, origin: string): string {

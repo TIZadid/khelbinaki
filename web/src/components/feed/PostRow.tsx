@@ -1,6 +1,6 @@
-import { MessageCircle, Phone } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import type { PublicPost } from "@/lib/api";
-import { postPath, telUrl, whatsappContactUrl } from "@/lib/contact";
+import { postPath } from "@/lib/contact";
 import { Link } from "@/lib/router";
 import { formatCountdown, formatTime, isStartingSoon } from "@/lib/time";
 import { btn } from "@/lib/ui";
@@ -65,19 +65,11 @@ export function PostRow({ post, now, soonest = false }: { post: PublicPost; now:
       </p>
 
       {!filled && (
-        <div className="relative z-10 flex gap-2 [grid-area:act] md:justify-end">
-          <a
-            href={whatsappContactUrl(post, window.location.origin)}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={`WhatsApp ${post.host_name}`}
-            className={cn(btn.outline, "flex-1 md:flex-none")}
-          >
-            <MessageCircle aria-hidden="true" className="size-4" /> WhatsApp
-          </a>
-          <a href={telUrl(post.phone)} aria-label={`Call ${post.host_name}`} className={btn.icon}>
-            <Phone aria-hidden="true" className="size-4" />
-          </a>
+        <div className="relative z-10 flex [grid-area:act] md:justify-end">
+          <Link to={postPath(post.id)} className={cn(btn.outline, "flex-1 md:flex-none")}>
+            {post.contact_mode === "direct" ? "Contact host" : "I'm interested"}
+            <ArrowUpRight aria-hidden="true" className="size-4" />
+          </Link>
         </div>
       )}
     </div>

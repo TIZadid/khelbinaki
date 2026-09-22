@@ -6,7 +6,7 @@ const post: PublicPost = {
   id: "aB3dE9xK2q",
   listing_type: "gk_needed",
   host_name: "Rafi",
-  phone: "8801712345678",
+  contact_mode: "direct",
   area: "Mirpur",
   turf_name: "Kings Arena",
   start_datetime: "2026-10-01T13:30:00.000Z", // Thu 1 Oct, 7:30 PM Dhaka
@@ -27,7 +27,7 @@ describe("contact links", () => {
   });
 
   it("messages the host on WhatsApp about this specific post", () => {
-    const url = whatsappContactUrl(post, ORIGIN);
+    const url = whatsappContactUrl(post, ORIGIN, "8801712345678");
     expect(url.startsWith("https://wa.me/8801712345678?text=")).toBe(true);
     expect(textOf(url)).toBe(
       "Hi Rafi, I saw your Khelbi Naki post for Kings Arena, Mirpur on Thu 1 Oct at 7:30 PM. " +

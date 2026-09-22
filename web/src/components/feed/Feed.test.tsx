@@ -12,7 +12,7 @@ function post(over: Partial<PublicPost>): PublicPost {
     id: "p",
     listing_type: "gk_needed",
     host_name: "Rafi",
-    phone: "8801712345678",
+    contact_mode: "direct",
     area: "Mirpur",
     turf_name: "Kings Arena",
     start_datetime: "2026-10-01T13:30:00.000Z",
@@ -53,16 +53,14 @@ describe("Feed", () => {
     expect(rowFor("6:00 PM")).toHaveTextContent("Ask");
   });
 
-  it("links each row to its game and to the host", () => {
-    renderFeed(ready(POSTS));
+  it("links each row to its game, with the action the host chose", () => {
+    renderFeed(ready([...POSTS, post({ id: "req", area: "Sylhet", contact_mode: "requests", start_datetime: "2026-10-02T15:00:00.000Z" })]));
 
     const soon = rowFor("7:30 PM");
     expect(within(soon).getByRole("link", { name: "Mirpur" })).toHaveAttribute("href", "/p/soon");
-    expect(within(soon).getByRole("link", { name: /whatsapp rafi/i }).getAttribute("href")).toMatch(
-      /^https:\/\/wa\.me\/8801712345678\?text=/,
-    );
-    expect(within(soon).getByRole("link", { name: /call rafi/i })).toHaveAttribute("href", "tel:+8801712345678");
-    expect(within(rowFor("8:00 PM")).queryByRole("link", { name: /whatsapp/i })).toBeNull();
+    expect(within(soon).getByRole("link", { name: /contact host/i })).toHaveAttribute("href", "/p/soon");
+    expect(within(rowFor("9:00 PM")).getByRole("link", { name: /i'm interested/i })).toBeInTheDocument();
+    expect(within(rowFor("8:00 PM")).queryByRole("link", { name: /contact host/i })).toBeNull();
   });
 
   it("filters by area chip", () => {

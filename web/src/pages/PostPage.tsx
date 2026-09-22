@@ -1,9 +1,11 @@
-import { ArrowLeft, ArrowUpRight, Phone, Share2 } from "lucide-react";
-import { type ReactNode, useEffect } from "react";
+import { ArrowLeft, MessageCircle, Share2 } from "lucide-react";
+import { type ReactNode, useEffect, useState } from "react";
+import { ContactSheet } from "@/components/post/ContactSheet";
+import { InterestForm } from "@/components/post/InterestForm";
 import { useAsync } from "@/hooks/useAsync";
 import { useNow } from "@/hooks/useNow";
 import { fetchPost, type PublicPost } from "@/lib/api";
-import { formatPhone, telUrl, whatsappContactUrl, whatsappShareUrl } from "@/lib/contact";
+import { whatsappShareUrl } from "@/lib/contact";
 import { Link } from "@/lib/router";
 import { formatCountdown, formatDay, formatTime, isStartingSoon } from "@/lib/time";
 import { btn } from "@/lib/ui";
@@ -58,6 +60,7 @@ export function PostPage({ id, now: fixedNow }: { id: string; now?: Date }) {
 }
 
 function PostDetail({ post, now }: { post: PublicPost; now: Date }) {
+  const [sheetOpen, setSheetOpen] = useState(false);
   const start = new Date(post.start_datetime);
   const filled = post.status === "filled";
   const started = start.getTime() <= now.getTime();
@@ -85,7 +88,7 @@ function PostDetail({ post, now }: { post: PublicPost; now: Date }) {
     ],
     ["Keepers needed", <span className="font-display text-[34px] leading-none font-bold">{post.slots_needed}</span>],
     ["Host", post.host_name],
-    ["Phone", <span className="whitespace-nowrap">{formatPhone(post.phone)}</span>],
+    ["Contact", post.contact_mode === "direct" ? "Message host" : "Send your number"],
   ];
 
   const status = filled ? " · filled" : started ? " · already started" : soon ? ` · starts ${formatCountdown(start, now)}` : "";
@@ -123,37 +126,51 @@ function PostDetail({ post, now }: { post: PublicPost; now: Date }) {
         </section>
       )}
 
-      {contactable ? (
-        // Sticky thumb bar on phones, inline row from tablets up.
-        <div className="fixed inset-x-0 bottom-0 z-20 border-t bg-[#0f120d] px-5 pt-3.5 pb-[max(1.625rem,env(safe-area-inset-bottom))] md:static md:mt-10 md:border-0 md:bg-transparent md:p-0">
-          <div className="mx-auto flex max-w-3xl gap-2.5">
-            <a
-              href={whatsappContactUrl(post, origin)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={cn(btn.primary, "flex-1 md:flex-none")}
-            >
-              WhatsApp {post.host_name} <ArrowUpRight aria-hidden="true" className="size-[18px]" />
-            </a>
-            <a href={telUrl(post.phone)} aria-label={`Call ${post.host_name}`} className={cn(btn.icon, "size-14")}>
-              <Phone aria-hidden="true" className="size-5" />
-            </a>
-            <a
-              href={whatsappShareUrl(post, origin)}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Share to a group"
-              className={cn(btn.icon, "size-14")}
-            >
-              <Share2 aria-hidden="true" className="size-5" />
-            </a>
+      {contactable && post.contact_mode === "requests" && <InterestForm post={post} />}
+
+      {contactable && post.contact_mode === "direct" && (
+        <>
+          <p className="mt-7 text-[15px] leading-relaxed text-subtle">
+            {post.host_name}'s number stays hidden until you tap Contact host.
+          </p>
+          {/* Sticky thumb bar on phones, inline row from tablets up. */}
+          <div className="fixed inset-x-0 bottom-0 z-20 border-t bg-[#0f120d] px-5 pt-3.5 pb-[max(1.625rem,env(safe-area-inset-bottom))] md:static md:mt-10 md:border-0 md:bg-transparent md:p-0">
+            <div className="mx-auto flex max-w-3xl gap-2.5">
+              <button type="button" onClick={() => setSheetOpen(true)} className={cn(btn.primary, "flex-1 md:flex-none")}>
+                <MessageCircle aria-hidden="true" className="size-[18px]" /> Contact host
+              </button>
+              <a
+                href={whatsappShareUrl(post, origin)}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Share to a group"
+                className={cn(btn.icon, "size-14")}
+              >
+                <Share2 aria-hidden="true" className="size-5" />
+              </a>
+            </div>
           </div>
-        </div>
-      ) : (
+          {sheetOpen && <ContactSheet post={post} onClose={() => setSheetOpen(false)} />}
+        </>
+      )}
+
+      {contactable && post.contact_mode === "requests" && (
+        <a
+          href={whatsappShareUrl(post, origin)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-7 inline-flex h-11 items-center gap-2.5 text-[15px] font-semibold text-muted-foreground hover:text-foreground"
+        >
+          <Share2 aria-hidden="true" className="size-[18px]" /> Share to a group
+        </a>
+      )}
+
+      {!contactable && (
         <p role="status" className="mt-10 text-muted-foreground">
           {filled ? "This game is filled. The host has found a keeper." : "This match has already started."}
         </p>
       )}
+
     </article>
   );
 }

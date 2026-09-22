@@ -1,6 +1,6 @@
-import { Phone } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import type { PublicPost } from "@/lib/api";
-import { postPath, telUrl, whatsappContactUrl } from "@/lib/contact";
+import { postPath } from "@/lib/contact";
 import { Link } from "@/lib/router";
 import { countdownParts, formatCountdown, formatTime } from "@/lib/time";
 import { btn } from "@/lib/ui";
@@ -51,19 +51,10 @@ export function NextUpTicket({ post, now }: { post: PublicPost; now: Date }) {
             </div>
           )}
         </div>
-        <div className="flex gap-2.5">
-          <a
-            href={whatsappContactUrl(post, window.location.origin)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={cn(btn.primary, "h-13 flex-1 text-base")}
-          >
-            WhatsApp {post.host_name}
-          </a>
-          <a href={telUrl(post.phone)} aria-label={`Call ${post.host_name}`} className={cn(btn.icon, "size-13")}>
-            <Phone aria-hidden="true" className="size-[18px]" />
-          </a>
-        </div>
+        <Link to={postPath(post.id)} className={cn(btn.primary, "h-13 w-full text-base")}>
+          {post.contact_mode === "direct" ? "Contact host" : "I'm interested"}
+          <ArrowUpRight aria-hidden="true" className="size-[18px]" />
+        </Link>
       </div>
     </article>
   );
