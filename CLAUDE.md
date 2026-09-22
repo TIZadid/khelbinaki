@@ -113,3 +113,11 @@ npx wrangler secret put <NAME>
   (see `listing_type`), but do not build it until explicitly asked.
 - Ask before adding any dependency that requires an account/API key on a
   non-Cloudflare, non-free service.
+
+## Deployments
+
+- GitHub: https://github.com/TIZadid/khelbinaki (push over SSH)
+- API: https://khelbinaki-api.khelbinaki.workers.dev (deploy: `cd api && npm run deploy`)
+- D1: `khelbinaki-db` (APAC), id `948b478a-834e-42ef-9be5-d7b62a4acbaf`
+- Web: Cloudflare Pages project `khelbinaki`, auto-deploys on push to `main`; other branches get preview URLs
+- Cloudflare login: run `npx wrangler login` in your own terminal (the OAuth callback can't reach the assistant's sandbox)
