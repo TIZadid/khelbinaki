@@ -82,6 +82,24 @@ grid on 2026-09-22 at the owner's request. Cards are `GlowCard`s: bordered, semi
 with a cursor-following spotlight on hover. The "starting soon" post in the
 feed uses the solid-lime highlighted variant (like the reference's middle card).
 
+### 4b. Reference round 2 (2026-09-22) — adopt without changing the palette
+
+Owner shared five references (dark coffee-machine UI, brutalist "We design
+without rules" studio, Top.5 American-football rankings, "We know the game"
+agency, a soccer-club template). Rule: keep the dark + lime palette and the
+current look; borrow structure and typography only.
+
+| From | Borrow | Where |
+|---|---|---|
+| Coffee machine | One accent used sparingly on calm charcoal | Lime only on: prices, the soonest "starting soon" card, primary CTA, one heading word |
+| Brutalist studio | Huge index numerals; hairline-bordered cells; `↗` on links; status cell with a dot | Big condensed `01/02/03`; live "N open games ●" pill; `↗` on CTAs |
+| Top.5 rankings | Small labels with superscript counts; thin rules between rows | Feed group headings "Today ³" |
+| "We know the game" | Huge outlined ghost words behind content; condensed uppercase words | Faint outlined "KHELBI" behind the hero |
+| Soccer club | Countdown boxes; circle motif | Countdown on the "starting soon" card; pitch centre circle already in background |
+
+New type token: `--font-condensed` = **Barlow Condensed** 600/700 (Google
+Fonts, free) for numerals — times, prices, step numbers. Body/headings unchanged.
+
 ## 5. Animation approach (21st.dev)
 
 21st.dev is a registry of copy-paste React + Tailwind (shadcn-style)
