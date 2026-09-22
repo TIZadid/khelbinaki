@@ -8,7 +8,7 @@
     {
       "binding": "DB",
       "database_name": "khelbinaki-db",
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "948b478a-834e-42ef-9be5-d7b62a4acbaf",
       "migrations_dir": "migrations"
     }
   ]
