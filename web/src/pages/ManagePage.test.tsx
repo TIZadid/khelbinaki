@@ -80,11 +80,17 @@ describe("ManagePage", () => {
 });
 
 describe("share card", () => {
-  it("offers a WhatsApp share link for the post", async () => {
+  it("opens the share panel with WhatsApp, Facebook and Telegram", async () => {
     serve();
     window.history.pushState(null, "", "/p/p1/manage#t=secret-token");
     render(<ManagePage id="p1" />);
+
     const share = within(await screen.findByRole("region", { name: /share your post/i }));
-    expect(share.getByRole("link", { name: /share/i }).getAttribute("href")).toMatch(/^https:\/\/wa\.me\/\?text=/);
+    fireEvent.click(share.getByRole("button", { name: /^share$/i }));
+
+    const dialog = within(await screen.findByRole("dialog", { name: /share this game/i }));
+    expect(dialog.getByRole("link", { name: "WhatsApp" }).getAttribute("href")).toMatch(/^https:\/\/wa\.me\/\?text=/);
+    expect(dialog.getByRole("link", { name: "Facebook" }).getAttribute("href")).toMatch(/facebook\.com\/sharer/);
+    expect(dialog.getByRole("link", { name: "Telegram" }).getAttribute("href")).toMatch(/t\.me\/share/);
   });
 });

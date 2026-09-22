@@ -1,11 +1,11 @@
 import { ArrowLeft, MessageCircle, Share2 } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
+import { ShareButton } from "@/components/ShareButton";
 import { ContactSheet } from "@/components/post/ContactSheet";
 import { InterestForm } from "@/components/post/InterestForm";
 import { useAsync } from "@/hooks/useAsync";
 import { useNow } from "@/hooks/useNow";
 import { fetchPost, type PublicPost } from "@/lib/api";
-import { whatsappShareUrl } from "@/lib/contact";
 import { Link } from "@/lib/router";
 import { formatCountdown, formatDay, formatTime, isStartingSoon } from "@/lib/time";
 import { btn } from "@/lib/ui";
@@ -66,7 +66,6 @@ function PostDetail({ post, now }: { post: PublicPost; now: Date }) {
   const started = start.getTime() <= now.getTime();
   const soon = !filled && isStartingSoon(start, now);
   const contactable = !filled && !started;
-  const origin = window.location.origin;
   const [clock, meridiem] = formatTime(start).split(" ");
 
   useEffect(() => {
@@ -139,15 +138,9 @@ function PostDetail({ post, now }: { post: PublicPost; now: Date }) {
               <button type="button" onClick={() => setSheetOpen(true)} className={cn(btn.primary, "flex-1 md:flex-none")}>
                 <MessageCircle aria-hidden="true" className="size-[18px]" /> Contact host
               </button>
-              <a
-                href={whatsappShareUrl(post, origin)}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Share to a group"
-                className={cn(btn.icon, "size-14")}
-              >
+              <ShareButton post={post} label="Share to a group" className={cn(btn.icon, "size-14 px-0")}>
                 <Share2 aria-hidden="true" className="size-5" />
-              </a>
+              </ShareButton>
             </div>
           </div>
           {sheetOpen && <ContactSheet post={post} onClose={() => setSheetOpen(false)} />}
@@ -155,14 +148,9 @@ function PostDetail({ post, now }: { post: PublicPost; now: Date }) {
       )}
 
       {contactable && post.contact_mode === "requests" && (
-        <a
-          href={whatsappShareUrl(post, origin)}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-7 inline-flex h-11 items-center gap-2.5 text-[15px] font-semibold text-muted-foreground hover:text-foreground"
-        >
+        <ShareButton post={post} label="Share to a group" className="mt-7 border-0 px-0 text-[15px] text-muted-foreground hover:text-foreground">
           <Share2 aria-hidden="true" className="size-[18px]" /> Share to a group
-        </a>
+        </ShareButton>
       )}
 
       {!contactable && (

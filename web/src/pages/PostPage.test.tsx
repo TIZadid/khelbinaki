@@ -45,7 +45,7 @@ describe("PostPage", () => {
     expect(screen.getByText("7:30")).toBeInTheDocument();
     expect(screen.getByText("Bring gloves")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /contact host/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /share to a group/i }).getAttribute("href")).toMatch(/^https:\/\/wa\.me\/\?text=/);
+    expect(screen.getByRole("button", { name: /share to a group/i })).toBeInTheDocument();
     expect(screen.queryByText(/01712/)).toBeNull();
     expect(document.title).toMatch(/^Mirpur · 7:30 PM/);
   });
@@ -62,7 +62,7 @@ describe("PostPage", () => {
     render(<PostPage id="p1" now={NOW} />);
     expect(await screen.findByText(/host has found a keeper/i)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /contact host/i })).toBeNull();
-    expect(screen.queryByRole("link", { name: /share/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /share/i })).toBeNull();
   });
 
   it("hides contact actions once the match has started", async () => {

@@ -1,8 +1,9 @@
 import { Copy, MessageCircle, Share2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAsync } from "@/hooks/useAsync";
+import { ShareButton } from "@/components/ShareButton";
 import { fetchInterests, fetchPost, type Interest, type PublicPost, setPostStatus } from "@/lib/api";
-import { formatPhone, postUrl, whatsappShareUrl } from "@/lib/contact";
+import { formatPhone, postUrl } from "@/lib/contact";
 import { tokenForPost } from "@/lib/myPosts";
 import { Link } from "@/lib/router";
 import { formatDay, formatTime } from "@/lib/time";
@@ -130,14 +131,12 @@ function ManageView({
         </h2>
         <p className="mt-2 text-[15px] leading-snug">Most keepers come from groups. Post it where your players are.</p>
         <div className="mt-4 flex flex-col gap-2.5 sm:flex-row">
-          <a
-            href={whatsappShareUrl(post, origin)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex h-13 flex-1 items-center justify-center gap-2.5 rounded-full bg-[#0a0c09] font-semibold text-foreground"
+          <ShareButton
+            post={post}
+            className="h-13 flex-1 border-0 bg-[#0a0c09] font-semibold text-foreground hover:text-foreground"
           >
             <Share2 aria-hidden="true" className="size-[18px]" /> Share
-          </a>
+          </ShareButton>
           <button
             type="button"
             onClick={() => copy(postUrl(post.id, origin), "link")}
