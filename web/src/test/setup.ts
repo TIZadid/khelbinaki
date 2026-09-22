@@ -30,3 +30,6 @@ if (!("IntersectionObserver" in window)) {
   }
   Object.assign(window, { IntersectionObserver: IO });
 }
+
+// jsdom doesn't implement scrolling; navigate() calls it.
+window.scrollTo = () => {};
