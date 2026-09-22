@@ -1,5 +1,8 @@
+import { MessageCircle, Phone } from "lucide-react";
 import { GlowCard } from "@/components/GlowCard";
 import type { PublicPost } from "@/lib/api";
+import { postPath, telUrl, whatsappContactUrl } from "@/lib/contact";
+import { Link } from "@/lib/router";
 import { formatCountdown, formatDay, formatTime, isStartingSoon } from "@/lib/time";
 import { cn } from "@/lib/utils";
 
@@ -8,12 +11,22 @@ export function PostCard({ post, now, highlighted = false }: { post: PublicPost;
   const filled = post.status === "filled";
   const soon = !filled && isStartingSoon(start, now);
   const muted = highlighted ? "text-primary-foreground/70" : "text-muted-foreground";
+  const action =
+    "inline-flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold transition-colors";
 
   return (
     <GlowCard highlighted={highlighted} className={cn("flex h-full flex-col gap-4", filled && "opacity-60")}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate font-semibold">{post.area}</p>
+          <p className="truncate font-semibold">
+            {/* Stretched link: the whole card opens the post; the action buttons sit above it. */}
+            <Link
+              to={postPath(post.id)}
+              className="after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring"
+            >
+              {post.area}
+            </Link>
+          </p>
           {post.turf_name && <p className={cn("truncate text-sm", muted)}>{post.turf_name}</p>}
         </div>
         {filled ? (
@@ -53,6 +66,36 @@ export function PostCard({ post, now, highlighted = false }: { post: PublicPost;
           {post.slots_needed > 1 ? `${post.slots_needed} keepers · ` : ""}by {post.host_name}
         </p>
       </div>
+
+      {!filled && (
+        <div className="relative z-10 flex gap-2">
+          <a
+            href={whatsappContactUrl(post, window.location.origin)}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`WhatsApp ${post.host_name}`}
+            className={cn(
+              action,
+              highlighted
+                ? "bg-primary-foreground text-primary hover:bg-primary-foreground/90"
+                : "border hover:border-primary hover:text-primary",
+            )}
+          >
+            <MessageCircle aria-hidden="true" className="size-4" /> WhatsApp
+          </a>
+          <a
+            href={telUrl(post.phone)}
+            aria-label={`Call ${post.host_name}`}
+            className={cn(
+              action,
+              "border",
+              highlighted ? "border-primary-foreground/30 hover:bg-primary-foreground/10" : "hover:border-primary hover:text-primary",
+            )}
+          >
+            <Phone aria-hidden="true" className="size-4" /> Call
+          </a>
+        </div>
+      )}
     </GlowCard>
   );
 }

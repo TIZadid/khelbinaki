@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { PublicPost } from "@/lib/api";
 import { Feed } from "./Feed";
@@ -60,6 +60,11 @@ describe("Feed", () => {
     expect(cardFor("8:00 PM")).toHaveTextContent("Filled");
     expect(screen.getByText("3 open games")).toBeInTheDocument();
     expect(cardFor("6:00 PM")).toHaveTextContent("Cost: ask host");
+    const soonCard = cardFor("7:30 PM");
+    expect(within(soonCard).getByRole("link", { name: "Mirpur" })).toHaveAttribute("href", "/p/soon");
+    expect(within(soonCard).getByRole("link", { name: /whatsapp rafi/i }).getAttribute("href")).toMatch(/^https:\/\/wa\.me\/8801712345678\?text=/);
+    expect(within(soonCard).getByRole("link", { name: /call rafi/i })).toHaveAttribute("href", "tel:+8801712345678");
+    expect(within(cardFor("8:00 PM")).queryByRole("link", { name: /whatsapp/i })).toBeNull();
   });
 
   it("filters by area chip", async () => {

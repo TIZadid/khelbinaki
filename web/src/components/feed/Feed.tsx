@@ -1,19 +1,20 @@
 import { useState } from "react";
 import { FadeUp } from "@/components/motion/FadeUp";
-import { useFeed } from "@/hooks/useFeed";
+import { useAsync } from "@/hooks/useAsync";
 import { useNow } from "@/hooks/useNow";
+import { fetchFeed } from "@/lib/api";
 import { groupPosts, isStartingSoon } from "@/lib/time";
 import { AreaChips, areaOptions } from "./AreaChips";
 import { LivePill } from "./LivePill";
 import { PostCard } from "./PostCard";
 
 export function Feed({ now: fixedNow }: { now?: Date }) {
-  const { state, retry } = useFeed();
+  const { state, retry } = useAsync(fetchFeed, []);
   const liveNow = useNow();
   const now = fixedNow ?? liveNow;
   const [area, setArea] = useState<string | null>(null);
 
-  const posts = state.status === "ready" ? state.posts : [];
+  const posts = state.status === "ready" ? state.data : [];
   const visible = area ? posts.filter((p) => p.area.trim().toLowerCase() === area) : posts;
   const soonest = visible.find((p) => p.status === "open" && isStartingSoon(new Date(p.start_datetime), now));
 

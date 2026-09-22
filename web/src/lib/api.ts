@@ -24,3 +24,11 @@ export async function fetchFeed(signal?: AbortSignal): Promise<PublicPost[]> {
   const data = (await res.json()) as { posts: PublicPost[] };
   return data.posts;
 }
+
+export async function fetchPost(id: string, signal?: AbortSignal): Promise<PublicPost | null> {
+  const res = await fetch(`${API_URL}/posts/${encodeURIComponent(id)}`, { signal });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`Post request failed (${res.status})`);
+  const data = (await res.json()) as { post?: PublicPost };
+  return data.post ?? null;
+}

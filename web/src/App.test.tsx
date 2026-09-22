@@ -6,6 +6,7 @@ beforeEach(() => {
   vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ posts: [] }), { status: 200 })));
 });
 afterEach(() => vi.unstubAllGlobals());
+afterEach(() => window.history.pushState(null, "", "/"));
 
 it("renders the brand, hero, feed and three how-it-works steps", async () => {
   render(<App />);
@@ -27,4 +28,16 @@ it("is not framed as night-only or Dhaka-only", () => {
 it("draws the pitch background as decoration only", () => {
   const { container } = render(<App />);
   expect(container.querySelector('[data-testid="pitch-bg"]')).toHaveAttribute("aria-hidden", "true");
+});
+
+it("routes /p/:id to the post page", async () => {
+  window.history.pushState(null, "", "/p/missing1");
+  render(<App />);
+  expect(await screen.findByText(/doesn't exist/i)).toBeInTheDocument();
+});
+
+it("shows a 404 page for unknown paths", () => {
+  window.history.pushState(null, "", "/nope");
+  render(<App />);
+  expect(screen.getByRole("heading", { name: /page not found/i })).toBeInTheDocument();
 });
