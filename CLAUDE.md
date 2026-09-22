@@ -79,7 +79,7 @@ CREATE TABLE posts (
 2. Worker API: `POST /posts`, `GET /posts` (feed-filtered per above), `PATCH /posts/:id`.
 3. Frontend: feed page, post-detail page (WhatsApp/tel links), post-creation form
    with Turnstile.
-4. Deploy: `wrangler deploy` (API), connect repo to Cloudflare Pages (frontend).
+4. Deploy: `wrangler deploy` (API); frontend auto-deploys via Workers Builds on push to `main`.
 5. Optional/later: Telegram bot announcement on new post, Web Push subscriptions
    by area, Cron Trigger for real archiving, opponent-team invite listing type,
    boosted/featured posts.
@@ -99,7 +99,7 @@ cd api && npx wrangler d1 migrations apply khelbinaki-db --remote
 npx wrangler dev              # local API dev
 npm run dev                   # local frontend dev
 npx wrangler deploy           # deploy API
-npm run build && npx wrangler pages deploy dist   # deploy frontend (if not using Git auto-deploy)
+cd web && npm run build && npx wrangler deploy     # deploy frontend by hand (normally Git auto-deploy)
 npx wrangler secret put <NAME>
 ```
 
@@ -113,6 +113,21 @@ npx wrangler secret put <NAME>
   (see `listing_type`), but do not build it until explicitly asked.
 - Ask before adding any dependency that requires an account/API key on a
   non-Cloudflare, non-free service.
+
+## API (Feature 1, `api/src/app.ts`)
+
+| Method & path | Body | Success | Errors |
+|---|---|---|---|
+| `GET /posts?area=` | – | `200 {posts}` upcoming, non-archived, soonest first, max 100 | – |
+| `GET /posts/:id` | – | `200 {post}` (past/filled too) | `404` |
+| `POST /posts` | post fields + `turnstile_token` | `201 {post, edit_token}` | `400 invalid_json`, `400 validation {fields}`, `403 captcha_failed` |
+| `PATCH /posts/:id` | `{edit_token, status: "open"\|"filled"}` | `200 {post}` | `400`, `403 forbidden`, `404` |
+
+- Phones are stored as `8801XXXXXXXXX` (wa.me format); `start_datetime` must include a timezone and is stored as UTC ISO.
+- `edit_token` is only ever returned once, from `POST /posts`.
+- CORS allow-list: `ALLOWED_ORIGINS` var in `api/wrangler.jsonc` (`*` = preview-URL wildcard).
+- `TURNSTILE_SECRET`: local `api/.dev.vars` holds Cloudflare's always-pass test key; production has none yet, so
+  creation returns `captcha_failed` until Feature 4 creates the real widget (`wrangler secret put TURNSTILE_SECRET`).
 
 ## Deployments
 
