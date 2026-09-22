@@ -1,5 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { saveKeeperProfile } from "@/lib/keeper";
 import App from "./App";
 
 beforeEach(() => {
@@ -40,4 +41,19 @@ it("shows a 404 page for unknown paths", () => {
   window.history.pushState(null, "", "/nope");
   render(<App />);
   expect(screen.getByRole("heading", { name: /page not found/i })).toBeInTheDocument();
+});
+
+it("routes /keeper to the keeper profile page", () => {
+  window.history.pushState(null, "", "/keeper");
+  render(<App />);
+  expect(screen.getByRole("heading", { level: 1, name: /your keeper profile/i })).toBeInTheDocument();
+});
+
+it("links keepers to their profile from the header", () => {
+  const { unmount } = render(<App />);
+  expect(within(screen.getByRole("banner")).getByRole("link", { name: "I'm a keeper" })).toHaveAttribute("href", "/keeper");
+  unmount();
+  saveKeeperProfile({ name: "Mehedi", phone: "8801912345678", areas: [], note: "" });
+  render(<App />);
+  expect(within(screen.getByRole("banner")).getByRole("link", { name: "My profile" })).toBeInTheDocument();
 });

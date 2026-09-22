@@ -1,5 +1,6 @@
 import { MotionConfig } from "motion/react";
 import type { ReactNode } from "react";
+import { useKeeperProfile } from "@/hooks/useKeeperProfile";
 import { Link } from "@/lib/router";
 import { PitchBackground } from "./PitchBackground";
 
@@ -12,6 +13,8 @@ function Brand({ className }: { className?: string }) {
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const keeper = useKeeperProfile();
+
   return (
     <MotionConfig reducedMotion="user">
       <div className="flex min-h-dvh flex-col">
@@ -21,14 +24,19 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Link to="/" className="font-display text-2xl font-extrabold tracking-[0.02em] uppercase md:text-[28px]">
               <Brand />
             </Link>
-            <nav aria-label="Main" className="hidden items-center gap-9 text-[15px] font-medium text-muted-foreground sm:flex">
-              <a href="/#games" className="hover:text-foreground">
-                Open games
-              </a>
-              <a href="/#how" className="hover:text-foreground">
-                How it works
-              </a>
-            </nav>
+            <div className="flex items-center gap-6 md:gap-9">
+              <nav aria-label="Main" className="hidden items-center gap-9 text-[15px] font-medium text-muted-foreground sm:flex">
+                <a href="/#games" className="hover:text-foreground">
+                  Open games
+                </a>
+                <a href="/#how" className="hover:text-foreground">
+                  How it works
+                </a>
+              </nav>
+              <Link to="/keeper" className="text-sm font-semibold text-muted-foreground hover:text-foreground md:text-[15px]">
+                {keeper ? "My profile" : "I'm a keeper"}
+              </Link>
+            </div>
           </div>
         </header>
         <main className="flex-1">{children}</main>

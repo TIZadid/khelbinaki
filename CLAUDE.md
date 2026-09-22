@@ -80,6 +80,11 @@ note, created_at; UNIQUE (post_id, phone). Only the post's host (edit token) can
    (`interests`), which only the host sees via their edit token, then the host
    WhatsApps them. Never build chat, inboxes, or paid relays/SMS.
 
+5. **Keeper profile** lives only in the keeper's browser (localStorage key
+   `khelbinaki.keeper.v1`): name, WhatsApp, areas, note. It pre-fills "I'm interested"
+   and makes the feed open on the keeper's areas. Never send it anywhere except with
+   an interest request.
+
 ## Build order (do in this sequence)
 
 1. D1 schema as migrations (`api/migrations/0001_init.sql`), apply with `wrangler d1 migrations apply`.

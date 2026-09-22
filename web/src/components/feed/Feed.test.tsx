@@ -2,6 +2,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { AsyncState } from "@/hooks/useAsync";
 import type { PublicPost } from "@/lib/api";
+import { saveKeeperProfile } from "@/lib/keeper";
 import { Feed } from "./Feed";
 
 const NOW = new Date("2026-10-01T12:00:00.000Z"); // 6:00 PM Dhaka
@@ -87,5 +88,29 @@ describe("Feed", () => {
     rerender(<Feed state={{ status: "error" }} retry={retry} now={NOW} />);
     fireEvent.click(screen.getByRole("button", { name: /try again/i }));
     expect(retry).toHaveBeenCalledOnce();
+  });
+});
+
+describe("Feed with a keeper profile", () => {
+  const keeper = (areas: string[]) => saveKeeperProfile({ name: "Mehedi", phone: "8801912345678", areas, note: "" });
+
+  it("opens on the keeper's areas", () => {
+    keeper(["agrabad"]);
+    renderFeed(ready(POSTS));
+
+    expect(screen.getByRole("button", { name: /my areas/i })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByText("7:30 PM")).toBeNull();
+    expect(screen.getByText("6:00 PM")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /^all/i }));
+    expect(screen.getByText("7:30 PM")).toBeInTheDocument();
+  });
+
+  it("shows everything when none of the keeper's areas have games", () => {
+    keeper(["Sylhet"]);
+    renderFeed(ready(POSTS));
+
+    expect(screen.getByText("7:30 PM")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /my areas/i })).toBeNull();
   });
 });

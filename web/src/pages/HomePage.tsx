@@ -6,6 +6,7 @@ import { NextUpTicket } from "@/components/NextUpTicket";
 import { useAsync } from "@/hooks/useAsync";
 import { useNow } from "@/hooks/useNow";
 import { fetchFeed } from "@/lib/api";
+import { Link } from "@/lib/router";
 import { btn } from "@/lib/ui";
 import { cn } from "@/lib/utils";
 
@@ -47,9 +48,14 @@ export function HomePage() {
             </p>
           </FadeUp>
           <FadeUp delay={0.15}>
-            <a href="#games" className={cn(btn.primary, "w-full sm:w-auto")}>
-              See open games <ArrowDownRight aria-hidden="true" className="size-[18px]" />
-            </a>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <a href="#games" className={cn(btn.primary, "w-full sm:w-auto")}>
+                See open games <ArrowDownRight aria-hidden="true" className="size-[18px]" />
+              </a>
+              <Link to="/keeper" className={cn(btn.outline, "h-14 px-7 text-[17px]")}>
+                I'm a keeper
+              </Link>
+            </div>
           </FadeUp>
         </div>
         {next && (

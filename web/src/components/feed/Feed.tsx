@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useKeeperProfile } from "@/hooks/useKeeperProfile";
 import type { AsyncState } from "@/hooks/useAsync";
 import type { PublicPost } from "@/lib/api";
 import { formatDay, groupPosts, isStartingSoon } from "@/lib/time";
-import { AreaChips, areaOptions } from "./AreaChips";
+import { AreaChips, MY_AREAS_KEY, areaOptions } from "./AreaChips";
 import { PostRow } from "./PostRow";
 
 export function Feed({
@@ -14,11 +15,22 @@ export function Feed({
   retry: () => void;
   now: Date;
 }) {
-  const [area, setArea] = useState<string | null>(null);
+  const keeper = useKeeperProfile();
+  const myAreas = useMemo(() => new Set((keeper?.areas ?? []).map((a) => a.trim().toLowerCase())), [keeper]);
+  // undefined = nothing picked yet, so open on the keeper's areas when those have games.
+  const [area, setArea] = useState<string | null | undefined>(undefined);
 
   const posts = state.status === "ready" ? state.data : [];
   const openCount = posts.filter((p) => p.status === "open").length;
-  const visible = area ? posts.filter((p) => p.area.trim().toLowerCase() === area) : posts;
+  const areaKey = (p: { area: string }) => p.area.trim().toLowerCase();
+  const hasMine = posts.some((p) => myAreas.has(areaKey(p)));
+  const selected = area !== undefined ? area : hasMine ? MY_AREAS_KEY : null;
+  const visible =
+    selected === MY_AREAS_KEY
+      ? posts.filter((p) => myAreas.has(areaKey(p)))
+      : selected
+        ? posts.filter((p) => areaKey(p) === selected)
+        : posts;
   const soonest = visible.find((p) => p.status === "open" && isStartingSoon(new Date(p.start_datetime), now));
 
   return (
@@ -60,7 +72,12 @@ export function Feed({
       {state.status === "ready" && posts.length > 0 && (
         <>
           <div className="mt-6">
-            <AreaChips options={areaOptions(posts.map((p) => p.area))} selected={area} onSelect={setArea} />
+            <AreaChips
+              options={areaOptions(posts.map((p) => p.area))}
+              selected={selected}
+              onSelect={setArea}
+              showMine={hasMine}
+            />
           </div>
           {groupPosts(visible, now).map((group) => (
             <div key={group.key} className="pt-10 md:pt-12">

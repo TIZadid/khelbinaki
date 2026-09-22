@@ -2,6 +2,9 @@ import { cn } from "@/lib/utils";
 
 export type AreaOption = { key: string; label: string; count: number };
 
+// Sentinel for the chip that filters to the keeper profile's areas.
+export const MY_AREAS_KEY = "__mine";
+
 // One chip per area (case-insensitive), most posts first.
 export function areaOptions(areas: string[]): AreaOption[] {
   const byKey = new Map<string, AreaOption>();
@@ -18,10 +21,12 @@ export function AreaChips({
   options,
   selected,
   onSelect,
+  showMine = false,
 }: {
   options: AreaOption[];
   selected: string | null;
   onSelect: (key: string | null) => void;
+  showMine?: boolean;
 }) {
   const chip = (key: string | null, label: string, count?: number) => {
     const active = selected === key;
@@ -45,6 +50,7 @@ export function AreaChips({
   return (
     <div role="group" aria-label="Filter by area" className="flex flex-wrap gap-2">
       {chip(null, "All areas")}
+      {showMine && chip(MY_AREAS_KEY, "My areas")}
       {options.map((o) => chip(o.key, o.label, o.count))}
     </div>
   );

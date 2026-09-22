@@ -33,3 +33,6 @@ if (!("IntersectionObserver" in window)) {
 
 // jsdom doesn't implement scrolling; navigate() calls it.
 window.scrollTo = () => {};
+
+// Keeper profiles live in localStorage; start every test without one.
+afterEach(() => window.localStorage.clear());
