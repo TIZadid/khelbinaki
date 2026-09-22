@@ -50,6 +50,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="page-x flex flex-col gap-2 py-8 text-sm text-subtle md:h-30 md:flex-row md:items-center md:justify-between md:py-0">
             <Brand className="font-display text-[22px] font-extrabold text-foreground uppercase" />
             <span>Free forever. Made for futsal across Bangladesh.</span>
+            <Link to="/cha" className="hover:text-foreground">
+              Buy me a cha
+            </Link>
           </div>
         </footer>
       </div>

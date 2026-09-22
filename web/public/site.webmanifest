@@ -1,0 +1,14 @@
+{
+  "name": "Khelbi Naki — find a goalkeeper",
+  "short_name": "Khelbi Naki",
+  "description": "The free board for underground futsal in Bangladesh.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0c09",
+  "theme_color": "#0a0c09",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

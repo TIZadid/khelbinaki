@@ -168,21 +168,25 @@ number from people browsing the site, not from people who pay. Hiding it
 completely needs a bKash Merchant or Personal Retail Account (paperwork and
 transaction fees), which is out of scope under the zero-cost rule.
 
-## 8. Feature roadmap (one plan per feature, written when we reach it)
+## 8. Feature roadmap — all shipped 2026-09-22/23
 
-| # | Feature | Deliverable |
+| # | Feature | State |
 |---|---|---|
-| 0 | **Setup & foundation** | Toolchain, git, api + web scaffolds, D1 migration, design system, first deploy of a "hello" API and landing page |
-| 1 | Posts API | `POST /posts`, `GET /posts` (feed filter), `GET /posts/:id`, `PATCH /posts/:id`; validation, BD phone normalisation, id and edit-token generation, CORS |
-| 2 | Feed page | Router, time-grouped feed, area chips, highlighted "starting soon" card, skeletons, empty state |
-| 3 | Post detail + contact | Detail page, WhatsApp prefilled link, `tel:`, share-to-WhatsApp |
-| 4 | Create post | Form + Turnstile + success screen with private manage link (saved in localStorage) |
-| 5 | Manage post | Manage page via token link, "Mark as filled" |
-| 6 | Buy me a cha | bKash QR dialog (section 7) |
-| 7 | Polish | OG/meta tags, PWA manifest, 404 page, Lighthouse pass |
+| 0 | Setup & foundation | ✅ |
+| 1 | Posts API | ✅ |
+| 2 | Feed page | ✅ |
+| 3 | Post detail + contact | ✅ |
+| 4a | Contact modes API (phone private, reveal, interests) | ✅ |
+| 4b | Keeper profile (on-device) | ✅ |
+| 4c | Contact on the site (Turnstile, reveal sheet, interest form) | ✅ |
+| 4d | Post a match + host manage page | ✅ |
+| 4e | Share everywhere + per-game link previews | ✅ |
+| 5 | Design sync (canvas → site) | ✅ |
+| 6 | Buy me a cha (bKash QR) | ✅ page built; needs the owner's QR image at `web/public/bkash-qr.png` |
+| 7 | Polish (icons, manifest, robots, sitemap, README) | ✅ |
 
-Later (from CLAUDE.md): Telegram announcements, Web Push by area, Cron
-archiving + history, opponent-invite listing type, featured posts.
+Later, only if wanted: Telegram/Web Push alerts for hosts and keepers, Cron archiving
+with a history page, opponent-team listings, featured posts, Bangla copy, a custom domain.
 
 ## 9. Open questions (not blocking setup)
 

@@ -1,6 +1,7 @@
 import { AppShell } from "@/components/AppShell";
 import { matchManagePath, matchPostPath, usePath } from "@/lib/router";
 import { HomePage } from "@/pages/HomePage";
+import { ChaPage } from "@/pages/ChaPage";
 import { KeeperPage } from "@/pages/KeeperPage";
 import { ManagePage } from "@/pages/ManagePage";
 import { NewPostPage } from "@/pages/NewPostPage";
@@ -15,6 +16,7 @@ export default function App() {
   let page;
   if (path === "/") page = <HomePage />;
   else if (path === "/keeper") page = <KeeperPage />;
+  else if (path === "/cha") page = <ChaPage />;
   else if (path === "/new") page = <NewPostPage />;
   else if (manageId) page = <ManagePage key={manageId} id={manageId} />;
   else if (postId) page = <PostPage key={postId} id={postId} />;

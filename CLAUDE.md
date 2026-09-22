@@ -96,6 +96,12 @@ note, created_at; UNIQUE (post_id, phone). Only the post's host (edit token) can
    by area, Cron Trigger for real archiving, opponent-team invite listing type,
    boosted/featured posts.
 
+All of build order 1-4 plus the MVP feature roadmap shipped on 2026-09-22/23
+(see docs/superpowers/specs/…-design.md §8). Turnstile is live: site key
+`0x4AAAAAAFAQISNULqQDLara` (public, in web/src/components/Turnstile.tsx), secret in
+the API Worker. `web/` deploys itself on push to `main`; its Worker (`web/src/worker/`)
+adds per-game link previews.
+
 ## Commands
 
 ```

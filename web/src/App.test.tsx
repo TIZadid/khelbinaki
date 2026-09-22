@@ -70,3 +70,10 @@ it("asks for the manage link when the token is missing", () => {
   render(<App />);
   expect(screen.getByRole("heading", { level: 1, name: /manage link needed/i })).toBeInTheDocument();
 });
+
+it("routes /cha to the tip page", () => {
+  window.history.pushState(null, "", "/cha");
+  render(<App />);
+  expect(screen.getByRole("heading", { level: 1, name: /buy me a cha/i })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: /^bkash$/i })).toBeInTheDocument();
+});
