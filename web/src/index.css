@@ -22,7 +22,6 @@
   --border: #252d1e;
   --input: #252d1e;
   --ring: #a6d421;
-  --grid-line: rgb(238 243 230 / 0.05);
 }
 
 @theme inline {
@@ -64,12 +63,8 @@
   }
 }
 
-.bg-grid {
-  background-image:
-    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: radial-gradient(ellipse at top, black 30%, transparent 75%);
+.pitch-fade {
+  mask-image: radial-gradient(ellipse 90% 70% at 50% 35%, black 40%, transparent 100%);
 }
 
 .glow-card::before {

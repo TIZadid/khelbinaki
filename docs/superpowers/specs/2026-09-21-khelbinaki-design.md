@@ -75,8 +75,10 @@ Token names follow shadcn/ui so components copied from 21st.dev work unchanged.
 **Type.** Headings: Sora 600/700. Body: Inter 400/500/600. Both from Google
 Fonts (free). Bangla text falls back to the system Bangla font for now.
 
-**Surfaces.** A fixed `GridBackground` (48px grid masked to fade out, plus a
-blurred lime glow at the top). Cards are `GlowCard`s: bordered, semi-opaque,
+**Surfaces.** A fixed `PitchBackground`: faint football-pitch markings (SVG,
+portrait pitch sliced to cover the screen, subtle mowing stripes) fading out
+from the centre, plus a blurred lime glow at the top. Replaced the original
+grid on 2026-09-22 at the owner's request. Cards are `GlowCard`s: bordered, semi-opaque,
 with a cursor-following spotlight on hover. The "starting soon" post in the
 feed uses the solid-lime highlighted variant (like the reference's middle card).
 
@@ -103,10 +105,10 @@ Sources looked at: Rent A Keeper (BR), GoalieUp / Puck (hockey goalie finders),
 subsneeded.com round-up, Turfly and TurfNation (Dhaka turf booking).
 
 Adopted (fit the no-accounts, zero-cost rules):
-- **Time-first feed**: group posts as *Tonight / Tomorrow / This week*; badge
+- **Time-first feed**: group posts as *Today / Tomorrow / This week*; badge
   posts starting within 3 hours as "Starting soon" (highlighted card).
-- **Area filter chips** (Mirpur, Dhanmondi, Uttara, Bashundhara, …) — text
-  area, no geocoding.
+- **Area filter chips** built from the areas in current posts (any city —
+  the product is nationwide, not Dhaka-only) — text area, no geocoding.
 - **Price front and centre**: cost per head is the largest number on a card
   (৳ symbol).
 - **One-tap contact**: WhatsApp button prefilled with a message naming the

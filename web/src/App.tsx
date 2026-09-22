@@ -4,7 +4,7 @@ import { FadeUp } from "@/components/motion/FadeUp";
 
 const steps = [
   { n: "01", title: "Post your match", body: "Turf, time and cost per head. Takes 30 seconds, no sign-up." },
-  { n: "02", title: "Keepers find you", body: "Goalkeepers across Dhaka browse tonight's open games." },
+  { n: "02", title: "Keepers find you", body: "Keepers near you browse open games and pick the ones that suit them." },
   { n: "03", title: "Settle it on WhatsApp", body: "They message you directly. Mark it filled when you're sorted." },
 ];
 
@@ -14,7 +14,7 @@ export default function App() {
       <section className="py-16 text-center sm:py-24">
         <FadeUp>
           <h1 className="text-4xl font-bold sm:text-6xl">
-            Need a <span className="text-primary">keeper</span> tonight?
+            Need a <span className="text-primary">keeper</span> for your match?
           </h1>
         </FadeUp>
         <FadeUp delay={0.1}>
