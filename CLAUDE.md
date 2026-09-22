@@ -94,7 +94,7 @@ cd web && npm test             # frontend tests
 npx wrangler login
 npx wrangler d1 create khelbinaki-db
 cd api && npx wrangler d1 migrations create khelbinaki-db <name>   # new schema change
-cd api && npx wrangler d1 migrations apply khelbinaki-db --local
+cd api && npx wrangler d1 migrations apply khelbinaki-db --local    # also after cloning or changing database_id
 cd api && npx wrangler d1 migrations apply khelbinaki-db --remote
 npx wrangler dev              # local API dev
 npm run dev                   # local frontend dev

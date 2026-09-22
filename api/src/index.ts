@@ -1,7 +1,7 @@
-import { Hono } from "hono";
+import { createApp } from "./app";
+import { turnstileVerifier } from "./lib/turnstile";
 
-const app = new Hono<{ Bindings: Env }>();
-
-app.get("/health", (c) => c.json({ ok: true }));
-
-export default app;
+export default createApp({
+  verifyHuman: (env) => turnstileVerifier(env.TURNSTILE_SECRET),
+  now: () => new Date(),
+});
