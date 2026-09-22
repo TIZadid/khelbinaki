@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeBdPhone, validateNewPost } from "../src/posts/validate";
+import { normalizeBdPhone, validateInterest, validateNewPost } from "../src/posts/validate";
 
 const NOW = new Date("2026-10-01T10:00:00.000Z");
 const valid = {
@@ -38,6 +38,7 @@ describe("validateNewPost", () => {
         cost_per_head: null,
         slots_needed: 1,
         notes: null,
+        contact_mode: "direct",
       },
     });
   });
@@ -86,5 +87,35 @@ describe("validateNewPost", () => {
   it("treats non-object input as empty", () => {
     const r = validateNewPost("nope", NOW);
     expect(!r.ok && r.errors.host_name).toBe("Required");
+  });
+});
+
+describe("contact_mode", () => {
+  it("accepts direct and requests", () => {
+    const r = validateNewPost({ ...valid, contact_mode: "requests" }, NOW);
+    expect(r.ok && r.value.contact_mode).toBe("requests");
+  });
+
+  it("rejects anything else", () => {
+    const r = validateNewPost({ ...valid, contact_mode: "email" }, NOW);
+    expect(!r.ok && r.errors.contact_mode).toBeTruthy();
+  });
+});
+
+describe("validateInterest", () => {
+  it("accepts a keeper's name, phone and optional note", () => {
+    expect(validateInterest({ name: " Mehedi ", phone: "019 1234 5678", note: " 5 yrs in goal " })).toEqual({
+      ok: true,
+      value: { name: "Mehedi", phone: "8801912345678", note: "5 yrs in goal" },
+    });
+    expect(validateInterest({ name: "Mehedi", phone: "01912345678" })).toEqual({
+      ok: true,
+      value: { name: "Mehedi", phone: "8801912345678", note: null },
+    });
+  });
+
+  it("reports missing name, bad phone and long note", () => {
+    const r = validateInterest({ phone: "123", note: "x".repeat(201) });
+    expect(!r.ok && Object.keys(r.errors).sort()).toEqual(["name", "note", "phone"]);
   });
 });

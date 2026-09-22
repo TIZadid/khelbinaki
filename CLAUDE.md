@@ -54,10 +54,14 @@ CREATE TABLE posts (
   slots_needed INTEGER NOT NULL DEFAULT 1,
   notes TEXT,
   status TEXT NOT NULL DEFAULT 'open', -- 'open' | 'filled' | 'archived'
+  contact_mode TEXT NOT NULL DEFAULT 'direct', -- 'direct' | 'requests' (migration 0002)
   edit_token TEXT NOT NULL,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 ```
+
+`interests` (migration 0002): id, post_id → posts(id) ON DELETE CASCADE, name, phone,
+note, created_at; UNIQUE (post_id, phone). Only the post's host (edit token) can read them.
 
 ## Key behaviors to implement
 
@@ -69,9 +73,12 @@ CREATE TABLE posts (
 3. **Archiving**: start with query-time filtering only (point 1). Only add a
    Cloudflare Cron Trigger + scheduled `UPDATE ... SET status='archived'` job if
    a "past posts / history" page is explicitly requested later.
-4. **Contact links**: every post card/detail view renders
-   `https://wa.me/<phone>?text=<url-encoded message referencing this specific post>`
-   and a `tel:<phone>` fallback. Never build a messaging endpoint.
+4. **Contact** (owner decision 2026-09-22): the host's phone is never in a public
+   response. Each post has a `contact_mode` chosen by the host:
+   **direct** — a keeper taps "Contact host", passes Turnstile, and gets the number
+   for `wa.me` / `tel:` links; **requests** — keepers leave name + phone + short note
+   (`interests`), which only the host sees via their edit token, then the host
+   WhatsApps them. Never build chat, inboxes, or paid relays/SMS.
 
 ## Build order (do in this sequence)
 
@@ -120,10 +127,13 @@ npx wrangler secret put <NAME>
 |---|---|---|---|
 | `GET /posts?area=` | – | `200 {posts}` upcoming, non-archived, soonest first, max 100 | – |
 | `GET /posts/:id` | – | `200 {post}` (past/filled too) | `404` |
-| `POST /posts` | post fields + `turnstile_token` | `201 {post, edit_token}` | `400 invalid_json`, `400 validation {fields}`, `403 captcha_failed` |
+| `POST /posts` | post fields + `contact_mode` + `turnstile_token` | `201 {post, edit_token}` | `400 invalid_json`, `400 validation {fields}`, `403 captcha_failed` |
 | `PATCH /posts/:id` | `{edit_token, status: "open"\|"filled"}` | `200 {post}` | `400`, `403 forbidden`, `404` |
+| `POST /posts/:id/contact` | `{turnstile_token}` | `200 {phone}` (direct mode only) | `404`, `409 requests_only`, `410 closed`, `403 captcha_failed` |
+| `POST /posts/:id/interests` | `{name, phone, note?, turnstile_token}` | `201/200 {ok:true}` (requests mode) | `404`, `409 direct_only`, `410 closed`, `400`, `403`, `429 full` (30/post) |
+| `GET /posts/:id/interests` | `Authorization: Bearer <edit_token>` | `200 {interests}` | `403 forbidden`, `404` |
 
-- Phones are stored as `8801XXXXXXXXX` (wa.me format); `start_datetime` must include a timezone and is stored as UTC ISO.
+- Phones are stored as `8801XXXXXXXXX` (wa.me format) and are **never** returned in public responses; `start_datetime` must include a timezone and is stored as UTC ISO.
 - `edit_token` is only ever returned once, from `POST /posts`.
 - CORS allow-list: `ALLOWED_ORIGINS` var in `api/wrangler.jsonc` (`*` = preview-URL wildcard).
 - `TURNSTILE_SECRET`: local `api/.dev.vars` holds Cloudflare's always-pass test key; production has none yet, so

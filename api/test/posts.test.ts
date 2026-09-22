@@ -7,6 +7,7 @@ const app = createApp({ verifyHuman: () => async () => true, now: () => NOW });
 
 // The test plugin keeps D1 data across tests in a file, so start each test empty.
 beforeEach(async () => {
+  await env.DB.prepare("DELETE FROM interests").run();
   await env.DB.prepare("DELETE FROM posts").run();
 });
 
@@ -49,7 +50,7 @@ describe("POST /posts", () => {
     expect(post).toMatchObject({
       listing_type: "gk_needed",
       host_name: "Rafi",
-      phone: "8801712345678",
+      contact_mode: "direct",
       area: "Mirpur",
       turf_name: "Kings Arena",
       start_datetime: "2026-10-01T14:00:00.000Z",
@@ -59,6 +60,7 @@ describe("POST /posts", () => {
     });
     expect(post.id).toMatch(/^[0-9A-Za-z]{10}$/);
     expect(post).not.toHaveProperty("edit_token");
+    expect(post).not.toHaveProperty("phone");
     expect(edit_token).toMatch(/^[A-Za-z0-9_-]{43}$/);
   });
 
@@ -95,7 +97,10 @@ describe("GET /posts (feed)", () => {
     expect(res.status).toBe(200);
     const { posts } = (await res.json()) as { posts: Record<string, unknown>[] };
     expect(posts.map((p) => p.id)).toEqual([sooner.post.id, later.post.id, "filled0001"]);
-    for (const p of posts) expect(p).not.toHaveProperty("edit_token");
+    for (const p of posts) {
+      expect(p).not.toHaveProperty("edit_token");
+      expect(p).not.toHaveProperty("phone");
+    }
   });
 
   it("filters by area, case-insensitively", async () => {

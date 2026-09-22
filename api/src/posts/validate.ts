@@ -1,3 +1,5 @@
+export type ContactMode = "direct" | "requests";
+
 export type NewPost = {
   host_name: string;
   phone: string;
@@ -8,12 +10,17 @@ export type NewPost = {
   cost_per_head: number | null;
   slots_needed: number;
   notes: string | null;
+  contact_mode: ContactMode;
 };
+
+export type NewInterest = { name: string; phone: string; note: string | null };
 
 export type Validation<T> = { ok: true; value: T } | { ok: false; errors: Record<string, string> };
 
 const MAX_DAYS_AHEAD = 60;
 const DAY_MS = 86_400_000;
+const CONTACT_MODES: readonly string[] = ["direct", "requests"];
+const PHONE_ERROR = "Enter a Bangladeshi mobile number like 01712345678";
 
 // Bangladeshi mobile: 01[3-9] + 8 digits, optional 88 country code. Stored as 8801XXXXXXXXX for wa.me.
 export function normalizeBdPhone(raw: string): string | null {
@@ -21,7 +28,8 @@ export function normalizeBdPhone(raw: string): string | null {
   return match ? `88${match[1]}` : null;
 }
 
-export function validateNewPost(input: unknown, now: Date): Validation<NewPost> {
+// Reads fields from an untrusted JSON body, collecting one error per bad field.
+function fieldReader(input: unknown) {
   const body = (typeof input === "object" && input !== null ? input : {}) as Record<string, unknown>;
   const errors: Record<string, string> = {};
 
@@ -53,8 +61,31 @@ export function validateNewPost(input: unknown, now: Date): Validation<NewPost> 
     return value;
   };
 
+  const phone = (key: string): string | null => {
+    const raw = text(key, 20, true);
+    if (raw === null) return null;
+    const normalized = normalizeBdPhone(raw);
+    if (!normalized) errors[key] = PHONE_ERROR;
+    return normalized;
+  };
+
+  return { body, errors, text, int, phone };
+}
+
+export function validateNewPost(input: unknown, now: Date): Validation<NewPost> {
+  const { body, errors, text, int, phone: readPhone } = fieldReader(input);
+
   if (body.listing_type !== undefined && body.listing_type !== "gk_needed") {
     errors.listing_type = "Only gk_needed posts are supported for now";
+  }
+
+  let contact_mode: ContactMode = "direct";
+  if (body.contact_mode !== undefined) {
+    if (typeof body.contact_mode === "string" && CONTACT_MODES.includes(body.contact_mode)) {
+      contact_mode = body.contact_mode as ContactMode;
+    } else {
+      errors.contact_mode = "Choose direct or requests";
+    }
   }
 
   const host_name = text("host_name", 60, true);
@@ -64,13 +95,7 @@ export function validateNewPost(input: unknown, now: Date): Validation<NewPost> 
   const duration_minutes = int("duration_minutes", 15, 240);
   const cost_per_head = int("cost_per_head", 0, 10_000);
   const slots_needed = int("slots_needed", 1, 5) ?? 1;
-
-  let phone: string | null = null;
-  const rawPhone = text("phone", 20, true);
-  if (rawPhone !== null) {
-    phone = normalizeBdPhone(rawPhone);
-    if (!phone) errors.phone = "Enter a Bangladeshi mobile number like 01712345678";
-  }
+  const phone = readPhone("phone");
 
   let start_datetime: string | null = null;
   const rawStart = text("start_datetime", 40, true);
@@ -97,6 +122,17 @@ export function validateNewPost(input: unknown, now: Date): Validation<NewPost> 
       cost_per_head,
       slots_needed,
       notes,
+      contact_mode,
     },
   };
+}
+
+export function validateInterest(input: unknown): Validation<NewInterest> {
+  const { errors, text, phone: readPhone } = fieldReader(input);
+  const name = text("name", 60, true);
+  const phone = readPhone("phone");
+  const note = text("note", 200, false);
+
+  if (Object.keys(errors).length > 0) return { ok: false, errors };
+  return { ok: true, value: { name: name as string, phone: phone as string, note } };
 }
