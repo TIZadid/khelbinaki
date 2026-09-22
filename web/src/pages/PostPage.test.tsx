@@ -44,7 +44,7 @@ describe("PostPage", () => {
     expect(screen.getByText("Kings Arena")).toBeInTheDocument();
     expect(screen.getByText("7:30 PM")).toBeInTheDocument();
     expect(screen.getByText("Bring gloves")).toBeInTheDocument();
-    expect(screen.getByText("+880 1712-345678")).toBeInTheDocument();
+    expect(screen.getByText("01712-345678")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /whatsapp rafi/i }).getAttribute("href")).toMatch(
       /^https:\/\/wa\.me\/8801712345678\?text=/,
     );

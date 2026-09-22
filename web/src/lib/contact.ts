@@ -35,8 +35,8 @@ export function telUrl(phone: string): string {
   return `tel:+${phone}`;
 }
 
-// 8801712345678 -> +880 1712-345678
+// 8801712345678 -> 01712-345678 (the local format people recognise)
 export function formatPhone(phone: string): string {
-  const match = /^880(\d{4})(\d{6})$/.exec(phone);
-  return match ? `+880 ${match[1]}-${match[2]}` : `+${phone}`;
+  const match = /^88(0\d{4})(\d{6})$/.exec(phone);
+  return match ? `${match[1]}-${match[2]}` : `+${phone}`;
 }

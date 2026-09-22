@@ -52,6 +52,6 @@ describe("contact links", () => {
 
   it("formats call links and phone numbers", () => {
     expect(telUrl("8801712345678")).toBe("tel:+8801712345678");
-    expect(formatPhone("8801712345678")).toBe("+880 1712-345678");
+    expect(formatPhone("8801712345678")).toBe("01712-345678");
   });
 });

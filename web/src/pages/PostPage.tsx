@@ -81,7 +81,7 @@ function PostDetail({ post, now }: { post: PublicPost; now: Date }) {
     ],
     ["Keepers needed", post.slots_needed],
     ["Host", post.host_name],
-    ["Phone", formatPhone(post.phone)],
+    ["Phone", <span className="whitespace-nowrap">{formatPhone(post.phone)}</span>],
   ];
 
   return (
@@ -108,7 +108,7 @@ function PostDetail({ post, now }: { post: PublicPost; now: Date }) {
         {post.duration_minutes ? ` · ${post.duration_minutes} min` : ""}
       </p>
 
-      <dl className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-lg border bg-border sm:grid-cols-4">
+      <dl className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-lg border bg-border">
         {facts.map(([label, value]) => (
           <div key={label} className="bg-card p-4">
             <dt className="text-xs tracking-[0.15em] text-muted-foreground uppercase">{label}</dt>
