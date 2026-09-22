@@ -26,7 +26,7 @@ to play, reusing the same posts table and feed.
 
 ## Stack
 
-- **Frontend:** Vite + React, deployed on Cloudflare Pages (free, `*.pages.dev`).
+- **Frontend:** Vite + React, deployed as a Cloudflare Worker with static assets (free; `web/wrangler.jsonc`). Chosen over Pages on 2026-09-22 because the dashboard now defaults to Workers.
 - **API:** Cloudflare Workers + Hono framework.
 - **DB:** Cloudflare D1 (SQLite at the edge, free tier).
 - **Spam protection:** Cloudflare Turnstile on the post-creation form.
@@ -119,5 +119,5 @@ npx wrangler secret put <NAME>
 - GitHub: https://github.com/TIZadid/khelbinaki (push over SSH)
 - API: https://khelbinaki-api.khelbinaki.workers.dev (deploy: `cd api && npm run deploy`)
 - D1: `khelbinaki-db` (APAC), id `948b478a-834e-42ef-9be5-d7b62a4acbaf`
-- Web: Cloudflare Pages project `khelbinaki`, auto-deploys on push to `main`; other branches get preview URLs
+- Web: Worker `khelbinaki` (static assets, SPA fallback) via Workers Builds: push to `main` deploys, other branches upload preview versions
 - Cloudflare login: run `npx wrangler login` in your own terminal (the OAuth callback can't reach the assistant's sandbox)
