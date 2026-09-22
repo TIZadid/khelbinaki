@@ -35,3 +35,7 @@ export function Link({ to, onClick, ...rest }: AnchorHTMLAttributes<HTMLAnchorEl
 export function matchPostPath(path: string): string | null {
   return /^\/p\/([0-9A-Za-z]{1,32})\/?$/.exec(path)?.[1] ?? null;
 }
+
+export function matchManagePath(path: string): string | null {
+  return /^\/p\/([0-9A-Za-z]{1,32})\/manage\/?$/.exec(path)?.[1] ?? null;
+}

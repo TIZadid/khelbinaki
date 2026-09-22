@@ -61,3 +61,48 @@ export async function sendInterest(
   const result = await postJson(`/posts/${encodeURIComponent(id)}/interests`, interest);
   return result.ok ? { ok: true as const } : result;
 }
+
+export type NewPostInput = {
+  host_name: string;
+  phone: string;
+  area: string;
+  turf_name?: string;
+  start_datetime: string;
+  duration_minutes?: number;
+  cost_per_head?: number;
+  slots_needed: number;
+  notes?: string;
+  contact_mode: ContactMode;
+  turnstile_token: string;
+};
+
+export async function createPost(input: NewPostInput) {
+  const result = await postJson("/posts", input);
+  if (!result.ok) return result;
+  const data = result.data as { post: PublicPost; edit_token: string };
+  return { ok: true as const, post: data.post, editToken: data.edit_token };
+}
+
+export type Interest = { name: string; phone: string; note: string | null; created_at: string };
+
+/** Host-only: the edit token proves ownership. */
+export async function fetchInterests(id: string, editToken: string, signal?: AbortSignal): Promise<Interest[]> {
+  const res = await fetch(`${API_URL}/posts/${encodeURIComponent(id)}/interests`, {
+    headers: { Authorization: `Bearer ${editToken}` },
+    signal,
+  });
+  if (!res.ok) throw new Error(`Interests request failed (${res.status})`);
+  const data = (await res.json()) as { interests: Interest[] };
+  return data.interests;
+}
+
+export async function setPostStatus(id: string, editToken: string, status: "open" | "filled") {
+  const res = await fetch(`${API_URL}/posts/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ edit_token: editToken, status }),
+  });
+  if (!res.ok) throw new Error(`Status update failed (${res.status})`);
+  const data = (await res.json()) as { post: PublicPost };
+  return data.post;
+}

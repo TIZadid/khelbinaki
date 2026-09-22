@@ -52,8 +52,8 @@ export function HomePage() {
               <a href="#games" className={cn(btn.primary, "w-full sm:w-auto")}>
                 See open games <ArrowDownRight aria-hidden="true" className="size-[18px]" />
               </a>
-              <Link to="/keeper" className={cn(btn.outline, "h-14 px-7 text-[17px]")}>
-                I'm a keeper
+              <Link to="/new" className={cn(btn.outline, "h-14 px-7 text-[17px]")}>
+                Post a match
               </Link>
             </div>
           </FadeUp>

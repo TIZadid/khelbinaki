@@ -36,6 +36,12 @@ export function AppShell({ children }: { children: ReactNode }) {
               <Link to="/keeper" className="text-sm font-semibold text-muted-foreground hover:text-foreground md:text-[15px]">
                 {keeper ? "My profile" : "I'm a keeper"}
               </Link>
+              <Link
+                to="/new"
+                className="inline-flex h-11 items-center gap-2 rounded-full border border-primary px-4 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground md:px-5"
+              >
+                Post a match
+              </Link>
             </div>
           </div>
         </header>
