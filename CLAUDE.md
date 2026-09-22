@@ -117,7 +117,8 @@ npx wrangler secret put <NAME>
 ## Deployments
 
 - GitHub: https://github.com/TIZadid/khelbinaki (push over SSH)
-- API: https://khelbinaki-api.khelbinaki.workers.dev (deploy: `cd api && npm run deploy`)
+- API: https://khelbinaki-api.zlabz.workers.dev (deploy: `cd api && npm run deploy`)
 - D1: `khelbinaki-db` (APAC), id `948b478a-834e-42ef-9be5-d7b62a4acbaf`
-- Web: Worker `khelbinaki` (static assets, SPA fallback) via Workers Builds: push to `main` deploys, other branches upload preview versions
+- Web: https://khelbinaki.zlabz.workers.dev (Worker `khelbinaki`, static assets, SPA fallback) via Workers Builds: push to `main` deploys, other branches upload preview versions
+- workers.dev account subdomain: `zlabz` (shared by every Worker on this account)
 - Cloudflare login: run `npx wrangler login` in your own terminal (the OAuth callback can't reach the assistant's sandbox)
