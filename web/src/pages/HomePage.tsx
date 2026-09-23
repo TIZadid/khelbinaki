@@ -1,7 +1,9 @@
 import { ArrowDownRight } from "lucide-react";
 import type { CSSProperties } from "react";
 import { Feed } from "@/components/feed/Feed";
+import { CountUp } from "@/components/motion/CountUp";
 import { FadeUp } from "@/components/motion/FadeUp";
+import { RevealWords } from "@/components/motion/RevealWords";
 import { NextUpTicket } from "@/components/NextUpTicket";
 import { useAsync } from "@/hooks/useAsync";
 import { useNow } from "@/hooks/useNow";
@@ -30,15 +32,29 @@ export function HomePage() {
         <div className="flex min-w-0 flex-1 flex-col gap-6 md:gap-8">
           <FadeUp>
             <p className="eyebrow flex items-center gap-3">
-              <span aria-hidden="true" className="size-2 rounded-full bg-primary" />
-              {openCount > 0 ? `${openCount} open ${openCount === 1 ? "game" : "games"} right now` : "Live board"} ·
-              across Bangladesh
+              <span aria-hidden="true" className="relative flex size-2">
+                <span className="absolute inline-flex size-full rounded-full bg-primary opacity-75 motion-safe:animate-ping" />
+                <span className="relative inline-flex size-2 rounded-full bg-primary" />
+              </span>
+              {openCount > 0 ? (
+                <>
+                  <CountUp value={openCount} /> open {openCount === 1 ? "game" : "games"} right now
+                </>
+              ) : (
+                "Live board"
+              )}{" "}
+              · across Bangladesh
             </p>
           </FadeUp>
           <FadeUp delay={0.05}>
-            <h1 className="font-display text-[clamp(5.5rem,14vw,11.5rem)] leading-[0.84] font-extrabold tracking-[-0.01em] uppercase">
-              <span className="block">Need a</span>{" "}
-              <span className="block text-primary">keeper?</span>
+            {/* The words animate in their own masked blocks, which would otherwise
+                read as "Need akeeper?", so the heading states its own name. */}
+            <h1
+              aria-label="Need a keeper?"
+              className="font-display text-[clamp(5.5rem,14vw,11.5rem)] leading-[0.84] font-extrabold tracking-[-0.01em] uppercase"
+            >
+              <RevealWords text="Need a" className="block" />{" "}
+              <RevealWords text="keeper?" className="block" wordClassName="text-primary" delay={0.12} />
             </h1>
           </FadeUp>
           <FadeUp delay={0.1}>

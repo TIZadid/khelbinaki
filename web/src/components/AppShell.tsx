@@ -1,19 +1,13 @@
-import { MotionConfig } from "motion/react";
+import { MotionConfig, motion } from "motion/react";
 import type { ReactNode } from "react";
 import { useKeeperProfile } from "@/hooks/useKeeperProfile";
-import { Link } from "@/lib/router";
+import { Brand } from "@/components/Brand";
+import { Link, usePath } from "@/lib/router";
 import { PitchBackground } from "./PitchBackground";
-
-function Brand({ className }: { className?: string }) {
-  return (
-    <span className={className}>
-      Khelbi <span className="text-primary">Naki?</span>
-    </span>
-  );
-}
 
 export function AppShell({ children }: { children: ReactNode }) {
   const keeper = useKeeperProfile();
+  const path = usePath();
 
   return (
     <MotionConfig reducedMotion="user">
@@ -21,9 +15,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <PitchBackground />
         <header className="border-b">
           <div className="page-x flex h-17 items-center justify-between md:h-22">
-            <Link to="/" className="font-display text-2xl font-extrabold tracking-[0.02em] uppercase md:text-[28px]">
-              <Brand />
-            </Link>
+            <Brand className="font-display text-2xl font-extrabold tracking-[0.02em] uppercase md:text-[28px]" />
             <div className="flex items-center gap-6 md:gap-9">
               <nav aria-label="Main" className="hidden items-center gap-9 text-[15px] font-medium text-muted-foreground sm:flex">
                 <a href="/#games" className="hover:text-foreground">
@@ -45,7 +37,17 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
           </div>
         </header>
-        <main className="flex-1">{children}</main>
+        <motion.main
+          key={path}
+          className="flex-1"
+          // Slide only: fading the whole page would empty it from the accessibility
+          // tree (and hide everything if the animation ever stalled).
+          initial={{ y: 10 }}
+          animate={{ y: 0 }}
+          transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+        >
+          {children}
+        </motion.main>
         <footer className="border-t">
           <div className="page-x flex flex-col gap-2 py-8 text-sm text-subtle md:h-30 md:flex-row md:items-center md:justify-between md:py-0">
             <Brand className="font-display text-[22px] font-extrabold text-foreground uppercase" />

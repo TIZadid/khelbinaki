@@ -1,4 +1,5 @@
 import { ArrowUpRight } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import type { PublicPost } from "@/lib/api";
 import { postPath } from "@/lib/contact";
 import { Link } from "@/lib/router";
@@ -8,8 +9,22 @@ import { cn } from "@/lib/utils";
 
 function TimeBox({ value, label }: { value: string; label: string }) {
   return (
-    <div className="flex-1 rounded-[14px] bg-muted pt-3 pb-2.5 text-center md:pt-4 md:pb-3">
-      <p className="font-display text-[56px] leading-none font-bold md:text-7xl">{value}</p>
+    <div className="flex-1 overflow-hidden rounded-[14px] bg-muted pt-3 pb-2.5 text-center md:pt-4 md:pb-3">
+      <p className="font-display text-[56px] leading-none font-bold md:text-7xl">
+        {/* Each tick slides the old number out and the new one in. */}
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.span
+            key={value}
+            className="inline-block"
+            initial={{ y: "-60%", opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: "60%", opacity: 0 }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+          >
+            {value}
+          </motion.span>
+        </AnimatePresence>
+      </p>
       <p className="mt-1 text-[10px] tracking-[0.2em] text-subtle md:mt-1.5 md:text-[11px]">{label}</p>
     </div>
   );

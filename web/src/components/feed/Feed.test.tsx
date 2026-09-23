@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { AsyncState } from "@/hooks/useAsync";
 import type { PublicPost } from "@/lib/api";
@@ -40,15 +40,16 @@ const renderFeed = (state: AsyncState<PublicPost[]>, retry = vi.fn()) =>
 const rowFor = (time: string) => screen.getByText(time).closest("li") as HTMLElement;
 
 describe("Feed", () => {
-  it("groups by Dhaka day and marks only the soonest open game", () => {
+  it("groups by Dhaka day and marks only the soonest open game", async () => {
     renderFeed(ready(POSTS));
 
     expect(screen.getByRole("heading", { name: /^today/i })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /^tomorrow/i })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /open games/i })).toHaveTextContent("3");
+    // the tally counts up, so wait for it to land
+    await waitFor(() => expect(screen.getByRole("heading", { name: /open games/i })).toHaveTextContent("3"));
     expect(within(rowFor("7:30 PM")).getByText("In 1h 30m")).toBeInTheDocument();
-    expect(rowFor("7:30 PM").firstElementChild).toHaveAttribute("data-soonest", "true");
-    expect(rowFor("10:00 PM").firstElementChild).not.toHaveAttribute("data-soonest");
+    expect(rowFor("7:30 PM").querySelector("[data-soonest]")).not.toBeNull();
+    expect(rowFor("10:00 PM").querySelector("[data-soonest]")).toBeNull();
     expect(rowFor("8:00 PM")).toHaveTextContent("Filled");
     expect(rowFor("6:00 PM")).toHaveTextContent("Ask");
   });

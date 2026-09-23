@@ -3,6 +3,8 @@ import { useKeeperProfile } from "@/hooks/useKeeperProfile";
 import type { AsyncState } from "@/hooks/useAsync";
 import type { PublicPost } from "@/lib/api";
 import { formatDay, groupPosts, isStartingSoon } from "@/lib/time";
+import { CountUp } from "@/components/motion/CountUp";
+import { FadeUp } from "@/components/motion/FadeUp";
 import { AreaChips, MY_AREAS_KEY, areaOptions } from "./AreaChips";
 import { PostRow } from "./PostRow";
 
@@ -38,7 +40,11 @@ export function Feed({
       <div className="border-b pb-6 md:pb-7">
         <h2 id="games-heading" className="font-display text-[52px] leading-[0.9] font-extrabold uppercase md:text-7xl">
           Open games
-          {state.status === "ready" && <sup className="ml-2 text-lg text-primary md:text-2xl">{openCount}</sup>}
+          {state.status === "ready" && (
+            <sup className="ml-2 text-lg text-primary md:text-2xl">
+              <CountUp value={openCount} />
+            </sup>
+          )}
         </h2>
       </div>
 
@@ -88,9 +94,11 @@ export function Feed({
                 )}
               </h3>
               <ul className="border-b">
-                {group.posts.map((post) => (
+                {group.posts.map((post, i) => (
                   <li key={post.id}>
-                    <PostRow post={post} now={now} soonest={post.id === soonest?.id} />
+                    <FadeUp delay={Math.min(i, 6) * 0.05}>
+                      <PostRow post={post} now={now} soonest={post.id === soonest?.id} />
+                    </FadeUp>
                   </li>
                 ))}
               </ul>

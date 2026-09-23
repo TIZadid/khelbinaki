@@ -19,14 +19,14 @@ export function PostRow({ post, now, soonest = false }: { post: PublicPost; now:
     <div
       data-soonest={soonest || undefined}
       className={cn(
-        "relative grid grid-cols-[1fr_auto] gap-x-4 gap-y-3 border-t py-5 [grid-template-areas:'time_price'_'place_place'_'act_act']",
+        "group relative grid grid-cols-[1fr_auto] gap-x-4 gap-y-3 border-t py-5 transition-colors duration-300 hover:bg-foreground/[0.02] [grid-template-areas:'time_price'_'place_place'_'act_act']",
         "md:h-26 md:grid-cols-[180px_minmax(0,1fr)_90px_90px_90px_200px] md:items-center md:gap-6 md:py-0 md:[grid-template-areas:'time_place_dur_keep_price_act']",
         filled && "opacity-40",
       )}
     >
       <p
         className={cn(
-          "font-display text-[44px] leading-none font-bold whitespace-nowrap [grid-area:time] md:text-[52px]",
+          "font-display text-[44px] leading-none font-bold whitespace-nowrap transition-transform duration-300 [grid-area:time] group-hover:md:translate-x-1 md:text-[52px]",
           soonest && "text-primary",
         )}
       >
