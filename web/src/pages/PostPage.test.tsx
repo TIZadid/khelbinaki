@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { PublicPost } from "@/lib/api";
 import { PostPage } from "./PostPage";
@@ -51,7 +51,7 @@ describe("PostPage", () => {
     expect(screen.getByRole("button", { name: /contact host/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /share to a group/i })).toBeInTheDocument();
     expect(screen.queryByText(/01712/)).toBeNull();
-    expect(document.title).toMatch(/^Mirpur · 7:30 PM/);
+    await waitFor(() => expect(document.title).toMatch(/^Mirpur · 7:30 PM/));
   });
 
   it("shows an opponent post as the team versus you, priced per team", async () => {
