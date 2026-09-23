@@ -144,7 +144,7 @@ function ManageView({
         <div className="mt-4 flex flex-col gap-2.5 sm:flex-row">
           <ShareButton
             post={post}
-            className="h-13 flex-1 border-0 bg-[#0a0c09] font-semibold text-foreground hover:text-foreground"
+            className="h-13 shrink-0 border-0 bg-[#0a0c09] font-semibold text-foreground hover:text-foreground sm:flex-1"
           >
             <Share2 aria-hidden="true" className="size-[18px]" /> Share
           </ShareButton>

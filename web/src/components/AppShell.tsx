@@ -4,10 +4,11 @@ import {
   MotionConfig,
   motion,
   useMotionValueEvent,
+  useInView,
   useReducedMotion,
   useScroll,
 } from "motion/react";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { Brand } from "@/components/Brand";
 import { Magnetic } from "@/components/motion/Magnetic";
 import { ScrollProgress } from "@/components/motion/ScrollProgress";
@@ -217,6 +218,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 
 function Footer() {
   const reduce = useReducedMotion();
+  const wordmark = useRef<HTMLDivElement>(null);
+  const filled = useInView(wordmark, { amount: 0.3 });
 
   const columns: { heading: string; links: { to: string; label: string; external?: boolean }[] }[] = [
     {
@@ -248,16 +251,16 @@ function Footer() {
         </div>
         {columns.map((column) => (
           <div key={column.heading}>
-            <h2 className="eyebrow text-subtle">{column.heading}</h2>
+            <h2 className="font-display text-lg font-bold tracking-[0.08em] text-primary uppercase">{column.heading}</h2>
             <ul className="mt-4 flex flex-col gap-2.5 text-[15px]">
               {column.links.map((link) => (
                 <li key={link.label}>
                   {link.external ? (
-                    <a href={link.to} target="_blank" rel="noopener noreferrer" className="link-draw text-muted-foreground hover:text-foreground">
+                    <a href={link.to} target="_blank" rel="noopener noreferrer" className="link-draw text-foreground/85 hover:text-primary">
                       {link.label}
                     </a>
                   ) : (
-                    <Link to={link.to} className="link-draw text-muted-foreground hover:text-foreground">
+                    <Link to={link.to} className="link-draw text-foreground/85 hover:text-primary">
                       {link.label}
                     </Link>
                   )}
@@ -268,23 +271,24 @@ function Footer() {
         ))}
       </div>
 
-      <div aria-hidden="true" className="relative page-x select-none">
+      {/* Watch the wrapper, not the clipped text: a fully clipped element never counts as visible. */}
+      <div ref={wordmark} aria-hidden="true" className="relative page-x pb-3 select-none">
         <p
-          className="text-outline font-display text-[15.5vw] leading-[0.8] font-extrabold whitespace-nowrap uppercase xl:text-[11.5rem]"
+          className="text-outline font-display text-[15.5vw] leading-[0.92] font-extrabold whitespace-nowrap uppercase xl:text-[11.5rem]"
           style={{ "--outline": "var(--line)" } as React.CSSProperties}
         >
           Khelbi Naki?
         </p>
         {/* The giant wordmark fills with lime, left to right, each time it comes into view. */}
-        <motion.p
-          initial={reduce ? false : { clipPath: "inset(0 100% 0 0)" }}
-          whileInView={{ clipPath: "inset(0 0% 0 0)" }}
-          viewport={{ amount: 0.8 }}
-          transition={{ duration: 1.4, ease: [0.76, 0, 0.24, 1] }}
-          className="absolute inset-y-0 left-5 md:left-10 font-display text-[15.5vw] leading-[0.8] font-extrabold whitespace-nowrap text-primary uppercase xl:text-[11.5rem]"
+        <p
+          style={{
+            clipPath: reduce || filled ? "inset(0 0 0 0)" : "inset(0 100% 0 0)",
+            transition: reduce ? undefined : "clip-path 1.4s cubic-bezier(0.76, 0, 0.24, 1)",
+          }}
+          className="absolute inset-y-0 left-5 md:left-10 font-display text-[15.5vw] leading-[0.92] font-extrabold whitespace-nowrap text-primary uppercase xl:text-[11.5rem]"
         >
           Khelbi Naki?
-        </motion.p>
+        </p>
       </div>
 
       <div className="page-x flex flex-col gap-1 border-t py-6 text-[13px] text-subtle sm:flex-row sm:justify-between">

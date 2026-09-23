@@ -121,14 +121,17 @@ function Hero({ state, openOf }: { state: AsyncState<PublicPost[]>; openOf: (typ
               <span className="absolute inline-flex size-full rounded-full bg-primary opacity-75 motion-safe:animate-ping" />
               <span className="relative inline-flex size-2 rounded-full bg-primary" />
             </span>
-            {total > 0 ? (
-              <>
-                <CountUp value={total} /> open {total === 1 ? "post" : "posts"} right now
-              </>
-            ) : (
-              "Live board"
-            )}{" "}
-            · underground futsal · Bangladesh
+            {/* One text run, so the count never wraps apart from its words. */}
+            <span>
+              {total > 0 ? (
+                <>
+                  <CountUp value={total} /> open {total === 1 ? "post" : "posts"} right now
+                </>
+              ) : (
+                "Live board"
+              )}{" "}
+              · underground futsal · Bangladesh
+            </span>
           </p>
         </FadeUp>
 
