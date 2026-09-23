@@ -52,9 +52,10 @@ export function Feed({
         </h2>
         <Link
           to="/new"
+          aria-label="GK Lagbe — post a match and find a keeper"
           className={cn(btn.outline, "h-12 border-primary text-primary hover:bg-primary hover:text-primary-foreground")}
         >
-          <Plus aria-hidden="true" className="size-4" /> Post a match
+          <Plus aria-hidden="true" className="size-4" /> GK Lagbe
         </Link>
       </div>
 

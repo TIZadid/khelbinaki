@@ -68,7 +68,7 @@ describe("Feed", () => {
 
   it("offers posting a match from the feed header", () => {
     renderFeed(ready(POSTS));
-    expect(screen.getByRole("link", { name: /post a match/i })).toHaveAttribute("href", "/new");
+    expect(screen.getByRole("link", { name: /gk lagbe/i })).toHaveAttribute("href", "/new");
   });
 
   it("filters by area chip", () => {

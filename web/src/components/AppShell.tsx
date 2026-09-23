@@ -30,9 +30,10 @@ export function AppShell({ children }: { children: ReactNode }) {
               </Link>
               <Link
                 to="/new"
-                className="inline-flex h-11 items-center gap-2 rounded-full border border-primary px-4 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground md:px-5"
+                aria-label="GK Lagbe — post a match and find a keeper"
+                className="inline-flex h-11 items-center gap-2 rounded-full border border-primary px-4 text-sm font-semibold text-primary transition-[color,background-color,transform] duration-150 hover:bg-primary hover:text-primary-foreground active:scale-[0.98] motion-reduce:active:scale-100 md:px-5"
               >
-                Post a match
+                GK Lagbe
               </Link>
             </div>
           </div>

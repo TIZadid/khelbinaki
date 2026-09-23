@@ -19,16 +19,6 @@ const upcoming = [
     body: "Post that your team needs a match, not just a keeper. Same board, same one-tap contact.",
     when: "Next",
   },
-  {
-    title: "Past games",
-    body: "A history page, so you can repost last week's game in two taps.",
-    when: "Later",
-  },
-  {
-    title: "Bangla",
-    body: "The whole site in Bangla, alerts included.",
-    when: "Later",
-  },
 ];
 
 const steps = [
@@ -87,8 +77,12 @@ export function HomePage() {
               <a href="#games" className={cn(btn.primary, "w-full sm:w-auto")}>
                 See open games <ArrowDownRight aria-hidden="true" className="size-[18px]" />
               </a>
-              <Link to="/new" className={cn(btn.outline, "h-14 px-7 text-[17px]")}>
-                Post a match
+              <Link
+                to="/new"
+                aria-label="GK Lagbe — post a match and find a keeper"
+                className={cn(btn.outline, "h-14 px-7 text-[17px]")}
+              >
+                GK Lagbe
               </Link>
             </div>
           </FadeUp>
@@ -107,7 +101,7 @@ export function HomePage() {
           <h2 id="next-heading" className="eyebrow mb-7 md:mb-10">
             Coming next
           </h2>
-          <ul className="grid gap-px overflow-hidden rounded-2xl border bg-border md:grid-cols-3">
+          <ul className="grid gap-px overflow-hidden rounded-2xl border bg-border md:grid-cols-2">
             {upcoming.map((item) => (
               <li key={item.title} className="bg-background p-5 md:p-6">
                 <span
