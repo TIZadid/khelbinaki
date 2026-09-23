@@ -106,7 +106,7 @@ function Hero({ state, openOf }: { state: AsyncState<PublicPost[]>; openOf: (typ
     <section ref={ref} aria-labelledby="hero-heading" className="relative isolate overflow-hidden">
       <motion.div
         style={reduce ? undefined : { y: ballY, scale: ballScale }}
-        className="absolute inset-x-0 top-0 -z-10 mx-auto size-[96vw] max-h-[680px] max-w-[680px] sm:inset-x-auto sm:-right-[8%] sm:mx-0 sm:size-[62vw] md:top-[8%] md:right-[-4%] md:size-[50vw] xl:right-[2%]"
+        className="absolute inset-x-0 top-0 -z-10 mx-auto size-[96vw] max-h-[680px] max-w-[680px] sm:inset-x-auto sm:-right-[8%] sm:mx-0 sm:size-[62vw] md:top-[8%] md:right-0 md:size-[46vw] xl:right-[2%]"
       >
         <HeroBall className="size-full" />
       </motion.div>
@@ -136,7 +136,7 @@ function Hero({ state, openOf }: { state: AsyncState<PublicPost[]>; openOf: (typ
         <h1
           id="hero-heading"
           aria-label="Khelbi Naki?"
-          className="on-pitch font-display text-[clamp(5.75rem,21vw,13rem)] leading-[0.8] font-extrabold tracking-[-0.015em] uppercase"
+          className="on-pitch font-display text-[clamp(5.75rem,21vw,13rem)] md:text-[14vw] xl:text-[13rem] leading-[0.8] font-extrabold tracking-[-0.015em] uppercase"
         >
           <RevealWords text="Khelbi" className="block" />
           <RevealWords text="Naki?" className="block" wordClassName="text-primary" delay={0.12} />

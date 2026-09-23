@@ -31,7 +31,7 @@ export function HeroBall({ className }: { className?: string }) {
   }, []);
 
   return (
-    <div aria-hidden="true" className={className}>
+    <div aria-hidden="true" className={`relative ${className ?? ""}`}>
       {enabled && (
         <Suspense fallback={null}>
           <Football3D reduce={reduce} onFail={fail} />

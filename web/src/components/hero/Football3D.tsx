@@ -36,6 +36,9 @@ const INK = new Color("#172010");
 const LIME = new Color("#a6d421");
 const CHALK = new Color("#e9eee2");
 
+/** How much bigger the canvas is than the box it's centred on, so floating pieces never hit its edge. */
+const BLEED = 1.5;
+
 /** Every geometry and material made here, so unmount can free them all. */
 type Bin = { geometries: BufferGeometry[]; materials: Material[] };
 
@@ -187,23 +190,58 @@ function makeKit(bin: Bin): KitPiece[] {
     boot.add(lace);
   }
 
-  // Goalkeeper glove: palm, four fingers, thumb and a lime wrist strap.
+  // Goalkeeper glove: a padded chalk palm, fanned fingers and an angled thumb,
+  // on a dark cuff with a lime strap. Smooth shading and no outlines, so it
+  // reads as one soft glove rather than a stack of boxes.
   const glove = new Group();
-  const palm = part(new BoxGeometry(0.44, 0.44, 0.14), ink);
-  palm.position.y = 0.05;
+  const soft = new MeshLambertMaterial({ color: CHALK });
+  bin.materials.push(soft);
+  const rounded = (w: number, h: number, r: number) => {
+    const shape = new Shape();
+    shape.moveTo(-w / 2 + r, -h / 2);
+    shape.lineTo(w / 2 - r, -h / 2);
+    shape.quadraticCurveTo(w / 2, -h / 2, w / 2, -h / 2 + r);
+    shape.lineTo(w / 2, h / 2 - r);
+    shape.quadraticCurveTo(w / 2, h / 2, w / 2 - r, h / 2);
+    shape.lineTo(-w / 2 + r, h / 2);
+    shape.quadraticCurveTo(-w / 2, h / 2, -w / 2, h / 2 - r);
+    shape.lineTo(-w / 2, -h / 2 + r);
+    shape.quadraticCurveTo(-w / 2, -h / 2, -w / 2 + r, -h / 2);
+    return shape;
+  };
+  const pad = (w: number, h: number, depth: number) => {
+    const g = new ExtrudeGeometry(rounded(w, h, 0.09), {
+      depth,
+      bevelEnabled: true,
+      bevelSize: 0.05,
+      bevelThickness: 0.05,
+      bevelSegments: 4,
+      curveSegments: 8,
+    });
+    g.translate(0, 0, -depth / 2);
+    return keep(g);
+  };
+  const palm = new Mesh(pad(0.42, 0.44, 0.08), soft);
+  palm.position.y = 0.06;
   glove.add(palm);
-  [-0.165, -0.055, 0.055, 0.165].forEach((x, i) => {
-    const long = i === 1 || i === 2;
-    const finger = part(new CapsuleGeometry(0.05, long ? 0.26 : 0.2, 3, 8), ink);
-    finger.position.set(x, long ? 0.45 : 0.42, 0);
+  // Little finger to index: lengths and a slight fan, like a real hand.
+  [0.17, 0.24, 0.26, 0.22].forEach((length, i) => {
+    const finger = new Mesh(keep(new CapsuleGeometry(0.058, length, 6, 12)), soft);
+    const x = -0.165 + i * 0.11;
+    finger.position.set(x, 0.3 + length / 2 + 0.04, 0);
+    finger.rotation.z = (1.5 - i) * 0.07;
     glove.add(finger);
   });
-  const thumb = part(new CapsuleGeometry(0.055, 0.16, 3, 8), ink);
-  thumb.position.set(-0.3, 0.1, 0.02);
-  thumb.rotation.z = 0.7;
+  const thumb = new Mesh(keep(new CapsuleGeometry(0.065, 0.18, 6, 12)), soft);
+  thumb.position.set(0.3, 0.1, 0.03);
+  thumb.rotation.z = -0.85;
   glove.add(thumb);
-  const strap = part(new BoxGeometry(0.5, 0.14, 0.18), lime, null);
-  strap.position.y = -0.22;
+  const cuff = new Mesh(pad(0.46, 0.18, 0.1), ink);
+  cuff.position.y = -0.27;
+  glove.add(cuff);
+  const strap = new Mesh(keep(new BoxGeometry(0.56, 0.07, 0.26)), lime);
+  strap.position.set(0, -0.27, 0);
+  strap.rotation.z = 0.12;
   glove.add(strap);
 
   // Referee whistle: chalk barrel and mouthpiece, lime ring.
@@ -280,12 +318,12 @@ function makeKit(bin: Bin): KitPiece[] {
     return { object: wrapper, home: new Vector3(x, y, z), bob, yaw, scale };
   };
   return [
-    piece(boot, -1.85, 0.95, -0.3, 0.8, 0.9, 0.6),
-    piece(glove, 1.9, 1.0, -0.5, 0.85, 1.1, -0.35),
-    piece(whistle, 1.95, -0.65, 0.5, 1.1, 1.3, 0.5),
+    piece(boot, -1.75, 0.9, -0.3, 0.8, 0.9, 0.6),
+    piece(glove, 1.75, 0.95, -0.5, 0.9, 1.1, -0.3),
+    piece(whistle, 1.8, -0.65, 0.5, 1.1, 1.3, 0.5),
     piece(cone, -1.55, -0.6, 0.4, 0.9, 1.0, 0),
-    piece(goal, 0.25, -1.6, -1.3, 1, 0.7, -0.45),
-    piece(watch, -0.35, 1.8, -1.0, 1, 1.2, 0.25),
+    piece(goal, 0.25, -1.55, -1.3, 1, 0.7, -0.45),
+    piece(watch, -0.35, 1.7, -1.0, 1, 1.2, 0.25),
   ];
 }
 
@@ -318,7 +356,9 @@ export default function Football3D({ reduce, onFail }: { reduce: boolean; onFail
     const bin: Bin = { geometries: [], materials: [] };
     const scene = new Scene();
     const camera = new PerspectiveCamera(36, 1, 0.1, 50);
-    camera.position.set(0, 0.25, 7.4);
+    // Far enough back that the kit sits well inside the frame (the canvas bleeds
+    // past its box by the same factor, so nothing is clipped at the edges).
+    camera.position.set(0, 0.2, 7.4 * BLEED);
     camera.lookAt(0, 0, 0);
 
     // Soft, even light and matte surfaces: no hotspots or coloured glare.
@@ -510,5 +550,11 @@ export default function Football3D({ reduce, onFail }: { reduce: boolean; onFail
     };
   }, [reduce, onFail]);
 
-  return <div ref={host} className="size-full" />;
+  return (
+    <div
+      ref={host}
+      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+      style={{ width: `${BLEED * 100}%`, height: `${BLEED * 100}%` }}
+    />
+  );
 }
