@@ -27,6 +27,11 @@ describe("validateKeeperProfile", () => {
     });
     expect(!r.ok && Object.keys(r.errors).sort()).toEqual(["name", "note", "phone", "regions"]);
   });
+
+  it("lets a keeper leave the WhatsApp number out", () => {
+    const r = validateKeeperProfile({ ...input, phone: "  " });
+    expect(r.ok && r.value.phone).toBe("");
+  });
 });
 
 describe("dedupeRegions", () => {

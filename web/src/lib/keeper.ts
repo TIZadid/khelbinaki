@@ -2,6 +2,7 @@ import { isRegion } from "./bd";
 import { normalizeBdPhone } from "./phone";
 
 // A keeper's details, kept only in this browser. Sent to a host only with an "I'm interested" request.
+// phone is "" when the keeper didn't save one.
 export type KeeperProfile = { name: string; phone: string; regions: string[]; note: string };
 export type ProfileErrors = Partial<Record<"name" | "phone" | "regions" | "note", string>>;
 
@@ -32,8 +33,9 @@ export function validateKeeperProfile(input: {
   if (!name) errors.name = "Tell hosts your name";
   else if (name.length > 60) errors.name = "At most 60 characters";
 
-  const phone = normalizeBdPhone(input.phone);
-  if (!phone) errors.phone = "Enter a Bangladeshi mobile number like 01712345678";
+  // Optional: it only pre-fills "send your number" requests, where hosts need it to reach you.
+  const phone = input.phone.trim() ? normalizeBdPhone(input.phone) : "";
+  if (phone === null) errors.phone = "Enter a Bangladeshi mobile number like 01712345678";
 
   const regions = dedupeRegions(input.regions);
   if (regions.length > MAX_REGIONS) errors.regions = `Up to ${MAX_REGIONS} places`;

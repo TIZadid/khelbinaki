@@ -26,7 +26,7 @@ const steps = [
   {
     n: "01",
     title: "Post the gap",
-    body: "Short a keeper, or short a whole team to play? Turf, time, how many a side and the cost. Thirty seconds, no sign-up.",
+    body: "Need a keeper, or a team to play against? Turf, time, how many a side and the cost. Thirty seconds, no sign-up.",
   },
   {
     n: "02",
@@ -144,7 +144,7 @@ function Hero({ state, openOf }: { state: AsyncState<PublicPost[]>; openOf: (typ
 
         <FadeUp delay={0.15}>
           <p className="max-w-[34rem] text-[17px] leading-relaxed text-muted-foreground md:text-xl">
-            The free board for underground futsal. <span className="text-foreground">Short a keeper?</span> Post it on GK
+            The free board for underground futsal. <span className="text-foreground">Need a keeper?</span> Post it on GK
             Lagbe. <span className="text-foreground">Looking for a team to play?</span> Post it on Opponent Lagbe. Settle
             it on WhatsApp. No sign-up.
           </p>
@@ -282,9 +282,9 @@ function Closing() {
       />
       <div className="page-x flex flex-col items-center py-24 text-center md:py-36">
         <p className="eyebrow text-primary">Your move</p>
-        <h2 id="closing-heading" className="on-pitch mt-5 font-display text-[64px] leading-[0.84] font-extrabold uppercase md:text-[128px]">
-          <RevealWords text="Short a keeper?" inView className="block" />
-          <RevealWords text="Short a team?" inView delay={0.1} className="block" wordClassName="text-primary" />
+        <h2 id="closing-heading" className="on-pitch mt-5 font-display text-[clamp(3.25rem,11vw,8rem)] leading-[0.84] font-extrabold uppercase">
+          <RevealWords text="Need a keeper?" inView className="block" />
+          <RevealWords text="Need a match?" inView delay={0.1} className="block" wordClassName="text-primary" />
         </h2>
         <p className="mt-6 max-w-lg text-[17px] leading-relaxed text-muted-foreground">
           Post it free. Players near you see it right away, and you settle the rest on WhatsApp.

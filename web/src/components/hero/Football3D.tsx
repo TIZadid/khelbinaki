@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import {
   AmbientLight,
+  BackSide,
   BufferAttribute,
   CanvasTexture,
   Color,
@@ -11,19 +12,18 @@ import {
   LineSegments,
   Mesh,
   MeshBasicMaterial,
-  MeshStandardMaterial,
+  MeshLambertMaterial,
   PerspectiveCamera,
   PlaneGeometry,
-  PointLight,
   Scene,
-  TorusGeometry,
   Vector3,
   WebGLRenderer,
 } from "three";
 import { ConvexGeometry } from "three/addons/geometries/ConvexGeometry.js";
 
-const LIME = new Color("#a6d421");
-const PANEL = new Color("#e6ecdc");
+// Near-black green pentagons on off-white panels: the classic ball, in the site's colours.
+const PENTAGON = new Color("#141a0c");
+const PANEL = new Color("#e9eee2");
 
 /**
  * A real football shape: the truncated icosahedron (12 pentagons, 20 hexagons).
@@ -61,7 +61,7 @@ function footballGeometry() {
   const geometry = new ConvexGeometry(points.map((p) => p.divideScalar(radius)));
 
   // Pentagons sit exactly under the 12 corners of the icosahedron the ball was cut
-  // from, (0, ±1, ±φ) and its cyclic turns, so a face pointing that way is lime.
+  // from, (0, ±1, ±φ) and its cyclic turns, so a face pointing that way is dark.
   const pentagons: Vector3[] = [];
   for (const [x, y, z] of [
     [0, 1, phi],
@@ -81,7 +81,7 @@ function footballGeometry() {
     b.fromBufferAttribute(position, t * 3 + 1);
     c.fromBufferAttribute(position, t * 3 + 2);
     const normal = new Vector3().subVectors(c, b).cross(new Vector3().subVectors(a, b)).normalize();
-    const color = pentagons.some((p) => Math.abs(p.dot(normal)) > 0.999) ? LIME : PANEL;
+    const color = pentagons.some((p) => Math.abs(p.dot(normal)) > 0.999) ? PENTAGON : PANEL;
     for (let k = 0; k < 3; k++) color.toArray(colors, (t * 3 + k) * 3);
   }
   geometry.setAttribute("color", new BufferAttribute(colors, 3));
@@ -133,36 +133,29 @@ export default function Football3D({ reduce, onFail }: { reduce: boolean; onFail
     camera.position.set(0, 0.35, 5.4);
     camera.lookAt(0, -0.1, 0);
 
-    scene.add(new AmbientLight(0xffffff, 0.55));
-    const key = new DirectionalLight(0xffffff, 2.4);
+    // Soft, even light and a matte ball: no hotspots or coloured glare.
+    scene.add(new AmbientLight(0xffffff, 1.1));
+    const key = new DirectionalLight(0xffffff, 1.6);
     key.position.set(-3, 4, 5);
     scene.add(key);
-    const rim = new PointLight(LIME, 30, 12);
-    rim.position.set(2.4, 1.2, -2.2);
-    scene.add(rim);
 
     const ballGeometry = footballGeometry();
-    const ballMaterial = new MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.42, metalness: 0.08 });
+    const ballMaterial = new MeshLambertMaterial({ vertexColors: true, flatShading: true });
     const ball = new Mesh(ballGeometry, ballMaterial);
     const seamGeometry = new EdgesGeometry(ballGeometry, 5);
-    const seamMaterial = new LineBasicMaterial({ color: 0x0a0c09, transparent: true, opacity: 0.55 });
+    const seamMaterial = new LineBasicMaterial({ color: 0x0a0c09, transparent: true, opacity: 0.35 });
     ball.add(new LineSegments(seamGeometry, seamMaterial));
+    // A hairline silhouette so dark pentagons on the edge don't melt into the page.
+    const outlineMaterial = new MeshBasicMaterial({ color: 0x3a4233, side: BackSide });
+    const outline = new Mesh(ballGeometry, outlineMaterial);
+    outline.scale.setScalar(1.018);
+    ball.add(outline);
 
     const spinner = new Group();
     spinner.add(ball);
     const lift = new Group();
     lift.add(spinner);
     scene.add(lift);
-
-    // Two thin orbit rings, like a ball mid-trick.
-    const ringGeometry = new TorusGeometry(1.45, 0.004, 6, 160);
-    const ringMaterial = new MeshBasicMaterial({ color: LIME, transparent: true, opacity: 0.35 });
-    const ringA = new Mesh(ringGeometry, ringMaterial);
-    ringA.rotation.set(1.2, 0.3, 0);
-    const ringB = new Mesh(ringGeometry, ringMaterial);
-    ringB.rotation.set(1.9, -0.6, 0.4);
-    ringB.scale.setScalar(1.12);
-    lift.add(ringA, ringB);
 
     const shadowMap = shadowTexture();
     const shadowMaterial = new MeshBasicMaterial({ map: shadowMap, transparent: true, depthWrite: false });
@@ -258,8 +251,6 @@ export default function Football3D({ reduce, onFail }: { reduce: boolean; onFail
       spin.y += (0.35 - spin.y) * 0.02;
       spinner.rotation.x += spin.x * dt + lean.y * 0.01;
       spinner.rotation.y += spin.y * dt;
-      ringA.rotation.z += dt * 0.25;
-      ringB.rotation.z -= dt * 0.18;
 
       renderer.render(scene, camera);
     };
@@ -293,8 +284,7 @@ export default function Football3D({ reduce, onFail }: { reduce: boolean; onFail
       ballMaterial.dispose();
       seamGeometry.dispose();
       seamMaterial.dispose();
-      ringGeometry.dispose();
-      ringMaterial.dispose();
+      outlineMaterial.dispose();
       shadowMap.dispose();
       shadowMaterial.dispose();
       renderer.dispose();

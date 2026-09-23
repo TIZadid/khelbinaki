@@ -170,7 +170,7 @@ export function NewPostPage({ type = "gk_needed" }: { type?: ListingType }) {
           <p className="mt-4 text-[17px] leading-relaxed text-muted-foreground">
             {opponent
               ? "Got the turf, need a team to play? Post your match and teams near you will see it on Opponent Lagbe."
-              : "Short a goalkeeper? Post your match and keepers near you will see it on GK Lagbe."}
+              : "No goalkeeper for your match? Post it and keepers near you will see it on GK Lagbe."}
           </p>
 
           <form noValidate onSubmit={onSubmit} className="mt-10 flex flex-col gap-8">

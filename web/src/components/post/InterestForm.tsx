@@ -28,7 +28,7 @@ export function InterestForm({ post }: { post: PublicPost }) {
   const profile = useKeeperProfile();
   const keeper = opponent ? null : profile;
   const [name, setName] = useState(keeper?.name ?? "");
-  const [phone, setPhone] = useState(keeper ? formatPhone(keeper.phone) : "");
+  const [phone, setPhone] = useState(keeper?.phone ? formatPhone(keeper.phone) : "");
   const [note, setNote] = useState(keeper?.note ?? "");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [token, setToken] = useState<string | null>(null);
@@ -131,9 +131,13 @@ export function InterestForm({ post }: { post: PublicPost }) {
             inputMode="tel"
             autoComplete="tel"
             placeholder="01712-345678"
+            aria-describedby="i-phone-hint"
             className={field}
             aria-invalid={errors.phone ? true : undefined}
           />
+          <p id="i-phone-hint" className="mt-1.5 text-[13px] text-subtle">
+            {opponent ? "The team" : post.host_name} keeps their number private, so this is how they'll reach you.
+          </p>
           {errors.phone && <p className="mt-1.5 text-sm text-destructive">{errors.phone}</p>}
         </div>
         <div>

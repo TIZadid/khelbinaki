@@ -31,7 +31,7 @@ function FieldError({ id, message }: { id: string; message?: string }) {
 export function KeeperPage() {
   const saved = useKeeperProfile();
   const [name, setName] = useState(saved?.name ?? "");
-  const [phone, setPhone] = useState(saved ? formatPhone(saved.phone) : "");
+  const [phone, setPhone] = useState(saved?.phone ? formatPhone(saved.phone) : "");
   const [regions, setRegions] = useState<string[]>(saved?.regions ?? []);
   const [regionDraft, setRegionDraft] = useState("");
   const [note, setNote] = useState(saved?.note ?? "");
@@ -98,8 +98,12 @@ export function KeeperPage() {
 
           <div>
             <label htmlFor="keeper-phone" className={labelStyle}>
-              WhatsApp number
+              WhatsApp number <span className="font-normal text-subtle">(optional)</span>
             </label>
+            <p id="keeper-phone-hint" className="mt-1 text-sm text-muted-foreground">
+              Some hosts keep their number private and ask keepers to send theirs instead. Save it here and we'll fill it
+              in for those games. It's never shown on the site.
+            </p>
             <input
               id="keeper-phone"
               className={cn(field, "mt-2")}
@@ -109,7 +113,7 @@ export function KeeperPage() {
               autoComplete="tel"
               placeholder="01712-345678"
               aria-invalid={errors.phone ? true : undefined}
-              aria-describedby={errors.phone ? "keeper-phone-error" : undefined}
+              aria-describedby={errors.phone ? "keeper-phone-hint keeper-phone-error" : "keeper-phone-hint"}
             />
             <FieldError id="keeper-phone-error" message={errors.phone} />
           </div>
