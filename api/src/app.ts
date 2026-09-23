@@ -1,5 +1,7 @@
 import { type Context, Hono } from "hono";
 import { cors } from "hono/cors";
+import { notifyNewPost } from "./alerts/notify";
+import { deleteAlert, normalizeAreas, saveAlert, saveTelegramCode, takeTelegramCode } from "./alerts/repo";
 import { isAllowedOrigin } from "./lib/origins";
 import { randomId, randomToken } from "./lib/random";
 import type { VerifyHuman } from "./lib/turnstile";
@@ -80,6 +82,14 @@ export function createApp(deps: Deps) {
 
     const editToken = randomToken();
     const post = await insertPost(c.env.DB, randomId(), editToken, result.value);
+    // Keepers watching this area hear about it after the response goes out.
+    // (Tests call the app without an ExecutionContext, so fall back to awaiting.)
+    const fanOut = notifyNewPost(c.env, post).catch(() => undefined);
+    try {
+      c.executionCtx.waitUntil(fanOut);
+    } catch {
+      await fanOut;
+    }
     return c.json({ post, edit_token: editToken }, 201);
   });
 
@@ -128,6 +138,99 @@ export function createApp(deps: Deps) {
     if (result === "not_found") return c.json({ error: "not_found" }, 404);
     if (result === "forbidden") return c.json({ error: "forbidden" }, 403);
     return c.json({ interests: result });
+  });
+
+  // Keepers ask to hear about new games near them.
+  app.post("/alerts", async (c) => {
+    const body = await readObject(c);
+    if (!body) return c.json({ error: "invalid_json" }, 400);
+    if (!(await isHuman(c, body))) return c.json({ error: "captcha_failed" }, 403);
+
+    const areas = normalizeAreas(Array.isArray(body.areas) ? body.areas.filter((a): a is string => typeof a === "string") : []);
+    const subscription = body.subscription as { endpoint?: unknown } | undefined;
+    if (typeof subscription?.endpoint !== "string" || !/^https:\/\//.test(subscription.endpoint)) {
+      return c.json({ error: "validation", fields: { subscription: "A push subscription is required" } }, 400);
+    }
+
+    await saveAlert(c.env.DB, randomId(12), "push", subscription.endpoint, areas);
+    return c.json({ ok: true, areas }, 201);
+  });
+
+  app.post("/alerts/off", async (c) => {
+    const body = (await readObject(c)) ?? {};
+    const endpoint = body.endpoint;
+    if (typeof endpoint !== "string") return c.json({ error: "validation" }, 400);
+    return c.json({ ok: await deleteAlert(c.env.DB, "push", endpoint) });
+  });
+
+  // Telegram: hand out a one-use code, then the bot links the chat to those areas.
+  app.post("/alerts/telegram", async (c) => {
+    const body = await readObject(c);
+    if (!body) return c.json({ error: "invalid_json" }, 400);
+    if (!(await isHuman(c, body))) return c.json({ error: "captcha_failed" }, 403);
+    if (!c.env.TELEGRAM_BOT_USERNAME) return c.json({ error: "telegram_unavailable" }, 503);
+
+    const areas = normalizeAreas(Array.isArray(body.areas) ? body.areas.filter((a): a is string => typeof a === "string") : []);
+    const code = randomId(10);
+    await saveTelegramCode(c.env.DB, code, areas);
+    return c.json({ code, link: `https://t.me/${c.env.TELEGRAM_BOT_USERNAME}?start=${code}` }, 201);
+  });
+
+  // One-off: points Telegram at the webhook using the bot token already stored
+  // as a secret, so the token never has to be handled anywhere else.
+  app.post("/telegram/setup/:secret", async (c) => {
+    if (!c.env.TELEGRAM_WEBHOOK_SECRET || c.req.param("secret") !== c.env.TELEGRAM_WEBHOOK_SECRET) {
+      return c.json({ error: "forbidden" }, 403);
+    }
+    if (!c.env.TELEGRAM_BOT_TOKEN) return c.json({ error: "no_bot_token" }, 503);
+
+    const hookUrl = `${new URL(c.req.url).origin}/telegram/${c.env.TELEGRAM_WEBHOOK_SECRET}`;
+    const response = await fetch(`https://api.telegram.org/bot${c.env.TELEGRAM_BOT_TOKEN}/setWebhook`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: hookUrl, allowed_updates: ["message"] }),
+    });
+    const body = (await response.json().catch(() => ({}))) as { ok?: boolean; description?: string };
+    return c.json({ ok: body.ok === true, description: body.description ?? null }, response.ok ? 200 : 502);
+  });
+
+  // Telegram calls this. The secret path segment is what proves it's really them.
+  app.post("/telegram/:secret", async (c) => {
+    if (!c.env.TELEGRAM_WEBHOOK_SECRET || c.req.param("secret") !== c.env.TELEGRAM_WEBHOOK_SECRET) {
+      return c.json({ error: "forbidden" }, 403);
+    }
+    const update = (await readObject(c)) ?? {};
+    const message = update.message as { chat?: { id?: number }; text?: string } | undefined;
+    const chatId = message?.chat?.id;
+    const text = message?.text ?? "";
+    if (typeof chatId !== "number") return c.json({ ok: true });
+
+    const start = /^\/start\s+([0-9A-Za-z]{1,32})/.exec(text);
+    let reply = "Send the link from the Khelbi Naki site to start getting alerts.";
+    if (start) {
+      const areas = await takeTelegramCode(c.env.DB, start[1]);
+      if (areas === null) {
+        reply = "That link has already been used. Get a fresh one from the site.";
+      } else {
+        await saveAlert(c.env.DB, randomId(12), "telegram", String(chatId), areas);
+        reply = areas
+          ? `Done. I'll message you when a game is posted in: ${areas.split(",").join(", ")}.`
+          : "Done. I'll message you when any new game is posted.";
+      }
+    }
+    if (/^\/stop/.test(text)) {
+      await deleteAlert(c.env.DB, "telegram", String(chatId));
+      reply = "Stopped. You won't get any more alerts.";
+    }
+
+    if (c.env.TELEGRAM_BOT_TOKEN) {
+      await fetch(`https://api.telegram.org/bot${c.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: chatId, text: reply }),
+      }).catch(() => undefined);
+    }
+    return c.json({ ok: true });
   });
 
   return app;

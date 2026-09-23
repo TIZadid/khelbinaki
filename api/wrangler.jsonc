@@ -5,7 +5,11 @@
   "compatibility_date": "2026-09-01",
   "observability": { "enabled": true },
   "vars": {
-    "ALLOWED_ORIGINS": "https://khelbinaki.zlabz.workers.dev,https://*-khelbinaki.zlabz.workers.dev,http://localhost:5173"
+    "ALLOWED_ORIGINS": "https://khelbinaki.zlabz.workers.dev,https://*-khelbinaki.zlabz.workers.dev,http://localhost:5173",
+    "SITE_URL": "https://khelbinaki.zlabz.workers.dev",
+    "VAPID_PUBLIC_KEY": "BBPgyWJg3ko3TwZp6gG9jAcs2bKvtqSLeO37ffIWGvXBURdLYX21xcuBLzdfXz59LXgUQ_vMrvJTAg561o3ArxQ",
+    "VAPID_SUBJECT": "https://khelbinaki.zlabz.workers.dev",
+    "TELEGRAM_BOT_USERNAME": ""
   },
   "d1_databases": [
     {

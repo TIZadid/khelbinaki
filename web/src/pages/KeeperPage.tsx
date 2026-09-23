@@ -1,5 +1,6 @@
 import { X } from "lucide-react";
 import { type FormEvent, type KeyboardEvent, useState } from "react";
+import { AlertSettings } from "@/components/keeper/AlertSettings";
 import { useKeeperProfile } from "@/hooks/useKeeperProfile";
 import { formatPhone } from "@/lib/contact";
 import {
@@ -212,6 +213,8 @@ export function KeeperPage() {
           )}
         </form>
       </div>
+
+      {saved && <AlertSettings areas={saved.areas} />}
     </div>
   );
 }

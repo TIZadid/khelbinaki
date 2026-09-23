@@ -80,6 +80,13 @@ note, created_at; UNIQUE (post_id, phone). Only the post's host (edit token) can
    (`interests`), which only the host sees via their edit token, then the host
    WhatsApps them. Never build chat, inboxes, or paid relays/SMS.
 
+6. **Alerts** (`alerts` table, migration 0003): keepers opt in to browser push
+   (VAPID, bodyless — the service worker fetches the newest games) and/or Telegram.
+   Areas are a lowercase comma-separated list; empty means anywhere. New posts fan
+   out in `waitUntil`; a failed alert must never fail the post. Secrets in the API
+   Worker: `VAPID_PRIVATE_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`
+   (the local copy lives in gitignored `api/.dev.vars`).
+
 5. **Keeper profile** lives only in the keeper's browser (localStorage key
    `khelbinaki.keeper.v1`): name, WhatsApp, areas, note. It pre-fills "I'm interested"
    and makes the feed open on the keeper's areas. Never send it anywhere except with
@@ -143,6 +150,11 @@ npx wrangler secret put <NAME>
 | `POST /posts/:id/contact` | `{turnstile_token}` | `200 {phone}` (direct mode only) | `404`, `409 requests_only`, `410 closed`, `403 captcha_failed` |
 | `POST /posts/:id/interests` | `{name, phone, note?, turnstile_token}` | `201/200 {ok:true}` (requests mode) | `404`, `409 direct_only`, `410 closed`, `400`, `403`, `429 full` (30/post) |
 | `GET /posts/:id/interests` | `Authorization: Bearer <edit_token>` | `200 {interests}` | `403 forbidden`, `404` |
+| `POST /alerts` | `{subscription, areas[], turnstile_token}` | `201 {ok, areas}` — browser push | `400`, `403 captcha_failed` |
+| `POST /alerts/off` | `{endpoint}` | `200 {ok}` | `400` |
+| `POST /alerts/telegram` | `{areas[], turnstile_token}` | `201 {code, link}` | `403`, `503 telegram_unavailable` |
+| `POST /telegram/:secret` | Telegram update | `200 {ok}` — `/start <code>` links a chat, `/stop` unlinks | `403` |
+| `POST /telegram/setup/:secret` | – | `200 {ok}` — points Telegram at the webhook | `403`, `503 no_bot_token` |
 
 - Phones are stored as `8801XXXXXXXXX` (wa.me format) and are **never** returned in public responses; `start_datetime` must include a timezone and is stored as UTC ISO.
 - `edit_token` is only ever returned once, from `POST /posts`.
