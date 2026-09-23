@@ -5,6 +5,8 @@ import { formatPhone, postUrl, telUrl, whatsappContactUrl, whatsappShareUrl } fr
 const post: PublicPost = {
   id: "aB3dE9xK2q",
   listing_type: "gk_needed",
+  team_name: null,
+  players_per_side: 5,
   host_name: "Rafi",
   contact_mode: "direct",
   area: "Mirpur",
@@ -41,14 +43,22 @@ describe("contact links", () => {
     const url = whatsappShareUrl(post, ORIGIN);
     expect(url.startsWith("https://wa.me/?text=")).toBe(true);
     expect(textOf(url)).toBe(
-      "Need a keeper! Kings Arena, Mirpur, Dhaka · Thu 1 Oct at 7:30 PM · ৳150/head\nhttps://khelbinaki.zlabz.workers.dev/p/aB3dE9xK2q",
+      "Need a keeper! Kings Arena, Mirpur, Dhaka · Thu 1 Oct at 7:30 PM · 5-a-side · ৳150/head\nhttps://khelbinaki.zlabz.workers.dev/p/aB3dE9xK2q",
+    );
+  });
+
+  it("asks an opponent team for the match, not for a keeper", () => {
+    const match = { ...post, listing_type: "opponent_needed" as const, team_name: "FC Mirpur", players_per_side: 6 };
+    expect(textOf(whatsappContactUrl(match, ORIGIN, "8801712345678"))).toBe(
+      "Hi Rafi, I saw FC Mirpur's Khelbi Naki post for a 6-a-side at Kings Arena, Mirpur, Dhaka on Thu 1 Oct at 7:30 PM. " +
+        "We'd like to play you. Is the match still open?\nhttps://khelbinaki.zlabz.workers.dev/p/aB3dE9xK2q",
     );
   });
 
   it("leaves out missing turf and cost", () => {
     const bare = { ...post, turf_name: null, cost_per_head: null };
     expect(textOf(whatsappShareUrl(bare, ORIGIN))).toBe(
-      "Need a keeper! Mirpur, Dhaka · Thu 1 Oct at 7:30 PM\nhttps://khelbinaki.zlabz.workers.dev/p/aB3dE9xK2q",
+      "Need a keeper! Mirpur, Dhaka · Thu 1 Oct at 7:30 PM · 5-a-side\nhttps://khelbinaki.zlabz.workers.dev/p/aB3dE9xK2q",
     );
   });
 

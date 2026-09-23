@@ -18,7 +18,7 @@ export function ChaPage() {
       </h1>
       <p className="mt-4 text-[17px] leading-relaxed text-muted-foreground">
         Khelbi Naki is free and has no ads. It costs nothing to run, so there's nothing to pay for — but if it found
-        you a keeper, a cup of tea is always welcome.
+        you a keeper or a team to play, a cup of tea is always welcome.
       </p>
 
       <section aria-labelledby="bkash-heading" className="mt-8 rounded-3xl border border-[#242a1f] bg-card p-5 md:p-7">
@@ -48,8 +48,8 @@ export function ChaPage() {
         )}
       </section>
 
-      <Link to="/" className="mt-8 inline-block font-semibold text-primary underline-offset-4 hover:underline">
-        Back to open games
+      <Link to="/" className="link-draw mt-8 inline-block font-semibold text-primary">
+        Back to GK Lagbe and Opponent Lagbe
       </Link>
     </div>
   );

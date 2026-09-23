@@ -4,6 +4,7 @@ import { useAsync } from "@/hooks/useAsync";
 import { ShareButton } from "@/components/ShareButton";
 import { fetchInterests, fetchPost, type Interest, type PublicPost, setPostStatus } from "@/lib/api";
 import { formatPhone, postUrl } from "@/lib/contact";
+import { formatLabel, isOpponent, listingOf } from "@/lib/listing";
 import { tokenForPost } from "@/lib/myPosts";
 import { Link } from "@/lib/router";
 import { formatDay, formatTime } from "@/lib/time";
@@ -29,11 +30,11 @@ export function ManagePage({ id }: { id: string }) {
       <div className="mx-auto w-full max-w-xl px-5 py-16 md:px-10">
         <h1 className="font-display text-5xl font-extrabold uppercase">Manage link needed</h1>
         <p className="mt-4 text-muted-foreground">
-          This page opens with the private link you got when you posted. Find it in the WhatsApp message you sent
-          yourself, or post again.
+          This page opens with the private link you got when you posted. Open it on the phone you posted from, find it
+          wherever you saved it, or post again.
         </p>
-        <Link to="/" className="mt-6 inline-block font-semibold text-primary underline-offset-4 hover:underline">
-          Back to open games
+        <Link to="/" className="link-draw mt-6 inline-block font-semibold text-primary">
+          Back to the boards
         </Link>
       </div>
     );
@@ -76,6 +77,8 @@ function ManageView({
   interestsFailed: boolean;
 }) {
   const [post, setPost] = useState(initial);
+  const board = listingOf(post);
+  const opponent = isOpponent(post);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState<"link" | "manage" | null>(null);
   const start = new Date(post.start_datetime);
@@ -110,17 +113,23 @@ function ManageView({
   return (
     <>
       <div className="flex items-center justify-between gap-4">
-        <p className="eyebrow">Your post · {formatDay(start)}</p>
+        <p className="eyebrow">Your post on {board.board} · {formatDay(start)}</p>
         <span className="flex items-center gap-2 text-xs font-semibold tracking-[0.16em] uppercase">
           <span aria-hidden="true" className={cn("size-[7px] rounded-full", filled ? "bg-muted-foreground" : "bg-primary")} />
-          {filled ? "Filled" : "Open"}
+          {filled ? board.filledBadge : "Open"}
         </span>
       </div>
       <h1 className="mt-3 font-display text-[56px] leading-[0.9] font-extrabold uppercase">
-        {post.area} · {formatTime(start)}
+        {opponent ? (post.team_name ?? post.area) : post.area} · {formatTime(start)}
       </h1>
       <p className="mt-2 text-muted-foreground">
-        {[post.turf_name, post.cost_per_head != null ? `৳${post.cost_per_head}` : "Cost: ask", `${post.slots_needed} keeper${post.slots_needed > 1 ? "s" : ""}`]
+        {[
+          opponent ? post.area : null,
+          post.turf_name,
+          formatLabel(post.players_per_side),
+          post.cost_per_head != null ? `৳${post.cost_per_head} ${board.costUnit}` : "Cost: ask",
+          opponent ? null : `${post.slots_needed} keeper${post.slots_needed > 1 ? "s" : ""}`,
+        ]
           .filter(Boolean)
           .join(" · ")}
       </p>
@@ -129,7 +138,7 @@ function ManageView({
         <h2 id="share-heading" className="font-display text-[34px] leading-none font-extrabold uppercase">
           Share your post
         </h2>
-        <p className="mt-2 text-[15px] leading-snug">Most keepers come from groups. Post it where your players are.</p>
+        <p className="mt-2 text-[15px] leading-snug">{board.shareLead}</p>
         <div className="mt-4 flex flex-col gap-2.5 sm:flex-row">
           <ShareButton
             post={post}
@@ -151,21 +160,22 @@ function ManageView({
         <section aria-labelledby="interested-heading" className="mt-10">
           <div className="flex items-baseline justify-between gap-4 border-b pb-3.5">
             <h2 id="interested-heading" className="font-display text-[34px] leading-none font-extrabold uppercase">
-              Interested
+              {board.interestedHeading}
               <sup className="ml-1.5 text-sm text-primary">{interests.length}</sup>
             </h2>
             <span className="text-[13px] text-subtle">Only you see these</span>
           </div>
           {interestsFailed && (
             <p role="alert" className="mt-4 text-muted-foreground">
-              Couldn't load the keepers who are interested.
+              Couldn't load who's interested. Refresh to try again.
             </p>
           )}
           {!interestsFailed && interests.length === 0 && (
-            <p className="mt-4 text-muted-foreground">No requests yet. Share your post to get some.</p>
+            <p className="mt-4 text-muted-foreground">{board.noRequests}</p>
           )}
           <ul>
             {interests.map((keeper) => (
+              // For opponent posts `name` is the other team's name.
               <li key={keeper.phone} className="flex items-center justify-between gap-3 border-b py-4.5">
                 <div className="min-w-0">
                   <p className="font-semibold">{keeper.name}</p>
@@ -174,7 +184,9 @@ function ManageView({
                 </div>
                 <a
                   href={`https://wa.me/${keeper.phone}?text=${encodeURIComponent(
-                    `Hi ${keeper.name}, about the game at ${post.turf_name ?? post.area} on ${formatDay(start)} at ${formatTime(start)} — are you still free to keep goal?`,
+                    opponent
+                      ? `Hi ${keeper.name}, ${post.team_name ?? post.host_name} here, about the ${formatLabel(post.players_per_side) ?? "match"} at ${post.turf_name ?? post.area} on ${formatDay(start)} at ${formatTime(start)} — are you still on?`
+                      : `Hi ${keeper.name}, about the game at ${post.turf_name ?? post.area} on ${formatDay(start)} at ${formatTime(start)} — are you still free to keep goal?`,
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -192,13 +204,15 @@ function ManageView({
         </section>
       ) : (
         <p className="mt-10 text-[15px] leading-relaxed text-muted-foreground">
-          Keepers tap Contact host on your post and message you on WhatsApp.
+          {opponent
+            ? "Teams tap Contact team on your post and message you on WhatsApp."
+            : "Keepers tap Contact host on your post and message you on WhatsApp."}
         </p>
       )}
 
       <section aria-labelledby="done-heading" className="mt-10 flex flex-col gap-3">
         <h2 id="done-heading" className="eyebrow text-subtle">
-          {filled ? "Changed your mind?" : "Found your keeper?"}
+          {filled ? "Changed your mind?" : board.foundIt}
         </h2>
         <button
           type="button"
@@ -206,12 +220,12 @@ function ManageView({
           disabled={busy}
           className="h-13 rounded-full border border-foreground font-semibold transition-colors hover:border-primary hover:text-primary disabled:opacity-60"
         >
-          {filled ? "Reopen this post" : "Mark as filled"}
+          {filled ? "Reopen this post" : opponent ? "We have an opponent" : "Mark as filled"}
         </button>
         <p className="text-[13px] leading-relaxed text-subtle">
           {filled
-            ? "Reopening puts it back in the feed and takes requests again."
-            : "Your post stays up with a Filled badge and stops taking requests."}
+            ? `Reopening puts it back on ${board.board} and takes requests again.`
+            : `Your post stays up with a ${board.filledBadge} badge and stops taking requests.`}
         </p>
       </section>
 

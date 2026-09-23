@@ -4,6 +4,7 @@ import { Turnstile } from "@/components/Turnstile";
 import { useKeeperProfile } from "@/hooks/useKeeperProfile";
 import { type PublicPost, sendInterest } from "@/lib/api";
 import { formatPhone } from "@/lib/contact";
+import { isOpponent, listingOf } from "@/lib/listing";
 import { normalizeBdPhone } from "@/lib/phone";
 import { Link } from "@/lib/router";
 import { btn } from "@/lib/ui";
@@ -12,16 +13,20 @@ import { cn } from "@/lib/utils";
 const field =
   "mt-2 w-full rounded-xl border border-line bg-background px-4 py-3 text-base outline-none focus-visible:border-primary aria-[invalid=true]:border-destructive";
 
-const MESSAGES: Record<string, string> = {
-  closed: "This game is no longer taking keepers.",
-  not_found: "This game was removed.",
-  full: "This game already has plenty of keepers interested.",
+const messages = (opponent: boolean): Record<string, string> => ({
+  closed: opponent ? "This team has already found an opponent." : "This game is no longer taking keepers.",
+  not_found: "This post was removed.",
+  full: opponent ? "This team already has plenty of offers." : "This game already has plenty of keepers interested.",
   captcha_failed: "The spam check didn't pass. Try again.",
-};
+});
 
-// Requests posts: the keeper leaves their details; only the host sees them.
+// Requests posts: the keeper (or a team) leaves their details; only the host sees them.
 export function InterestForm({ post }: { post: PublicPost }) {
-  const keeper = useKeeperProfile();
+  const opponent = isOpponent(post);
+  const copy = listingOf(post);
+  // The keeper profile is a keeper's details, so it only fills in keeper games.
+  const profile = useKeeperProfile();
+  const keeper = opponent ? null : profile;
   const [name, setName] = useState(keeper?.name ?? "");
   const [phone, setPhone] = useState(keeper ? formatPhone(keeper.phone) : "");
   const [note, setNote] = useState(keeper?.note ?? "");
@@ -37,10 +42,12 @@ export function InterestForm({ post }: { post: PublicPost }) {
           Sent to {post.host_name}
         </h2>
         <p role="status" className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
-          They'll WhatsApp you if you're picked. Nothing else to do — your number stays with them.
+          {opponent
+            ? "They'll WhatsApp you to fix the match. Nothing else to do — your number stays with them."
+            : "They'll WhatsApp you if you're picked. Nothing else to do — your number stays with them."}
         </p>
-        <Link to="/" className="mt-5 inline-block font-semibold text-primary underline-offset-4 hover:underline">
-          Back to open games
+        <Link to={`/#${copy.anchor}`} className="link-draw mt-5 inline-block font-semibold text-primary">
+          Back to {copy.board}
         </Link>
       </section>
     );
@@ -49,7 +56,7 @@ export function InterestForm({ post }: { post: PublicPost }) {
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const nextErrors: Record<string, string> = {};
-    if (!name.trim()) nextErrors.name = "Tell the host your name";
+    if (!name.trim()) nextErrors.name = opponent ? "Tell them your team's name" : "Tell the host your name";
     const normalized = normalizeBdPhone(phone);
     if (!normalized) nextErrors.phone = "Enter a Bangladeshi mobile number like 01712345678";
     if (note.trim().length > 200) nextErrors.note = "At most 200 characters";
@@ -71,16 +78,18 @@ export function InterestForm({ post }: { post: PublicPost }) {
     setStatus("error");
     setToken(null);
     if (result.failure.fields) setErrors(result.failure.fields);
-    setMessage(MESSAGES[result.failure.error] ?? "Couldn't send that. Try again.");
+    setMessage(messages(opponent)[result.failure.error] ?? "Couldn't send that. Try again.");
   };
 
   return (
     <section aria-labelledby="interest-heading" className="mt-9 rounded-3xl border border-[#242a1f] bg-card p-5 md:p-7">
       <h2 id="interest-heading" className="font-display text-[34px] leading-none font-extrabold uppercase">
-        I'm interested
+        {copy.requestAction}
       </h2>
       <p className="mt-2.5 text-[15px] leading-relaxed text-muted-foreground">
-        {post.host_name} keeps their number private. Send yours and they'll WhatsApp you if you're picked.
+        {opponent
+          ? `${post.team_name ?? post.host_name} keeps their number private. Send your team's details and they'll WhatsApp you to fix the match.`
+          : `${post.host_name} keeps their number private. Send yours and they'll WhatsApp you if you're picked.`}
       </p>
 
       {keeper && (
@@ -98,13 +107,14 @@ export function InterestForm({ post }: { post: PublicPost }) {
       <form noValidate onSubmit={onSubmit} className="mt-5 flex flex-col gap-4">
         <div>
           <label htmlFor="i-name" className="text-sm font-semibold">
-            Your name
+            {opponent ? "Your team" : "Your name"}
           </label>
           <input
             id="i-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            autoComplete="name"
+            autoComplete={opponent ? "off" : "name"}
+            placeholder={opponent ? "e.g. Dhanmondi Dynamos" : undefined}
             className={field}
             aria-invalid={errors.name ? true : undefined}
           />
@@ -134,7 +144,7 @@ export function InterestForm({ post }: { post: PublicPost }) {
             id="i-note"
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="e.g. 5 years in goal, free most evenings"
+            placeholder={opponent ? "e.g. Captain Sakib. Mid-level side, can do 8 PM." : "e.g. 5 years in goal, free most evenings"}
             className={cn(field, "min-h-22 resize-none")}
             aria-invalid={errors.note ? true : undefined}
           />

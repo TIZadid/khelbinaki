@@ -1,4 +1,5 @@
 import { type AnchorHTMLAttributes, useSyncExternalStore } from "react";
+import { scrollToTarget } from "./smoothScroll";
 
 // Minimal history-API router: the site Worker serves index.html for every path.
 function subscribe(onChange: () => void) {
@@ -11,9 +12,22 @@ export function usePath(): string {
 }
 
 export function navigate(to: string) {
+  const samePage = new URL(to, window.location.href).pathname === window.location.pathname;
   window.history.pushState(null, "", to);
   window.dispatchEvent(new PopStateEvent("popstate"));
-  window.scrollTo(0, 0);
+  const hash = new URL(to, window.location.href).hash;
+  if (!hash) {
+    scrollToTarget(0, true);
+    return;
+  }
+  // "/#opponent-lagbe" from another page: wait for the home page to render, then glide there.
+  if (!samePage) scrollToTarget(0, true);
+  let tries = 0;
+  const seek = () => {
+    if (document.querySelector(hash)) scrollToTarget(hash, !samePage);
+    else if (tries++ < 20) requestAnimationFrame(seek);
+  };
+  requestAnimationFrame(seek);
 }
 
 export function Link({ to, onClick, ...rest }: AnchorHTMLAttributes<HTMLAnchorElement> & { to: string }) {

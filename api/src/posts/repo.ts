@@ -1,10 +1,12 @@
-import type { ContactMode, NewInterest, NewPost } from "./validate";
+import type { ContactMode, ListingType, NewInterest, NewPost } from "./validate";
 
 export type PostStatus = "open" | "filled" | "archived";
 
 export type PublicPost = {
   id: string;
-  listing_type: string;
+  listing_type: ListingType;
+  team_name: string | null;
+  players_per_side: number | null;
   contact_mode: ContactMode;
   host_name: string;
   area: string;
@@ -34,19 +36,22 @@ export const MAX_INTERESTS = 30;
 
 // Everything except edit_token and phone (both private) and lat/lng (unused for now).
 const PUBLIC_COLUMNS =
-  "id, listing_type, contact_mode, host_name, area, district, division, turf_name, start_datetime, duration_minutes, cost_per_head, slots_needed, notes, status, created_at";
+  "id, listing_type, team_name, players_per_side, contact_mode, host_name, area, district, division, turf_name, start_datetime, duration_minutes, cost_per_head, slots_needed, notes, status, created_at";
 
 const FEED_LIMIT = 100;
 
 export async function insertPost(db: D1Database, id: string, editToken: string, post: NewPost): Promise<PublicPost> {
   const row = await db
     .prepare(
-      `INSERT INTO posts (id, host_name, phone, area, district, division, turf_name, start_datetime, duration_minutes, cost_per_head, slots_needed, notes, contact_mode, edit_token)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `INSERT INTO posts (id, listing_type, team_name, players_per_side, host_name, phone, area, district, division, turf_name, start_datetime, duration_minutes, cost_per_head, slots_needed, notes, contact_mode, edit_token)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        RETURNING ${PUBLIC_COLUMNS}`,
     )
     .bind(
       id,
+      post.listing_type,
+      post.team_name,
+      post.players_per_side,
       post.host_name,
       post.phone,
       post.area,
@@ -69,10 +74,16 @@ export async function insertPost(db: D1Database, id: string, editToken: string, 
 export async function listFeed(
   db: D1Database,
   now: Date,
-  opts: { area?: string; district?: string; listingType?: string } = {},
+  // "all" returns both boards mixed; callers split them by listing_type.
+  opts: { area?: string; district?: string; listingType?: ListingType | "all" } = {},
 ): Promise<PublicPost[]> {
-  const where = ["listing_type = ?", "status != 'archived'", "start_datetime > ?"];
-  const params: unknown[] = [opts.listingType ?? "gk_needed", now.toISOString()];
+  const where = ["status != 'archived'", "start_datetime > ?"];
+  const params: unknown[] = [now.toISOString()];
+  const type = opts.listingType ?? "gk_needed";
+  if (type !== "all") {
+    where.push("listing_type = ?");
+    params.push(type);
+  }
   if (opts.area) {
     where.push("area = ? COLLATE NOCASE");
     params.push(opts.area);

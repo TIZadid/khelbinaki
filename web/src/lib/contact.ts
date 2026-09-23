@@ -1,5 +1,7 @@
 import type { PublicPost } from "./api";
+import { shareText } from "./share";
 import { districtName } from "./bd";
+import { formatLabel, isOpponent } from "./listing";
 import { formatDay, formatTime } from "./time";
 
 export function postPath(id: string): string {
@@ -20,16 +22,17 @@ function when(post: PublicPost): string {
 }
 
 export function whatsappContactUrl(post: PublicPost, origin: string, phone: string): string {
-  const text =
-    `Hi ${post.host_name}, I saw your Khelbi Naki post for ${place(post)} on ${when(post)}. ` +
-    `I can play in goal. Is the spot still open?\n${postUrl(post.id, origin)}`;
+  const text = isOpponent(post)
+    ? `Hi ${post.host_name}, I saw ${post.team_name ?? "your team"}'s Khelbi Naki post for a ` +
+      `${formatLabel(post.players_per_side) ?? "match"} at ${place(post)} on ${when(post)}. ` +
+      `We'd like to play you. Is the match still open?\n${postUrl(post.id, origin)}`
+    : `Hi ${post.host_name}, I saw your Khelbi Naki post for ${place(post)} on ${when(post)}. ` +
+      `I can play in goal. Is the spot still open?\n${postUrl(post.id, origin)}`;
   return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
 }
 
 export function whatsappShareUrl(post: PublicPost, origin: string): string {
-  const cost = post.cost_per_head != null ? ` · ৳${post.cost_per_head}/head` : "";
-  const text = `Need a keeper! ${place(post)} · ${when(post)}${cost}\n${postUrl(post.id, origin)}`;
-  return `https://wa.me/?text=${encodeURIComponent(text)}`;
+  return `https://wa.me/?text=${encodeURIComponent(`${shareText(post)}\n${postUrl(post.id, origin)}`)}`;
 }
 
 export function telUrl(phone: string): string {

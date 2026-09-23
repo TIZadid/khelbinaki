@@ -6,6 +6,8 @@ import { ManagePage } from "./ManagePage";
 const post: PublicPost = {
   id: "p1",
   listing_type: "gk_needed",
+  team_name: null,
+  players_per_side: 5,
   contact_mode: "requests",
   host_name: "Nabil",
   area: "Mirpur",
@@ -90,7 +92,7 @@ describe("share card", () => {
     const share = within(await screen.findByRole("region", { name: /share your post/i }));
     fireEvent.click(share.getByRole("button", { name: /^share$/i }));
 
-    const dialog = within(await screen.findByRole("dialog", { name: /share this game/i }));
+    const dialog = within(await screen.findByRole("dialog", { name: /share this post/i }));
     expect(dialog.getByRole("link", { name: "WhatsApp" }).getAttribute("href")).toMatch(/^https:\/\/wa\.me\/\?text=/);
     expect(dialog.getByRole("link", { name: "Facebook" }).getAttribute("href")).toMatch(/facebook\.com\/sharer/);
     expect(dialog.getByRole("link", { name: "Telegram" }).getAttribute("href")).toMatch(/t\.me\/share/);

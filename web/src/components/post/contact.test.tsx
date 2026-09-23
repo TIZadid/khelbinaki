@@ -8,6 +8,8 @@ import { InterestForm } from "./InterestForm";
 const post: PublicPost = {
   id: "p1",
   listing_type: "gk_needed",
+  team_name: null,
+  players_per_side: 5,
   contact_mode: "direct",
   host_name: "Rafi",
   area: "Mirpur",

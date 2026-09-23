@@ -106,6 +106,19 @@ describe("GET /posts (feed)", () => {
     }
   });
 
+  it("keeps the two boards apart: keeper posts by default, opponents or both on request", async () => {
+    const keeper = await create();
+    const match = await create({ listing_type: "opponent_needed", team_name: "FC Mirpur", players_per_side: 6, start_datetime: "2026-10-01T15:00:00.000Z" });
+    const ids = async (query: string) =>
+      ((await (await send("GET", `/posts${query}`)).json()) as { posts: { id: string }[] }).posts.map((p) => p.id);
+
+    expect(await ids("")).toEqual([keeper.post.id]);
+    expect(await ids("?type=opponent_needed")).toEqual([match.post.id]);
+    expect(await ids("?type=all")).toEqual([keeper.post.id, match.post.id]);
+    expect((await send("GET", "/posts?type=nope")).status).toBe(400);
+    expect(match.post).toMatchObject({ team_name: "FC Mirpur", players_per_side: 6, slots_needed: 1 });
+  });
+
   it("filters by area, case-insensitively", async () => {
     await create({ area: "Mirpur" });
     await create({ area: "Agrabad" });

@@ -11,6 +11,8 @@ function post(over: Partial<PublicPost>): PublicPost {
   return {
     id: "p",
     listing_type: "gk_needed",
+  team_name: null,
+  players_per_side: 5,
     host_name: "Rafi",
     contact_mode: "direct",
     area: "Mirpur",
@@ -66,6 +68,21 @@ describe("Feed", () => {
     expect(within(rowFor("8:00 PM")).queryByRole("link", { name: /contact host/i })).toBeNull();
   });
 
+  it("shows only its own board's posts", () => {
+    const match = post({ id: "opp", listing_type: "opponent_needed", team_name: "FC Mirpur", start_datetime: "2026-10-01T15:00:00.000Z" });
+    const { unmount } = renderFeed(ready([...POSTS, match]));
+    expect(screen.queryByText("FC Mirpur")).toBeNull();
+    unmount();
+
+    render(<Feed type="opponent_needed" state={ready([...POSTS, match])} retry={vi.fn()} now={NOW} />);
+    expect(screen.getByRole("heading", { name: /opponent lagbe/i })).toBeInTheDocument();
+    const row = rowFor("9:00 PM");
+    expect(within(row).getByRole("link", { name: "FC Mirpur" })).toHaveAttribute("href", "/p/opp");
+    expect(row).toHaveTextContent("per team");
+    expect(within(row).getByRole("link", { name: /contact team/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /need an opponent/i })).toHaveAttribute("href", "/new/opponent");
+  });
+
   it("offers posting a match from the feed header", () => {
     renderFeed(ready(POSTS));
     expect(screen.getByRole("link", { name: /need a keeper/i })).toHaveAttribute("href", "/new");
@@ -86,7 +103,7 @@ describe("Feed", () => {
   it("shows loading, empty and error states", () => {
     const retry = vi.fn();
     const { rerender } = renderFeed({ status: "loading" });
-    expect(screen.getByLabelText(/loading games/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/loading gk lagbe/i)).toBeInTheDocument();
 
     rerender(<Feed state={ready([])} retry={retry} now={NOW} />);
     expect(screen.getByText(/no games need a keeper/i)).toBeInTheDocument();

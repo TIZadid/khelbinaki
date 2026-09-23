@@ -1,23 +1,30 @@
 # Khelbi Naki?
 
-A free board for underground futsal in Bangladesh. Hosts post that they need a
-goalkeeper; keepers browse open games and get in touch. No accounts, no payments,
-no in-app chat — and no hosting bill: everything runs on Cloudflare's free tiers.
+A free board for underground futsal in Bangladesh, with two boards:
+
+- **GK Lagbe** — hosts post that they need a goalkeeper; keepers pick a game.
+- **Opponent Lagbe** — a team with a turf posts that it needs a team to play; other
+  teams take them on.
+
+No accounts, no payments, no in-app chat — and no hosting bill: everything runs on
+Cloudflare's free tiers.
 
 - **Site:** https://khelbinaki.zlabz.workers.dev
 - **API:** https://khelbinaki-api.zlabz.workers.dev
 
 ## How it works
 
-1. A host posts a match (area, turf, kick-off, cost per head, keepers needed) and
-   chooses how keepers reach them:
-   - **Keepers message me** — a keeper taps *Contact host*, passes a spam check, and
-     gets the host's number for WhatsApp or a call.
-   - **Keepers send me their number** — keepers leave their details; only the host
-     sees them, on the private manage page.
-2. The feed shows upcoming games grouped by day in Bangladesh time. A game drops out
-   by itself once it starts.
-3. The host marks the game filled when they're sorted.
+1. A host posts a match (district, area, turf, kick-off, how many a side, length,
+   cost) on one of the boards. Keeper posts price per head and say how many keepers;
+   opponent posts name the team and price per team (their share of the turf). The
+   host chooses how people reach them:
+   - **Message me** — a keeper or team taps *Contact host* / *Contact team*, passes a
+     spam check, and gets the host's number for WhatsApp or a call.
+   - **Send me your number** — they leave their details; only the host sees them, on
+     the private manage page.
+2. Each board shows upcoming posts grouped by day in Bangladesh time. A post drops
+   out by itself once it starts.
+3. The host marks the post filled when they're sorted.
 
 Keepers can save a profile (name, WhatsApp, areas) that stays on their own phone and
 fills in "I'm interested" for them.

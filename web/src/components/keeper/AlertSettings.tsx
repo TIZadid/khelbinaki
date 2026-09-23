@@ -53,11 +53,11 @@ export function AlertSettings({ regions }: { regions: string[] }) {
   return (
     <section aria-labelledby="alerts-heading" className="mt-10 rounded-3xl border border-[#242a1f] bg-card p-5 md:p-7">
       <h2 id="alerts-heading" className="font-display text-[34px] leading-none font-extrabold uppercase">
-        Tell me about new games
+        Alert me on GK Lagbe
       </h2>
       <p className="mt-2.5 text-[15px] leading-relaxed text-muted-foreground">
-        Get a notification when a game is posted in <span className="text-foreground">{placeLabel}</span>. Free, and you
-        can stop any time.
+        Get a notification when a game in <span className="text-foreground">{placeLabel}</span> needs a keeper. Free, and
+        you can stop any time.
       </p>
 
       <div className="mt-5 flex flex-col gap-3">

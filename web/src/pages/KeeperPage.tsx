@@ -71,7 +71,7 @@ export function KeeperPage() {
 
   return (
     <div className="mx-auto w-full max-w-xl px-5 pt-10 pb-20 md:px-10">
-      <p className="eyebrow text-primary">For goalkeepers</p>
+      <p className="eyebrow text-primary">GK Lagbe · for goalkeepers</p>
       <h1 className="mt-3.5 font-display text-6xl leading-[0.88] font-extrabold uppercase">Your keeper profile</h1>
       <p className="mt-3 text-muted-foreground">
         Save your details once. They stay on this phone and fill in "I'm interested" for you. A host only sees them
@@ -119,7 +119,7 @@ export function KeeperPage() {
               Where do you play?
             </label>
             <p className="mt-1 text-sm text-muted-foreground">
-              Pick up to {MAX_REGIONS} districts, or a whole division. The feed opens on these, and alerts follow them.
+              Pick up to {MAX_REGIONS} districts, or a whole division. GK Lagbe opens on these, and alerts follow them.
             </p>
             <RegionSelect
               id="keeper-region"
@@ -189,8 +189,8 @@ export function KeeperPage() {
           {status === "saved" && (
             <p role="status" className="text-sm">
               Saved on this phone.{" "}
-              <Link to="/" className="font-semibold text-primary underline-offset-4 hover:underline">
-                See games in your areas
+              <Link to="/#gk-lagbe" className="font-semibold text-primary underline-offset-4 hover:underline">
+                See GK Lagbe in your places
               </Link>
             </p>
           )}

@@ -5,6 +5,8 @@ import { shareTargets, shareText } from "./share";
 const post: PublicPost = {
   id: "aB3dE9xK2q",
   listing_type: "gk_needed",
+  team_name: null,
+  players_per_side: 5,
   contact_mode: "direct",
   host_name: "Rafi",
   area: "Mirpur",
@@ -24,9 +26,15 @@ const URL_ = `${ORIGIN}/p/aB3dE9xK2q`;
 
 describe("shareText", () => {
   it("reads as one line in a group chat", () => {
-    expect(shareText(post)).toBe("Need a keeper! Kings Arena, Mirpur, Dhaka · Thu 1 Oct at 7:30 PM · ৳150/head");
-    expect(shareText({ ...post, turf_name: null, cost_per_head: null })).toBe(
+    expect(shareText(post)).toBe("Need a keeper! Kings Arena, Mirpur, Dhaka · Thu 1 Oct at 7:30 PM · 5-a-side · ৳150/head");
+    expect(shareText({ ...post, turf_name: null, cost_per_head: null, players_per_side: null })).toBe(
       "Need a keeper! Mirpur, Dhaka · Thu 1 Oct at 7:30 PM",
+    );
+  });
+
+  it("calls out the team and the cost per team on opponent posts", () => {
+    expect(shareText({ ...post, listing_type: "opponent_needed", team_name: "FC Mirpur", players_per_side: 6, cost_per_head: 1500 })).toBe(
+      "Opponent lagbe! FC Mirpur wants a 6-a-side · Kings Arena, Mirpur, Dhaka · Thu 1 Oct at 7:30 PM · ৳1500/team",
     );
   });
 });

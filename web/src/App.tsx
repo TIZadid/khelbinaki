@@ -17,7 +17,8 @@ export default function App() {
   if (path === "/") page = <HomePage />;
   else if (path === "/keeper") page = <KeeperPage />;
   else if (path === "/cha") page = <ChaPage />;
-  else if (path === "/new") page = <NewPostPage />;
+  else if (path === "/new" || path === "/new/keeper") page = <NewPostPage key="gk" type="gk_needed" />;
+  else if (path === "/new/opponent") page = <NewPostPage key="opponent" type="opponent_needed" />;
   else if (manageId) page = <ManagePage key={manageId} id={manageId} />;
   else if (postId) page = <PostPage key={postId} id={postId} />;
   else page = <NotFoundPage />;

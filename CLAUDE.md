@@ -10,8 +10,11 @@ that they need a goalkeeper for a match (cost per head, turf/area, date/time).
 Goalkeepers browse a public feed and contact the host directly. No accounts, no
 payments, no in-app chat — contact happens over WhatsApp/phone.
 
-Planned (not yet built): a second listing type where teams invite opponent teams
-to play, reusing the same posts table and feed.
+Two boards share the posts table (owner decision 2026-09-23): **GK Lagbe**
+(`listing_type = 'gk_needed'`, a game needs a keeper) and **Opponent Lagbe**
+(`'opponent_needed'`, a team needs a team to play). Every board-specific word —
+board name, buttons, cost unit, empty/filled copy — lives in `web/src/lib/listing.ts`;
+never hard-code either board's copy in a page, and never call a board "open games".
 
 ## Non-negotiable constraints
 
@@ -50,13 +53,15 @@ CREATE TABLE posts (
   lng REAL,
   start_datetime TEXT NOT NULL, -- ISO 8601
   duration_minutes INTEGER,
-  cost_per_head INTEGER,
+  cost_per_head INTEGER, -- per head on gk_needed, PER TEAM on opponent_needed
   slots_needed INTEGER NOT NULL DEFAULT 1,
   notes TEXT,
   status TEXT NOT NULL DEFAULT 'open', -- 'open' | 'filled' | 'archived'
   contact_mode TEXT NOT NULL DEFAULT 'direct', -- 'direct' | 'requests' (migration 0002)
   district TEXT NOT NULL DEFAULT '', -- slug from src/lib/bd.ts, e.g. 'coxs-bazar' (migration 0004)
   division TEXT NOT NULL DEFAULT '', -- 'div-<division>', e.g. 'div-chattogram' (migration 0004)
+  players_per_side INTEGER, -- 3..11, "5-a-side"; required for opponent posts (migration 0005)
+  team_name TEXT, -- opponent posts only, required there (migration 0005)
   edit_token TEXT NOT NULL,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -144,8 +149,9 @@ npx wrangler secret put <NAME>
   "correct" one that costs money or adds infrastructure (e.g. don't suggest
   Twilio for SMS, don't suggest a paid map API — use a plain area-name text
   field instead of geocoding unless asked).
-- Keep the opponent-invite feature in mind when touching the posts schema/feed
-  (see `listing_type`), but do not build it until explicitly asked.
+- Keep the two boards separate: separate sections, separate "Need a keeper" /
+  "Need an opponent" buttons and forms (`/new`, `/new/opponent`). No generic
+  "Post a game". Alerts (push/Telegram) are for keeper posts only.
 - Ask before adding any dependency that requires an account/API key on a
   non-Cloudflare, non-free service.
 
@@ -153,9 +159,9 @@ npx wrangler secret put <NAME>
 
 | Method & path | Body | Success | Errors |
 |---|---|---|---|
-| `GET /posts?area=&district=` | – | `200 {posts}` upcoming, non-archived, soonest first, max 100 | – |
+| `GET /posts?type=&area=&district=` | – | `200 {posts}` upcoming, non-archived, soonest first, max 100. `type` = `gk_needed` (default, for old clients and the push worker), `opponent_needed` or `all` (the home page) | `400` bad type |
 | `GET /posts/:id` | – | `200 {post}` (past/filled too) | `404` |
-| `POST /posts` | post fields + `district` + `contact_mode` + `turnstile_token` | `201 {post, edit_token}` | `400 invalid_json`, `400 validation {fields}`, `403 captcha_failed` |
+| `POST /posts` | post fields + `listing_type` + `players_per_side` + `team_name` (opponent) + `district` + `contact_mode` + `turnstile_token` | `201 {post, edit_token}` | `400 invalid_json`, `400 validation {fields}`, `403 captcha_failed` |
 | `PATCH /posts/:id` | `{edit_token, status: "open"\|"filled"}` | `200 {post}` | `400`, `403 forbidden`, `404` |
 | `POST /posts/:id/contact` | `{turnstile_token}` | `200 {phone}` (direct mode only) | `404`, `409 requests_only`, `410 closed`, `403 captcha_failed` |
 | `POST /posts/:id/interests` | `{name, phone, note?, turnstile_token}` | `201/200 {ok:true}` (requests mode) | `404`, `409 direct_only`, `410 closed`, `400`, `403`, `429 full` (30/post) |
@@ -171,6 +177,15 @@ npx wrangler secret put <NAME>
 - CORS allow-list: `ALLOWED_ORIGINS` var in `api/wrangler.jsonc` (`*` = preview-URL wildcard).
 - `TURNSTILE_SECRET`: local `api/.dev.vars` holds Cloudflare's always-pass test key; production has none yet, so
   creation returns `captcha_failed` until Feature 4 creates the real widget (`wrangler secret put TURNSTILE_SECRET`).
+
+## Frontend design (redesign 2026-09-23)
+
+Dark pitch + lime + Barlow stays the theme. Motion stack: `motion` (Framer Motion)
+for reveals/layout/scroll-linked effects, `lenis` smooth scroll (mouse/trackpad only,
+off for touch and reduced motion; go through `web/src/lib/smoothScroll.ts`, never
+call `window.scrollTo` directly), and a three.js football in the hero
+(`components/hero/Football3D.tsx`), lazy-loaded and skipped on Data Saver / no WebGL.
+Everything must respect `prefers-reduced-motion`.
 
 ## Deployments
 

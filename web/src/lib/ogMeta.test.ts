@@ -30,6 +30,16 @@ describe("buildMeta", () => {
 });
 
 describe("escapeHtml", () => {
+  it("describes an opponent post by its team, format and cost per team", () => {
+    const meta = buildMeta(
+      { ...post, listing_type: "opponent_needed", team_name: "FC Mirpur", players_per_side: 6, cost_per_head: 1500 },
+      URL_,
+    );
+    expect(meta.title).toMatch(/^Opponent needed · FC Mirpur · /);
+    expect(meta.description).toMatch(/^6-a-side · ৳1500 per team · /);
+    expect(meta.description).toMatch(/take on FC Mirpur/);
+  });
+
   it("keeps host-written text out of the markup", () => {
     expect(escapeHtml('Mirpur <script>"x"</script>')).toBe("Mirpur &lt;script&gt;&quot;x&quot;&lt;/script&gt;");
   });

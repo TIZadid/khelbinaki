@@ -13,6 +13,8 @@ const bot = createApp({ verifyHuman: () => async () => false, now: () => NOW });
 const post: PublicPost = {
   id: "abc123",
   listing_type: "gk_needed",
+  team_name: null,
+  players_per_side: 5,
   contact_mode: "direct",
   host_name: "Rafi",
   area: "Mirpur",
@@ -193,6 +195,18 @@ describe("notifyNewPost", () => {
     expect(result.sent).toBe(2);
     expect(calls).toContain(PUSH_ENDPOINT);
     expect(calls.filter((c) => c.includes("api.telegram.org"))).toHaveLength(1);
+  });
+
+  it("leaves keepers alone when a team posts for an opponent", async () => {
+    await env.DB.prepare("INSERT INTO alerts (id, channel, address, regions) VALUES ('t1', 'telegram', '4242', '')").run();
+    const fetcher = vi.fn(async () => new Response("{}", { status: 200 }));
+    const result = await notifyNewPost(
+      { DB: env.DB, SITE_URL: "https://k.example", TELEGRAM_BOT_TOKEN: "bot-token" },
+      { ...post, listing_type: "opponent_needed", team_name: "FC Mirpur" },
+      fetcher as unknown as typeof fetch,
+    );
+    expect(result).toEqual({ sent: 0, dropped: 0 });
+    expect(fetcher).not.toHaveBeenCalled();
   });
 
   it("forgets subscriptions the browser has dropped", async () => {

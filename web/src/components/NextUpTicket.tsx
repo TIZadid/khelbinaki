@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "motion/react";
 import type { PublicPost } from "@/lib/api";
 import { districtName } from "@/lib/bd";
 import { postPath } from "@/lib/contact";
+import { formatLabel, isOpponent, listingOf } from "@/lib/listing";
 import { Link } from "@/lib/router";
 import { countdownParts, formatCountdown, formatTime } from "@/lib/time";
 import { btn } from "@/lib/ui";
@@ -31,18 +32,21 @@ function TimeBox({ value, label }: { value: string; label: string }) {
   );
 }
 
-// The soonest open game, styled like a match ticket (reference: soccer-club countdown).
+// The soonest open post on either board, styled like a match ticket (reference: soccer-club countdown).
 export function NextUpTicket({ post, now }: { post: PublicPost; now: Date }) {
+  const copy = listingOf(post);
   const start = new Date(post.start_datetime);
   const [first, second] = countdownParts(start, now);
   const place = [post.turf_name, post.area, districtName(post.district)].filter(Boolean).join(", ");
+  const title = isOpponent(post) ? `${post.team_name ?? post.host_name} vs ?` : copy.headline;
+  const format = formatLabel(post.players_per_side);
 
   return (
-    <article aria-label="Next game" className="overflow-hidden rounded-3xl border border-[#242a1f] bg-card">
+    <article aria-label="Next kick-off" className="overflow-hidden rounded-3xl border border-[#242a1f] bg-card/90 shadow-[0_30px_80px_-30px_rgb(0_0_0/0.8)] backdrop-blur">
       <div className="flex flex-col gap-4 p-5 md:gap-6 md:px-8 md:pt-7 md:pb-8">
         <div className="eyebrow flex justify-between">
-          <span>Next up</span>
-          <span className="text-primary">Starts in</span>
+          <span>{copy.board}</span>
+          <span className="text-primary">Kicks off in</span>
         </div>
         <div className="flex items-center gap-3" role="timer" aria-label={`Starts ${formatCountdown(start, now)}`}>
           <TimeBox {...first} />
@@ -58,17 +62,18 @@ export function NextUpTicket({ post, now }: { post: PublicPost; now: Date }) {
             <Link to={postPath(post.id)} className="font-display text-[38px] leading-none font-bold hover:text-primary md:text-[44px]">
               {formatTime(start)}
             </Link>
-            <p className="mt-1.5 truncate text-muted-foreground">{place}</p>
+            <p className="mt-2 truncate font-semibold">{title}</p>
+            <p className="mt-0.5 truncate text-muted-foreground">{[format, place].filter(Boolean).join(" · ")}</p>
           </div>
           {post.cost_per_head != null && (
             <div className="text-right">
               <p className="font-display text-3xl leading-none font-bold text-primary md:text-4xl">৳{post.cost_per_head}</p>
-              <p className="mt-1.5 text-sm text-subtle">per head</p>
+              <p className="mt-1.5 text-sm text-subtle">{copy.costUnit}</p>
             </div>
           )}
         </div>
         <Link to={postPath(post.id)} className={cn(btn.primary, "h-13 w-full text-base")}>
-          {post.contact_mode === "direct" ? "Contact host" : "I'm interested"}
+          {post.contact_mode === "direct" ? copy.directAction : copy.requestAction}
           <ArrowUpRight aria-hidden="true" className="size-[18px]" />
         </Link>
       </div>

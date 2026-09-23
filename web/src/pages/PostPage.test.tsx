@@ -8,6 +8,8 @@ const NOW = new Date("2026-10-01T12:00:00.000Z"); // 6:00 PM Dhaka
 const base: PublicPost = {
   id: "p1",
   listing_type: "gk_needed",
+  team_name: null,
+  players_per_side: 5,
   host_name: "Rafi",
   contact_mode: "direct",
   area: "Mirpur",
@@ -50,6 +52,26 @@ describe("PostPage", () => {
     expect(screen.getByRole("button", { name: /share to a group/i })).toBeInTheDocument();
     expect(screen.queryByText(/01712/)).toBeNull();
     expect(document.title).toMatch(/^Mirpur · 7:30 PM/);
+  });
+
+  it("shows an opponent post as the team versus you, priced per team", async () => {
+    const opponent = { ...base, listing_type: "opponent_needed" as const, team_name: "FC Mirpur", players_per_side: 6, cost_per_head: 1500 };
+    serve(opponent);
+    render(<PostPage id="p1" now={NOW} />);
+
+    expect(await screen.findByRole("heading", { level: 1, name: "FC Mirpur" })).toBeInTheDocument();
+    expect(screen.getByText("Cost per team")).toBeInTheDocument();
+    expect(screen.getByText("6-a-side")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /contact team/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /opponent lagbe/i })).toHaveAttribute("href", "/#opponent-lagbe");
+    expect(screen.queryByText(/keepers needed/i)).toBeNull();
+  });
+
+  it("asks a team for its details on requests-mode opponent posts", async () => {
+    serve({ ...base, listing_type: "opponent_needed", team_name: "FC Mirpur", contact_mode: "requests" });
+    render(<PostPage id="p1" now={NOW} />);
+    expect(await screen.findByRole("heading", { name: /take them on/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/your team/i)).toBeInTheDocument();
   });
 
   it("asks keepers to send their number on requests-mode posts", async () => {

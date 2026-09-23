@@ -30,6 +30,9 @@ describe("validateNewPost", () => {
     expect(r).toEqual({
       ok: true,
       value: {
+        listing_type: "gk_needed",
+        team_name: null,
+        players_per_side: null,
         host_name: "Rafi",
         phone: "8801712345678",
         area: "Mirpur",
@@ -88,10 +91,28 @@ describe("validateNewPost", () => {
     expect(!r.ok && r.errors.notes).toMatch(/500/);
   });
 
-  it("only accepts the gk_needed listing type for now", () => {
+  it("accepts the two listing types and nothing else", () => {
     expect(validateNewPost({ ...valid, listing_type: "gk_needed" }, NOW).ok).toBe(true);
-    const r = validateNewPost({ ...valid, listing_type: "opponent_needed" }, NOW);
+    const r = validateNewPost({ ...valid, listing_type: "tournament" }, NOW);
     expect(!r.ok && r.errors.listing_type).toBeTruthy();
+  });
+
+  it("needs a team name and a format for opponent posts, and always asks for one team", () => {
+    const missing = validateNewPost({ ...valid, listing_type: "opponent_needed" }, NOW);
+    expect(!missing.ok && Object.keys(missing.errors).sort()).toEqual(["players_per_side", "team_name"]);
+
+    const r = validateNewPost(
+      { ...valid, listing_type: "opponent_needed", team_name: " FC Mirpur ", players_per_side: 6, slots_needed: 3 },
+      NOW,
+    );
+    expect(r.ok && r.value).toMatchObject({ listing_type: "opponent_needed", team_name: "FC Mirpur", players_per_side: 6, slots_needed: 1 });
+  });
+
+  it("keeps the format on keeper posts but drops a team name", () => {
+    const r = validateNewPost({ ...valid, players_per_side: 5, team_name: "Ignored" }, NOW);
+    expect(r.ok && r.value).toMatchObject({ players_per_side: 5, team_name: null });
+    const bad = validateNewPost({ ...valid, players_per_side: 12 }, NOW);
+    expect(!bad.ok && bad.errors.players_per_side).toMatch(/3 to 11/);
   });
 
   it("treats non-object input as empty", () => {

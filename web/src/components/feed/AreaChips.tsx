@@ -25,11 +25,14 @@ export function AreaChips({
   selected,
   onSelect,
   showMine = false,
+  layoutId = "area-chip",
 }: {
   options: AreaOption[];
   selected: string | null;
   onSelect: (key: string | null) => void;
   showMine?: boolean;
+  /** Unique per board, or the highlight would fly between the two boards. */
+  layoutId?: string;
 }) {
   const chip = (key: string | null, label: string, count?: number) => {
     const active = selected === key;
@@ -41,12 +44,12 @@ export function AreaChips({
         onClick={() => onSelect(key)}
         className={cn(
           "relative isolate h-10 shrink-0 rounded-full border px-[18px] text-sm font-medium transition-colors",
-          active ? "border-transparent text-background" : "border-[#242a1f] text-muted-foreground hover:text-foreground",
+          active ? "border-transparent text-background" : "border-[#242a1f] text-muted-foreground hover:border-line hover:text-foreground",
         )}
       >
         {active && (
           <motion.span
-            layoutId="area-chip"
+            layoutId={layoutId}
             className="absolute inset-0 -z-10 rounded-full bg-foreground"
             transition={{ type: "spring", stiffness: 420, damping: 34 }}
           />

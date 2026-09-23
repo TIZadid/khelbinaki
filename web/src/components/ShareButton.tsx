@@ -61,7 +61,7 @@ export function ShareButton({
           >
             <div className="flex items-center justify-between gap-4">
               <h2 id="share-dialog-heading" className="font-display text-[34px] leading-none font-extrabold uppercase">
-                Share this game
+                Share this post
               </h2>
               <button
                 type="button"

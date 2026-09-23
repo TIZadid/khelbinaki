@@ -16,7 +16,7 @@ import {
   listInterests,
   setStatus,
 } from "./posts/repo";
-import { type ContactMode, validateInterest, validateNewPost } from "./posts/validate";
+import { type ContactMode, LISTING_TYPES, type ListingType, validateInterest, validateNewPost } from "./posts/validate";
 
 export type Deps = {
   verifyHuman: (env: Env) => VerifyHuman;
@@ -65,7 +65,13 @@ export function createApp(deps: Deps) {
   app.get("/posts", async (c) => {
     const area = c.req.query("area")?.trim() || undefined;
     const district = c.req.query("district")?.trim() || undefined;
-    return c.json({ posts: await listFeed(c.env.DB, deps.now(), { area, district }) });
+    // Old clients (and the push service worker) omit type and get the keeper board.
+    const rawType = c.req.query("type")?.trim();
+    if (rawType && rawType !== "all" && !(LISTING_TYPES as readonly string[]).includes(rawType)) {
+      return c.json({ error: "validation", fields: { type: "Use gk_needed, opponent_needed or all" } }, 400);
+    }
+    const listingType = (rawType || "gk_needed") as ListingType | "all";
+    return c.json({ posts: await listFeed(c.env.DB, deps.now(), { area, district, listingType }) });
   });
 
   app.get("/posts/:id", async (c) => {
@@ -84,7 +90,7 @@ export function createApp(deps: Deps) {
 
     const editToken = randomToken();
     const post = await insertPost(c.env.DB, randomId(), editToken, result.value);
-    // Keepers watching this area hear about it after the response goes out.
+    // Keepers watching this area hear about new keeper posts after the response goes out.
     // (Tests call the app without an ExecutionContext, so fall back to awaiting.)
     const fanOut = notifyNewPost(c.env, post).catch(() => undefined);
     try {

@@ -1,8 +1,13 @@
 import { divisionOf, isDistrict } from "../lib/bd";
 
 export type ContactMode = "direct" | "requests";
+export type ListingType = "gk_needed" | "opponent_needed";
+export const LISTING_TYPES: readonly ListingType[] = ["gk_needed", "opponent_needed"];
 
 export type NewPost = {
+  listing_type: ListingType;
+  team_name: string | null;
+  players_per_side: number | null;
   host_name: string;
   phone: string;
   area: string;
@@ -79,8 +84,13 @@ function fieldReader(input: unknown) {
 export function validateNewPost(input: unknown, now: Date): Validation<NewPost> {
   const { body, errors, text, int, phone: readPhone } = fieldReader(input);
 
-  if (body.listing_type !== undefined && body.listing_type !== "gk_needed") {
-    errors.listing_type = "Only gk_needed posts are supported for now";
+  let listing_type: ListingType = "gk_needed";
+  if (body.listing_type !== undefined) {
+    if (typeof body.listing_type === "string" && (LISTING_TYPES as readonly string[]).includes(body.listing_type)) {
+      listing_type = body.listing_type as ListingType;
+    } else {
+      errors.listing_type = "Choose gk_needed or opponent_needed";
+    }
   }
 
   let contact_mode: ContactMode = "direct";
@@ -111,7 +121,14 @@ export function validateNewPost(input: unknown, now: Date): Validation<NewPost> 
   const notes = text("notes", 500, false);
   const duration_minutes = int("duration_minutes", 15, 240);
   const cost_per_head = int("cost_per_head", 0, 10_000);
-  const slots_needed = int("slots_needed", 1, 5) ?? 1;
+  const players_per_side = int("players_per_side", 3, 11);
+  // A team asking for opponents has to say who they are and what size game it is.
+  const team_name = text("team_name", 60, listing_type === "opponent_needed");
+  if (listing_type === "opponent_needed" && players_per_side === null && !errors.players_per_side) {
+    errors.players_per_side = "Required";
+  }
+  // Opponent posts always want exactly one team.
+  const slots_needed = listing_type === "opponent_needed" ? 1 : (int("slots_needed", 1, 5) ?? 1);
   const phone = readPhone("phone");
 
   let start_datetime: string | null = null;
@@ -130,6 +147,9 @@ export function validateNewPost(input: unknown, now: Date): Validation<NewPost> 
   return {
     ok: true,
     value: {
+      listing_type,
+      team_name: listing_type === "opponent_needed" ? team_name : null,
+      players_per_side,
       host_name: host_name as string,
       phone: phone as string,
       area: area as string,

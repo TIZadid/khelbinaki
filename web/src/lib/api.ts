@@ -1,9 +1,13 @@
+import type { ListingType } from "./listing";
+
 export type PostStatus = "open" | "filled" | "archived";
 export type ContactMode = "direct" | "requests";
 
 export type PublicPost = {
   id: string;
-  listing_type: string;
+  listing_type: ListingType;
+  team_name: string | null;
+  players_per_side: number | null;
   contact_mode: ContactMode;
   host_name: string;
   area: string;
@@ -21,8 +25,9 @@ export type PublicPost = {
 
 export const API_URL: string = import.meta.env.VITE_API_URL ?? "https://khelbinaki-api.zlabz.workers.dev";
 
+/** Both boards in one request; pages split them by listing_type. */
 export async function fetchFeed(signal?: AbortSignal): Promise<PublicPost[]> {
-  const res = await fetch(`${API_URL}/posts`, { signal });
+  const res = await fetch(`${API_URL}/posts?type=all`, { signal });
   if (!res.ok) throw new Error(`Feed request failed (${res.status})`);
   const data = (await res.json()) as { posts: PublicPost[] };
   return data.posts;
@@ -65,6 +70,9 @@ export async function sendInterest(
 }
 
 export type NewPostInput = {
+  listing_type: ListingType;
+  team_name?: string;
+  players_per_side: number;
   host_name: string;
   phone: string;
   area: string;

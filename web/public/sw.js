@@ -5,12 +5,12 @@ const API_URL = "https://khelbinaki-api.zlabz.workers.dev";
 self.addEventListener("push", (event) => {
   event.waitUntil(
     (async () => {
-      let title = "New game on Khelbi Naki";
-      let body = "A keeper is needed. Tap to see the game.";
-      let url = "/";
+      let title = "New on GK Lagbe";
+      let body = "A game near you needs a keeper. Tap to see it.";
+      let url = "/#gk-lagbe";
 
       try {
-        const response = await fetch(`${API_URL}/posts`);
+        const response = await fetch(`${API_URL}/posts?type=gk_needed`);
         const { posts = [] } = await response.json();
         const next = posts.find((post) => post.status === "open");
         if (next) {

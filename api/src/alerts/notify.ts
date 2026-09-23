@@ -47,6 +47,8 @@ export async function notifyNewPost(
   post: PublicPost,
   fetcher: typeof fetch = (input, init) => fetch(input, init),
 ): Promise<{ sent: number; dropped: number }> {
+  // Alerts are a keeper feature: opponent posts don't wake keepers up.
+  if (post.listing_type !== "gk_needed") return { sent: 0, dropped: 0 };
   const alerts = await listAlertsFor(env.DB, post.district, post.division);
   let sent = 0;
   let dropped = 0;
