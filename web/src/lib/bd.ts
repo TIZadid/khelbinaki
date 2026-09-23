@@ -112,15 +112,15 @@ export const DIVISIONS: Division[] = [
 // its districts (Sylhet the division vs Sylhet the district), so plain slugs clash.
 export const DIVISION_PREFIX = "div-";
 
-const DISTRICT_INDEX = new Map(
+const DISTRICT_INDEX = new Map<string, { name: string; division: string; divisionName: string }>(
   DIVISIONS.flatMap((division) =>
     division.districts.map(
       (d) => [d.slug, { name: d.name, division: `${DIVISION_PREFIX}${division.slug}`, divisionName: division.name }] as const,
     ),
   ),
 );
-const DIVISION_INDEX = new Map(
-  DIVISIONS.map((division) => [`${DIVISION_PREFIX}${division.slug}`, division.name] as const),
+const DIVISION_INDEX = new Map<string, string>(
+  DIVISIONS.map((division) => [`${DIVISION_PREFIX}${division.slug}`, division.name]),
 );
 
 export function isDistrict(slug: string): boolean {
