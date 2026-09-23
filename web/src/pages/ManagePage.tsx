@@ -51,7 +51,9 @@ export function ManagePage({ id }: { id: string }) {
         </p>
       )}
       {post.state.status === "ready" && post.state.data === null && (
-        <p className="text-muted-foreground">This post no longer exists.</p>
+        <p className="text-muted-foreground">
+          This post no longer exists. Posts, and the requests sent to them, are deleted two days after the match ends.
+        </p>
       )}
       {post.state.status === "ready" && post.state.data && (
         <ManageView
@@ -225,7 +227,8 @@ function ManageView({
         <p className="text-[13px] leading-relaxed text-subtle">
           {filled
             ? `Reopening puts it back on ${board.board} and takes requests again.`
-            : `Your post stays up with a ${board.filledBadge} badge and stops taking requests.`}
+            : `Your post stays up with a ${board.filledBadge} badge and stops taking requests.`}{" "}
+          It leaves the board at kick-off and is deleted, with any requests, two days after the match.
         </p>
       </section>
 

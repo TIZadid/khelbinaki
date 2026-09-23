@@ -30,11 +30,11 @@ function dhakaToday(): string {
 
 const CONTACT_CHOICES: Record<ListingType, [ContactMode, string, string][]> = {
   gk_needed: [
-    ["direct", "Keepers message me", "They tap Contact host and get your number. Fastest when kick-off is close."],
+    ["direct", "Keepers message me", "They tap Contact host, pass a spam check and see your number. Fastest when kick-off is close."],
     ["requests", "Keepers send me their number", "Your number stays private. Check this post's page and pick who to WhatsApp."],
   ],
   opponent_needed: [
-    ["direct", "Teams message me", "They tap Contact team and get your number. Fastest when kick-off is close."],
+    ["direct", "Teams message me", "They tap Contact team, pass a spam check and see your number. Fastest when kick-off is close."],
     ["requests", "Teams send me their number", "Your number stays private. Check this post's page and pick which team to WhatsApp."],
   ],
 };
@@ -364,7 +364,12 @@ export function NewPostPage({ type = "gk_needed" }: { type?: ListingType }) {
                   className={field}
                   aria-invalid={errors.phone ? true : undefined}
                 />
-                <p className="mt-1.5 text-[13px] text-subtle">Never shown on the site.</p>
+                <p className="mt-1.5 text-[13px] text-subtle">
+                  Never listed on the board.{" "}
+                  {mode === "direct"
+                    ? `It's shown only to ${opponent ? "a team" : "a keeper"} who taps ${copy.directAction} and passes a spam check.`
+                    : `With "send me their number" below, nobody sees it.`}
+                </p>
                 {err("phone")}
               </div>
             </Section>
@@ -420,7 +425,10 @@ export function NewPostPage({ type = "gk_needed" }: { type?: ListingType }) {
             <p className="eyebrow">How it'll look on {copy.board}</p>
             <Preview type={type} values={values} start={start} mode={mode} />
             <p className="mt-4 text-[13px] leading-relaxed text-subtle">
-              Your number never shows. {opponent ? "Teams" : "Keepers"} reach you the way you choose below the form.
+              Your number is never listed.{" "}
+              {mode === "direct"
+                ? `${opponent ? "A team" : "A keeper"} sees it only after tapping ${copy.directAction} and passing a spam check.`
+                : `Nobody sees it: ${opponent ? "teams" : "keepers"} send you theirs instead.`}
             </p>
           </div>
         </aside>

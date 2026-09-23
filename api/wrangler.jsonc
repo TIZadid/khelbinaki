@@ -4,6 +4,8 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-09-01",
   "observability": { "enabled": true },
+  // Hourly cleanup: archive ended posts, delete them 48h later (src/cleanup.ts).
+  "triggers": { "crons": ["17 * * * *"] },
   "vars": {
     "ALLOWED_ORIGINS": "https://khelbinaki.zlabz.workers.dev,https://*-khelbinaki.zlabz.workers.dev,http://localhost:5173",
     "SITE_URL": "https://khelbinaki.zlabz.workers.dev",

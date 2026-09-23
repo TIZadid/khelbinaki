@@ -59,10 +59,61 @@ export async function saveTelegramCode(db: D1Database, code: string, regions: st
   await db.prepare("INSERT OR REPLACE INTO telegram_links (code, regions) VALUES (?, ?)").bind(code, regions).run();
 }
 
-/** One-use: the code is spent as soon as the keeper opens the bot. */
-export async function takeTelegramCode(db: D1Database, code: string): Promise<string | null> {
-  const row = await db.prepare("SELECT regions FROM telegram_links WHERE code = ?").bind(code).first<{ regions: string }>();
-  if (!row) return null;
-  await db.prepare("DELETE FROM telegram_links WHERE code = ?").bind(code).run();
+type TelegramLink = { regions: string; chat_id: string | null };
+
+/**
+ * The first chat to open the bot with a code claims it; after that the code only
+ * works for that same chat. Returns the regions to watch, or null if it's unknown
+ * or already claimed by someone else.
+ */
+export async function claimTelegramCode(db: D1Database, code: string, chatId: string): Promise<string | null> {
+  const row = await db.prepare("SELECT regions, chat_id FROM telegram_links WHERE code = ?").bind(code).first<TelegramLink>();
+  if (!row || (row.chat_id !== null && row.chat_id !== chatId)) return null;
+  if (row.chat_id === null) await db.prepare("UPDATE telegram_links SET chat_id = ? WHERE code = ?").bind(chatId, code).run();
   return row.regions;
+}
+
+export type TelegramStatus =
+  | { status: "unknown" }
+  | { status: "waiting" } // code handed out, Start not tapped yet
+  | { status: "linked"; regions: string }
+  | { status: "stopped" }; // they sent /stop, or turned it off from the site
+
+export async function telegramStatus(db: D1Database, code: string): Promise<TelegramStatus> {
+  const row = await db.prepare("SELECT regions, chat_id FROM telegram_links WHERE code = ?").bind(code).first<TelegramLink>();
+  if (!row) return { status: "unknown" };
+  if (row.chat_id === null) return { status: "waiting" };
+  const alert = await db
+    .prepare("SELECT regions FROM alerts WHERE channel = 'telegram' AND address = ?")
+    .bind(row.chat_id)
+    .first<{ regions: string }>();
+  return alert ? { status: "linked", regions: alert.regions } : { status: "stopped" };
+}
+
+/** The chat a claimed code points at, or null. */
+export async function telegramChatFor(db: D1Database, code: string): Promise<string | null> {
+  const row = await db.prepare("SELECT chat_id FROM telegram_links WHERE code = ?").bind(code).first<{ chat_id: string | null }>();
+  return row?.chat_id ?? null;
+}
+
+/** Changes the places of an existing alert. False when there's no such alert. */
+export async function updateAlertRegions(
+  db: D1Database,
+  channel: AlertChannel,
+  address: string,
+  regions: string,
+): Promise<boolean> {
+  const result = await db
+    .prepare("UPDATE alerts SET regions = ? WHERE channel = ? AND address = ?")
+    .bind(regions, channel, address)
+    .run();
+  return result.meta.changes > 0;
+}
+
+export async function alertRegions(db: D1Database, channel: AlertChannel, address: string): Promise<string | null> {
+  const row = await db
+    .prepare("SELECT regions FROM alerts WHERE channel = ? AND address = ?")
+    .bind(channel, address)
+    .first<{ regions: string }>();
+  return row?.regions ?? null;
 }

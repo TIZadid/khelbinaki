@@ -289,7 +289,7 @@ function Footer() {
 
       <div className="page-x flex flex-col gap-1 border-t py-6 text-[13px] text-subtle sm:flex-row sm:justify-between">
         <span>Free forever. Made for futsal across Bangladesh.</span>
-        <span>Contact happens on WhatsApp. Your number is never public.</span>
+        <span>Contact happens on WhatsApp. Numbers are never listed on the board.</span>
       </div>
     </footer>
   );

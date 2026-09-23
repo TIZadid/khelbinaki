@@ -77,9 +77,11 @@ note, created_at; UNIQUE (post_id, phone). Only the post's host (edit token) can
    match time passes — this must happen automatically, not manually.
 2. **Closing a post**: `PATCH /posts/:id` requires the matching `edit_token`,
    sets `status = 'filled'`.
-3. **Archiving**: start with query-time filtering only (point 1). Only add a
-   Cloudflare Cron Trigger + scheduled `UPDATE ... SET status='archived'` job if
-   a "past posts / history" page is explicitly requested later.
+3. **Cleanup** (owner request 2026-09-23, free-tier housekeeping): an hourly Cron
+   Trigger (`api/src/cleanup.ts`, `triggers` in `api/wrangler.jsonc`) archives a post
+   once its slot ends (kick-off + length, or +2h), and deletes it — with its
+   interests (names + numbers) — 48h after that. It also clears Telegram link codes
+   that were never used or whose alerts are off. Retention numbers live in `RETENTION`.
 4. **Contact** (owner decision 2026-09-22): the host's phone is never in a public
    response. Each post has a `contact_mode` chosen by the host:
    **direct** — a keeper taps "Contact host", passes Turnstile, and gets the number
@@ -101,6 +103,10 @@ note, created_at; UNIQUE (post_id, phone). Only the post's host (edit token) can
 
 6. **Alerts** (`alerts` table, migration 0003): keepers opt in to browser push
    (VAPID, bodyless — the service worker fetches the newest games) and/or Telegram.
+   No login: push is tied to the browser's endpoint; Telegram to its link code, which
+   stays in the browser (`khelbinaki.telegram.v1`) and is the key to check status,
+   change places or turn it off (migration 0006 keeps used codes + their chat_id).
+   Saving the keeper profile moves both to the new places.
    Regions (districts or `div-` divisions) are a lowercase comma-separated list;
    empty means anywhere in Bangladesh. New posts fan
    out in `waitUntil`; a failed alert must never fail the post. Secrets in the API
@@ -168,8 +174,12 @@ npx wrangler secret put <NAME>
 | `GET /posts/:id/interests` | `Authorization: Bearer <edit_token>` | `200 {interests}` | `403 forbidden`, `404` |
 | `POST /alerts` | `{subscription, regions[], turnstile_token}` | `201 {ok, regions}` — browser push | `400`, `403 captcha_failed` |
 | `POST /alerts/off` | `{endpoint}` | `200 {ok}` | `400` |
+| `POST /alerts/regions` | `{endpoint, regions[]}` | `200 {ok, regions}` — moves this browser's alerts (profile saved) | `400`, `404` |
+| `GET /alerts/telegram/:code` | – | `200 {status: unknown\|waiting\|linked\|stopped, regions?}` | – |
+| `POST /alerts/telegram/:code/regions` | `{regions[]}` | `200 {ok, regions}` | `404` (not linked) |
+| `POST /alerts/telegram/:code/off` | – | `200 {ok}` | `404` |
 | `POST /alerts/telegram` | `{regions[], turnstile_token}` | `201 {code, link}` | `403`, `503 telegram_unavailable` |
-| `POST /telegram/:secret` | Telegram update | `200 {ok}` — `/start <code>` links a chat, `/stop` unlinks | `403` |
+| `POST /telegram/:secret` | Telegram update | `200 {ok}` — `/start <code>` links a chat, `/status`, `/places`, `/stop` | `403` |
 | `POST /telegram/setup/:secret` | – | `200 {ok}` — points Telegram at the webhook | `403`, `503 no_bot_token` |
 
 - Phones are stored as `8801XXXXXXXXX` (wa.me format) and are **never** returned in public responses; `start_datetime` must include a timezone and is stored as UTC ISO.

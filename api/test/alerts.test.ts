@@ -81,6 +81,14 @@ describe("POST /alerts", () => {
     expect(await listAlertsFor(env.DB, "khulna", "div-khulna")).toHaveLength(1);
   });
 
+  it("moves a browser's alerts to new places without another spam check", async () => {
+    await send(app, "POST", "/alerts", { subscription: { endpoint: PUSH_ENDPOINT }, regions: ["dhaka"], turnstile_token: "t" });
+    const res = await send(bot, "POST", "/alerts/regions", { endpoint: PUSH_ENDPOINT, regions: ["div-sylhet"] });
+    expect(await res.json()).toEqual({ ok: true, regions: "div-sylhet" });
+    expect(await listAlertsFor(env.DB, "sylhet", "div-sylhet")).toHaveLength(1);
+    expect((await send(app, "POST", "/alerts/regions", { endpoint: "https://x.example/unknown", regions: [] })).status).toBe(404);
+  });
+
   it("refuses bots and junk", async () => {
     expect((await send(bot, "POST", "/alerts", { subscription: { endpoint: PUSH_ENDPOINT }, turnstile_token: "t" })).status).toBe(403);
     const bad = await send(app, "POST", "/alerts", { subscription: { endpoint: "not-a-url" }, turnstile_token: "t" });
@@ -124,6 +132,64 @@ describe("Telegram linking", () => {
 
     await hook({ message: { chat: { id: 4242 }, text: "/stop" } });
     expect(await listAlertsFor(env.DB, "dhaka", "div-dhaka")).toHaveLength(0);
+  });
+
+  it("lets the browser holding the code check, re-place and stop its Telegram alerts", async () => {
+    const withBot = { ...env, TELEGRAM_BOT_USERNAME: "khelbinaki_bot", TELEGRAM_WEBHOOK_SECRET: "hook-secret" };
+    const call = (method: string, path: string, body?: unknown) =>
+      app.request(
+        path,
+        { method, headers: { "Content-Type": "application/json" }, body: body === undefined ? undefined : JSON.stringify(body) },
+        withBot,
+      );
+
+    const { code } = (await (await call("POST", "/alerts/telegram", { regions: ["dhaka"], turnstile_token: "t" })).json()) as {
+      code: string;
+    };
+    expect(await (await call("GET", `/alerts/telegram/${code}`)).json()).toEqual({ status: "waiting" });
+    expect(await (await call("GET", "/alerts/telegram/nope")).json()).toEqual({ status: "unknown" });
+    // Nothing to re-place until Start is tapped.
+    expect((await call("POST", `/alerts/telegram/${code}/regions`, { regions: ["sylhet"] })).status).toBe(404);
+
+    await call("POST", "/telegram/hook-secret", { message: { chat: { id: 4242 }, text: `/start ${code}` } });
+    expect(await (await call("GET", `/alerts/telegram/${code}`)).json()).toEqual({ status: "linked", regions: "dhaka" });
+
+    const moved = await call("POST", `/alerts/telegram/${code}/regions`, { regions: ["sylhet", "div-khulna"] });
+    expect(await moved.json()).toEqual({ ok: true, regions: "sylhet,div-khulna" });
+    expect(await listAlertsFor(env.DB, "dhaka", "div-dhaka")).toHaveLength(0);
+    expect(await listAlertsFor(env.DB, "sylhet", "div-sylhet")).toHaveLength(1);
+
+    // The same chat can reuse its own link; it just re-links.
+    await call("POST", "/telegram/hook-secret", { message: { chat: { id: 4242 }, text: `/start ${code}` } });
+    expect(await listAlertsFor(env.DB, "sylhet", "div-sylhet")).toHaveLength(1);
+
+    expect(await (await call("POST", `/alerts/telegram/${code}/off`)).json()).toEqual({ ok: true });
+    expect(await (await call("GET", `/alerts/telegram/${code}`)).json()).toEqual({ status: "stopped" });
+  });
+
+  it("answers /status and /places in the bot", async () => {
+    const replies: string[] = [];
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(async (_url, init) => {
+      replies.push(JSON.parse(String(init?.body)).text);
+      return new Response("{}");
+    });
+    const withBot = { ...env, TELEGRAM_BOT_TOKEN: "tok", TELEGRAM_WEBHOOK_SECRET: "hook-secret" };
+    const hook = (text: string) =>
+      app.request(
+        "/telegram/hook-secret",
+        { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: { chat: { id: 7 }, text } }) },
+        withBot,
+      );
+
+    await hook("/status");
+    await env.DB.prepare("INSERT INTO alerts (id, channel, address, regions) VALUES ('a', 'telegram', '7', 'dhaka')").run();
+    await hook("/status");
+    await hook("/places");
+    fetchSpy.mockRestore();
+
+    expect(replies[0]).toMatch(/alerts are off/i);
+    expect(replies[1]).toMatch(/watching Dhaka/);
+    expect(replies[2]).toMatch(/\/keeper#alerts/);
   });
 
   it("ignores calls without the secret path", async () => {

@@ -53,7 +53,9 @@ export function PostPage({ id, now: fixedNow }: { id: string; now?: Date }) {
 
       {state.status === "ready" && state.data === null && (
         <div className="mt-10">
-          <p className="text-muted-foreground">This post doesn't exist or was removed.</p>
+          <p className="text-muted-foreground">
+            This post doesn't exist. Posts are cleared away two days after their match, so it may have ended a while ago.
+          </p>
           <Link to="/" className="link-draw mt-4 inline-block font-semibold text-primary">
             Back to GK Lagbe and Opponent Lagbe
           </Link>

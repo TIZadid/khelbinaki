@@ -77,7 +77,17 @@ export function Feed({
                 </sup>
               )}
             </h2>
-            <p className="mt-3 text-[15px] text-muted-foreground md:text-[17px]">{copy.tagline}</p>
+            <p className="mt-3 text-[15px] text-muted-foreground md:text-[17px]">
+              {copy.tagline}
+              {type === "gk_needed" && (
+                <>
+                  {" · "}
+                  <Link to="/keeper#alerts" className="link-draw font-semibold text-primary">
+                    Get alerts for new games
+                  </Link>
+                </>
+              )}
+            </p>
           </div>
         </div>
         <Magnetic className="inline-flex self-start md:self-end">

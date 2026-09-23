@@ -106,14 +106,14 @@ function Hero({ state, openOf }: { state: AsyncState<PublicPost[]>; openOf: (typ
     <section ref={ref} aria-labelledby="hero-heading" className="relative isolate overflow-hidden">
       <motion.div
         style={reduce ? undefined : { y: ballY, scale: ballScale }}
-        className="absolute top-0 -right-[10%] -z-10 size-[68vw] max-h-[680px] max-w-[680px] sm:-right-[8%] sm:size-[62vw] md:top-[8%] md:right-[-4%] md:size-[50vw] xl:right-[2%]"
+        className="absolute inset-x-0 top-0 -z-10 mx-auto size-[96vw] max-h-[680px] max-w-[680px] sm:inset-x-auto sm:-right-[8%] sm:mx-0 sm:size-[62vw] md:top-[8%] md:right-[-4%] md:size-[50vw] xl:right-[2%]"
       >
         <HeroBall className="size-full" />
       </motion.div>
 
       <motion.div
         style={reduce ? undefined : { y: textY }}
-        className="page-x pointer-events-none flex min-h-[calc(100svh-4.25rem)] flex-col justify-end gap-7 pt-[56vw] pb-14 sm:pt-[30vw] md:min-h-[calc(100svh-5rem)] md:justify-center md:gap-7 md:pt-8 md:pb-20"
+        className="page-x pointer-events-none flex min-h-[calc(100svh-4.25rem)] flex-col justify-end gap-7 pt-[84vw] pb-14 sm:pt-[30vw] md:min-h-[calc(100svh-5rem)] md:justify-center md:gap-7 md:pt-8 md:pb-20"
       >
         <FadeUp>
           <p className="eyebrow flex items-center gap-3">
@@ -276,10 +276,6 @@ function Step({ step, i, progress }: { step: (typeof steps)[number]; i: number; 
 function Closing() {
   return (
     <section aria-labelledby="closing-heading" className="relative overflow-hidden border-t">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -bottom-1/2 left-1/2 -z-10 size-[70rem] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgb(166_212_33/0.14),transparent_60%)]"
-      />
       <div className="page-x flex flex-col items-center py-24 text-center md:py-36">
         <p className="eyebrow text-primary">Your move</p>
         <h2 id="closing-heading" className="on-pitch mt-5 font-display text-[clamp(3.25rem,11vw,8rem)] leading-[0.84] font-extrabold uppercase">

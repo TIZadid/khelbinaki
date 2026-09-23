@@ -37,7 +37,8 @@ function stubPushSupport({ permission = "default" as NotificationPermission, sub
 
 function stubFetch(ok = true) {
   const fn = vi.fn(async (_url: string, _init?: RequestInit) =>
-    ok ? new Response(JSON.stringify({ ok: true, link: "https://t.me/khelbinaki_bot?start=abc" }), { status: 200 }) : new Response("{}", { status: 500 }),
+    ok
+      ? new Response(JSON.stringify({ ok: true, code: "abc", link: "https://t.me/khelbinaki_bot?start=abc", status: "waiting" }), { status: 200 }) : new Response("{}", { status: 500 }),
   );
   vi.stubGlobal("fetch", fn);
   return fn;
@@ -69,6 +70,23 @@ describe("AlertSettings", () => {
     fireEvent.click(screen.getByRole("button", { name: /connect/i }));
     const link = await screen.findByRole("link", { name: /open telegram/i });
     expect(link).toHaveAttribute("href", "https://t.me/khelbinaki_bot?start=abc");
+  });
+
+  it("shows Telegram as on once Start was tapped, and turns it off from the site", async () => {
+    stubPushSupport();
+    window.localStorage.setItem("khelbinaki.telegram.v1", JSON.stringify({ code: "abc", link: "https://t.me/x?start=abc" }));
+    const fn = vi.fn(async (url: string, _init?: RequestInit) =>
+      url.endsWith("/off")
+        ? new Response(JSON.stringify({ ok: true }))
+        : new Response(JSON.stringify({ status: "linked", regions: "dhaka" })),
+    );
+    vi.stubGlobal("fetch", fn);
+    render(<AlertSettings regions={["dhaka"]} />);
+
+    expect(await screen.findByText(/on\. watching dhaka/i)).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole("button", { name: /turn off/i }).at(-1) as HTMLElement);
+    expect(await screen.findByText(/off\. connect again/i)).toBeInTheDocument();
+    expect(fn.mock.calls.some(([url]) => url.endsWith("/alerts/telegram/abc/off"))).toBe(true);
   });
 
   it("says when the browser blocks notifications", async () => {

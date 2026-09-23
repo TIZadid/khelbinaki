@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { AlertSettings } from "@/components/keeper/AlertSettings";
+import { syncAlertRegions } from "@/lib/alerts";
 import { useKeeperProfile } from "@/hooks/useKeeperProfile";
 import { formatPhone } from "@/lib/contact";
 import { RegionSelect } from "@/components/RegionSelect";
@@ -37,6 +38,7 @@ export function KeeperPage() {
   const [note, setNote] = useState(saved?.note ?? "");
   const [errors, setErrors] = useState<ProfileErrors>({});
   const [status, setStatus] = useState<"idle" | "saved" | "failed">("idle");
+  const [alertsMoved, setAlertsMoved] = useState(false);
 
   const addRegion = (slug: string) => {
     if (!slug) return;
@@ -55,7 +57,11 @@ export function KeeperPage() {
     setErrors({});
     setRegions(result.value.regions);
     setRegionDraft("");
-    setStatus(saveKeeperProfile(result.value) ? "saved" : "failed");
+    const saved = saveKeeperProfile(result.value);
+    setStatus(saved ? "saved" : "failed");
+    setAlertsMoved(false);
+    // Alerts on this phone follow the new places.
+    if (saved) syncAlertRegions(result.value.regions).then((moved) => setAlertsMoved(moved > 0));
   };
 
   const onDelete = () => {
@@ -102,7 +108,7 @@ export function KeeperPage() {
             </label>
             <p id="keeper-phone-hint" className="mt-1 text-sm text-muted-foreground">
               Some hosts keep their number private and ask keepers to send theirs instead. Save it here and we'll fill it
-              in for those games. It's never shown on the site.
+              in for those games. Only the host of a game you send it to sees it.
             </p>
             <input
               id="keeper-phone"
@@ -192,7 +198,7 @@ export function KeeperPage() {
 
           {status === "saved" && (
             <p role="status" className="text-sm">
-              Saved on this phone.{" "}
+              Saved on this phone.{alertsMoved ? " Your alerts now follow these places too." : ""}{" "}
               <Link to="/#gk-lagbe" className="font-semibold text-primary underline-offset-4 hover:underline">
                 See GK Lagbe in your places
               </Link>
@@ -206,7 +212,7 @@ export function KeeperPage() {
         </form>
       </div>
 
-      {saved && <AlertSettings regions={saved.regions} />}
+      <AlertSettings regions={saved?.regions ?? []} hasProfile={Boolean(saved)} />
     </div>
   );
 }

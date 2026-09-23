@@ -53,14 +53,98 @@ export async function disablePush(): Promise<void> {
   await subscription.unsubscribe().catch(() => undefined);
 }
 
-/** Returns the t.me link that ties this keeper's Telegram chat to their areas. */
-export async function telegramLink(regions: string[], turnstileToken: string): Promise<string | null> {
+/** Moves this browser's push alerts to new places. No-op when push is off here. */
+export async function updatePushRegions(regions: string[]): Promise<boolean> {
+  const subscription = await currentSubscription().catch(() => null);
+  if (!subscription) return false;
+  const response = await fetch(`${API_URL}/alerts/regions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ endpoint: subscription.endpoint, regions }),
+  }).catch(() => null);
+  return response?.ok ?? false;
+}
+
+// Telegram: the link code is kept on this phone and acts as its private key to
+// the chat's alerts (check them, change places, turn them off). No login.
+export type TelegramKey = { code: string; link: string };
+const TELEGRAM_KEY = "khelbinaki.telegram.v1";
+
+export function loadTelegramKey(): TelegramKey | null {
+  try {
+    const parsed: unknown = JSON.parse(window.localStorage.getItem(TELEGRAM_KEY) ?? "null");
+    const key = parsed as TelegramKey | null;
+    return key && typeof key.code === "string" && typeof key.link === "string" ? key : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveTelegramKey(key: TelegramKey | null): void {
+  try {
+    if (key) window.localStorage.setItem(TELEGRAM_KEY, JSON.stringify(key));
+    else window.localStorage.removeItem(TELEGRAM_KEY);
+  } catch {
+    // Storage blocked: the link still works, the site just can't show its status later.
+  }
+}
+
+/** Gets a fresh t.me link that ties a Telegram chat to these places, and remembers it here. */
+export async function telegramLink(regions: string[], turnstileToken: string): Promise<TelegramKey | null> {
   const response = await fetch(`${API_URL}/alerts/telegram`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ regions, turnstile_token: turnstileToken }),
   });
   if (!response.ok) return null;
-  const data = (await response.json()) as { link?: string };
-  return data.link ?? null;
+  const data = (await response.json()) as { code?: string; link?: string };
+  if (!data.code || !data.link) return null;
+  const key = { code: data.code, link: data.link };
+  saveTelegramKey(key);
+  return key;
 }
+
+export type TelegramStatus =
+  | { status: "unknown" }
+  | { status: "waiting" }
+  | { status: "linked"; regions: string }
+  | { status: "stopped" };
+
+export async function telegramStatus(code: string): Promise<TelegramStatus> {
+  const response = await fetch(`${API_URL}/alerts/telegram/${encodeURIComponent(code)}`);
+  if (!response.ok) throw new Error(`Telegram status failed (${response.status})`);
+  return (await response.json()) as TelegramStatus;
+}
+
+export async function updateTelegramRegions(code: string, regions: string[]): Promise<boolean> {
+  const response = await fetch(`${API_URL}/alerts/telegram/${encodeURIComponent(code)}/regions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ regions }),
+  }).catch(() => null);
+  return response?.ok ?? false;
+}
+
+export async function telegramOff(code: string): Promise<boolean> {
+  const response = await fetch(`${API_URL}/alerts/telegram/${encodeURIComponent(code)}/off`, { method: "POST" }).catch(
+    () => null,
+  );
+  return response?.ok ?? false;
+}
+
+/**
+ * The keeper saved new places: move every alert this phone controls to them.
+ * Returns how many channels followed (0 when no alerts are on).
+ */
+export async function syncAlertRegions(regions: string[]): Promise<number> {
+  const key = loadTelegramKey();
+  const results = await Promise.all([
+    updatePushRegions(regions),
+    key ? updateTelegramRegions(key.code, regions) : Promise.resolve(false),
+  ]);
+  if (results.some(Boolean)) window.dispatchEvent(new Event(ALERTS_CHANGED));
+  return results.filter(Boolean).length;
+}
+
+/** Fired after places change, so the alerts panel re-reads its status. */
+export const ALERTS_CHANGED = "khelbinaki:alerts-changed";

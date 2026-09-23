@@ -1,7 +1,17 @@
 import { type Context, Hono } from "hono";
 import { cors } from "hono/cors";
 import { notifyNewPost } from "./alerts/notify";
-import { deleteAlert, normalizeRegions, saveAlert, saveTelegramCode, takeTelegramCode } from "./alerts/repo";
+import {
+  alertRegions,
+  claimTelegramCode,
+  deleteAlert,
+  normalizeRegions,
+  saveAlert,
+  saveTelegramCode,
+  telegramChatFor,
+  telegramStatus,
+  updateAlertRegions,
+} from "./alerts/repo";
 import { regionName } from "./lib/bd";
 import { isAllowedOrigin } from "./lib/origins";
 import { randomId, randomToken } from "./lib/random";
@@ -36,6 +46,12 @@ function gate(
   if (info.status !== "open" || new Date(info.start_datetime) <= now) return { error: "closed", status: 410 };
   return null;
 }
+
+const readRegions = (body: Record<string, unknown>) =>
+  normalizeRegions(Array.isArray(body.regions) ? body.regions.filter((r): r is string => typeof r === "string") : []);
+
+const placesText = (regions: string) =>
+  regions ? regions.split(",").map((slug) => regionName(slug) ?? slug).join(", ") : "anywhere in Bangladesh";
 
 async function readObject(c: Ctx): Promise<Record<string, unknown> | null> {
   const body = await c.req.json<unknown>().catch(() => null);
@@ -171,15 +187,44 @@ export function createApp(deps: Deps) {
     return c.json({ ok: await deleteAlert(c.env.DB, "push", endpoint) });
   });
 
-  // Telegram: hand out a one-use code, then the bot links the chat to those areas.
+  // A keeper saved new places on their profile: move this browser's alerts to them.
+  // Knowing the (unguessable) push endpoint is what proves it's their browser.
+  app.post("/alerts/regions", async (c) => {
+    const body = (await readObject(c)) ?? {};
+    if (typeof body.endpoint !== "string") return c.json({ error: "validation" }, 400);
+    const regions = readRegions(body);
+    if (!(await updateAlertRegions(c.env.DB, "push", body.endpoint, regions))) return c.json({ error: "not_found" }, 404);
+    return c.json({ ok: true, regions });
+  });
+
+  // The link code, kept in the keeper's browser, is their key to their Telegram alerts.
+  app.get("/alerts/telegram/:code", async (c) => c.json(await telegramStatus(c.env.DB, c.req.param("code"))));
+
+  app.post("/alerts/telegram/:code/regions", async (c) => {
+    const chatId = await telegramChatFor(c.env.DB, c.req.param("code"));
+    const regions = readRegions((await readObject(c)) ?? {});
+    if (!chatId || !(await updateAlertRegions(c.env.DB, "telegram", chatId, regions))) {
+      return c.json({ error: "not_found" }, 404);
+    }
+    await c.env.DB.prepare("UPDATE telegram_links SET regions = ? WHERE code = ?").bind(regions, c.req.param("code")).run();
+    return c.json({ ok: true, regions });
+  });
+
+  app.post("/alerts/telegram/:code/off", async (c) => {
+    const chatId = await telegramChatFor(c.env.DB, c.req.param("code"));
+    if (!chatId) return c.json({ error: "not_found" }, 404);
+    return c.json({ ok: await deleteAlert(c.env.DB, "telegram", chatId) });
+  });
+
+  // Telegram: hand out a code, then the bot links the chat to those areas.
   app.post("/alerts/telegram", async (c) => {
     const body = await readObject(c);
     if (!body) return c.json({ error: "invalid_json" }, 400);
     if (!(await isHuman(c, body))) return c.json({ error: "captcha_failed" }, 403);
     if (!c.env.TELEGRAM_BOT_USERNAME) return c.json({ error: "telegram_unavailable" }, 503);
 
-    const regions = normalizeRegions(Array.isArray(body.regions) ? body.regions.filter((r): r is string => typeof r === "string") : []);
-    const code = randomId(10);
+    const regions = readRegions(body);
+    const code = randomId(16);
     await saveTelegramCode(c.env.DB, code, regions);
     return c.json({ code, link: `https://t.me/${c.env.TELEGRAM_BOT_USERNAME}?start=${code}` }, 201);
   });
@@ -213,22 +258,35 @@ export function createApp(deps: Deps) {
     const text = message?.text ?? "";
     if (typeof chatId !== "number") return c.json({ ok: true });
 
+    const chat = String(chatId);
+    const profile = `${c.env.SITE_URL}/keeper#alerts`;
+    const help =
+      "I send GK Lagbe alerts: a message whenever a game near you needs a keeper.\n\n" +
+      "/status — which places I'm watching\n/places — how to change them\n/stop — no more alerts\n\n" +
+      `To start, tap Connect Telegram on your keeper profile: ${profile}`;
     const start = /^\/start\s+([0-9A-Za-z]{1,32})/.exec(text);
-    let reply = "Send the link from the Khelbi Naki site to start getting alerts.";
+    let reply = help;
     if (start) {
-      const regions = await takeTelegramCode(c.env.DB, start[1]);
+      const regions = await claimTelegramCode(c.env.DB, start[1], chat);
       if (regions === null) {
-        reply = "That link has already been used. Get a fresh one from the site.";
+        reply = `That link was already used on another Telegram account. Get a fresh one from ${profile}`;
       } else {
-        await saveAlert(c.env.DB, randomId(12), "telegram", String(chatId), regions);
-        reply = regions
-          ? `Done. I'll message you when a game is posted in: ${regions.split(",").map((slug) => regionName(slug) ?? slug).join(", ")}.`
-          : "Done. I'll message you when any new game is posted anywhere in Bangladesh.";
+        await saveAlert(c.env.DB, randomId(12), "telegram", chat, regions);
+        reply =
+          `Done. I'll message you when a game in ${placesText(regions)} needs a keeper.\n\n` +
+          "Change your places on your keeper profile and save — I'll follow along. Send /stop to turn alerts off.";
       }
-    }
-    if (/^\/stop/.test(text)) {
-      await deleteAlert(c.env.DB, "telegram", String(chatId));
-      reply = "Stopped. You won't get any more alerts.";
+    } else if (/^\/status/.test(text)) {
+      const regions = await alertRegions(c.env.DB, "telegram", chat);
+      reply =
+        regions === null
+          ? `Alerts are off for this chat. Turn them on from ${profile}`
+          : `I'm watching ${placesText(regions)} for games that need a keeper. /stop turns this off.`;
+    } else if (/^\/places/.test(text)) {
+      reply = `Open your keeper profile, change your places and tap Save — these alerts update too: ${profile}`;
+    } else if (/^\/stop/.test(text)) {
+      await deleteAlert(c.env.DB, "telegram", chat);
+      reply = `Stopped. You won't get any more alerts. Turn them back on any time from ${profile}`;
     }
 
     if (c.env.TELEGRAM_BOT_TOKEN) {
