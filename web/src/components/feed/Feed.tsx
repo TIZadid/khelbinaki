@@ -5,6 +5,10 @@ import type { PublicPost } from "@/lib/api";
 import { formatDay, groupPosts, isStartingSoon } from "@/lib/time";
 import { CountUp } from "@/components/motion/CountUp";
 import { FadeUp } from "@/components/motion/FadeUp";
+import { Plus } from "lucide-react";
+import { Link } from "@/lib/router";
+import { btn } from "@/lib/ui";
+import { cn } from "@/lib/utils";
 import { AreaChips, MY_AREAS_KEY, areaOptions } from "./AreaChips";
 import { PostRow } from "./PostRow";
 
@@ -37,8 +41,8 @@ export function Feed({
 
   return (
     <section id="games" aria-labelledby="games-heading" className="page-x scroll-mt-6 pb-24 md:pb-30">
-      <div className="border-b pb-6 md:pb-7">
-        <h2 id="games-heading" className="font-display text-[52px] leading-[0.9] font-extrabold uppercase md:text-7xl">
+      <div className="flex flex-wrap items-end justify-between gap-4 border-b pb-6 md:pb-7">
+        <h2 id="games-heading" className="on-pitch font-display text-[52px] leading-[0.9] font-extrabold uppercase md:text-7xl">
           Open games
           {state.status === "ready" && (
             <sup className="ml-2 text-lg text-primary md:text-2xl">
@@ -46,6 +50,12 @@ export function Feed({
             </sup>
           )}
         </h2>
+        <Link
+          to="/new"
+          className={cn(btn.outline, "h-12 border-primary text-primary hover:bg-primary hover:text-primary-foreground")}
+        >
+          <Plus aria-hidden="true" className="size-4" /> Post a match
+        </Link>
       </div>
 
       {state.status === "loading" && (

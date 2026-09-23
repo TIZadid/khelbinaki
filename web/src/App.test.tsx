@@ -16,6 +16,8 @@ it("renders the brand, hero, feed and three how-it-works steps", async () => {
   expect(screen.getByRole("heading", { level: 1, name: /need a keeper/i })).toBeInTheDocument();
   expect(screen.getByRole("link", { name: /see open games/i })).toHaveAttribute("href", "#games");
   expect(await screen.findByText(/no upcoming games/i)).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: /coming next/i })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: /find an opponent team/i })).toBeInTheDocument();
   const steps = screen.getByRole("list", { name: /how it works/i });
   expect(within(steps).getAllByRole("listitem")).toHaveLength(3);
 });

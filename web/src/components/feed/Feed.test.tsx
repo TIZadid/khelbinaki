@@ -66,6 +66,11 @@ describe("Feed", () => {
     expect(within(rowFor("8:00 PM")).queryByRole("link", { name: /contact host/i })).toBeNull();
   });
 
+  it("offers posting a match from the feed header", () => {
+    renderFeed(ready(POSTS));
+    expect(screen.getByRole("link", { name: /post a match/i })).toHaveAttribute("href", "/new");
+  });
+
   it("filters by area chip", () => {
     renderFeed(ready(POSTS));
 

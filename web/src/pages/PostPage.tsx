@@ -99,12 +99,12 @@ function PostDetail({ post, now }: { post: PublicPost; now: Date }) {
         {formatDay(start)}
         {status}
       </p>
-      <h1 className="mt-3.5 font-display text-7xl leading-[0.88] font-extrabold uppercase md:text-8xl">{post.area}</h1>
+      <h1 className="on-pitch mt-3.5 font-display text-7xl leading-[0.88] font-extrabold uppercase md:text-8xl">{post.area}</h1>
       <p className="mt-2 text-[17px] text-muted-foreground">
         {[post.turf_name, districtName(post.district)].filter(Boolean).join(" · ")}
       </p>
 
-      <p className="mt-9 flex items-baseline gap-3.5 font-display font-bold">
+      <p className="on-pitch mt-9 flex items-baseline gap-3.5 font-display font-bold">
         <span className="text-[120px] leading-[0.85]">{clock}</span>
         <span className="text-[40px] font-semibold text-muted-foreground">{meridiem}</span>
       </p>

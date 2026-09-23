@@ -12,6 +12,25 @@ import { Link } from "@/lib/router";
 import { btn } from "@/lib/ui";
 import { cn } from "@/lib/utils";
 
+// What's next, so hosts and keepers can see where this is going.
+const upcoming = [
+  {
+    title: "Find an opponent team",
+    body: "Post that your team needs a match, not just a keeper. Same board, same one-tap contact.",
+    when: "Next",
+  },
+  {
+    title: "Past games",
+    body: "A history page, so you can repost last week's game in two taps.",
+    when: "Later",
+  },
+  {
+    title: "Bangla",
+    body: "The whole site in Bangla, alerts included.",
+    when: "Later",
+  },
+];
+
 const steps = [
   { n: "01", title: "Post your match", body: "Turf, time and cost per head. Thirty seconds, no sign-up." },
   { n: "02", title: "Keepers find you", body: "Keepers near you browse open games and pick the ones that suit them." },
@@ -51,7 +70,7 @@ export function HomePage() {
                 read as "Need akeeper?", so the heading states its own name. */}
             <h1
               aria-label="Need a keeper?"
-              className="font-display text-[clamp(5.5rem,14vw,11.5rem)] leading-[0.84] font-extrabold tracking-[-0.01em] uppercase"
+              className="on-pitch font-display text-[clamp(5.5rem,14vw,11.5rem)] leading-[0.84] font-extrabold tracking-[-0.01em] uppercase"
             >
               <RevealWords text="Need a" className="block" />{" "}
               <RevealWords text="keeper?" className="block" wordClassName="text-primary" delay={0.12} />
@@ -82,6 +101,42 @@ export function HomePage() {
       </section>
 
       <Feed state={state} retry={retry} now={now} />
+
+      <section id="next" aria-labelledby="next-heading" className="border-t">
+        <div className="page-x py-14 md:py-24">
+          <h2 id="next-heading" className="eyebrow mb-7 md:mb-10">
+            Coming next
+          </h2>
+          <ul className="grid gap-px overflow-hidden rounded-2xl border bg-border md:grid-cols-3">
+            {upcoming.map((item) => (
+              <li key={item.title} className="bg-background p-5 md:p-6">
+                <span
+                  className={cn(
+                    "inline-block rounded-full border px-2.5 py-1 text-[11px] font-semibold tracking-[0.12em] uppercase",
+                    item.when === "Next" ? "border-primary text-primary" : "border-line text-subtle",
+                  )}
+                >
+                  {item.when}
+                </span>
+                <h3 className="mt-3.5 font-display text-2xl font-bold uppercase">{item.title}</h3>
+                <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">{item.body}</p>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-5 text-[15px] text-subtle">
+            Want something else?{" "}
+            <a
+              href="https://github.com/TIZadid/khelbinaki/issues"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-primary underline-offset-4 hover:underline"
+            >
+              Tell us here
+            </a>
+            .
+          </p>
+        </div>
+      </section>
 
       <section id="how" aria-labelledby="how-heading" className="border-t">
         <div className="page-x py-14 md:py-30">

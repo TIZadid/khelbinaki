@@ -69,7 +69,10 @@ export function PostRow({ post, now, soonest = false }: { post: PublicPost; now:
         <div className="relative z-10 flex [grid-area:act] md:justify-end">
           <Link to={postPath(post.id)} className={cn(btn.outline, "flex-1 md:flex-none")}>
             {post.contact_mode === "direct" ? "Contact host" : "I'm interested"}
-            <ArrowUpRight aria-hidden="true" className="size-4" />
+            <ArrowUpRight
+              aria-hidden="true"
+              className="size-4 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+            />
           </Link>
         </div>
       )}

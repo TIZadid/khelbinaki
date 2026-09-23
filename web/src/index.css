@@ -60,6 +60,12 @@
   * {
     @apply border-border;
   }
+  /* Keyboard users get the same clear affordance as pointer users. */
+  :where(a, button, select, input, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: 0.5rem;
+  }
   body {
     @apply bg-background font-sans text-foreground antialiased;
   }
@@ -85,6 +91,25 @@
   color: var(--muted-foreground);
 }
 
+/* Motion timings follow NN/g: hover ~150ms, state changes ~250ms, overlays ~350ms. */
+:root {
+  --hover: 150ms;
+  --state: 250ms;
+}
+
+/* Sits between the pitch drawing and the page: strongest in the middle, where
+   headlines and rows live, fading out at the edges so the pitch still shows. */
+.scrim {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 40%, rgb(10 12 9 / 0.92), rgb(10 12 9 / 0.55) 60%, transparent 100%),
+    linear-gradient(to bottom, rgb(10 12 9 / 0.6), rgb(10 12 9 / 0.35));
+}
+
+/* Big display type over the pitch: a faint shadow keeps edges crisp. */
+.on-pitch {
+  text-shadow: 0 2px 18px rgb(10 12 9 / 0.85);
+}
+
 .pitch-fade {
   mask-image: radial-gradient(ellipse 90% 70% at 50% 35%, black 40%, transparent 100%);
 }
@@ -93,4 +118,20 @@
 .text-outline {
   color: transparent;
   -webkit-text-stroke: 1.5px var(--outline, #4a5342);
+}
+
+/* The one row that starts soonest breathes, so the eye lands on it. */
+@media (prefers-reduced-motion: no-preference) {
+  .pulse-soon {
+    animation: pulse-soon 2.6s ease-in-out infinite;
+  }
+}
+
+@keyframes pulse-soon {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.78;
+  }
 }
