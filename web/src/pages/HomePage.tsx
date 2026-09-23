@@ -77,12 +77,8 @@ export function HomePage() {
               <a href="#games" className={cn(btn.primary, "w-full sm:w-auto")}>
                 See open games <ArrowDownRight aria-hidden="true" className="size-[18px]" />
               </a>
-              <Link
-                to="/new"
-                aria-label="GK Lagbe — post a match and find a keeper"
-                className={cn(btn.outline, "h-14 px-7 text-[17px]")}
-              >
-                GK Lagbe
+              <Link to="/new" className={cn(btn.outline, "h-14 px-7 text-[17px]")}>
+                Need a keeper
               </Link>
             </div>
           </FadeUp>

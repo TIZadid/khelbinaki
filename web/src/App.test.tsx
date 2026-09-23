@@ -15,7 +15,7 @@ it("renders the brand, hero, feed and three how-it-works steps", async () => {
   expect(screen.getByRole("banner")).toHaveTextContent("Khelbi Naki");
   expect(screen.getByRole("heading", { level: 1, name: /need a keeper/i })).toBeInTheDocument();
   expect(screen.getByRole("link", { name: /see open games/i })).toHaveAttribute("href", "#games");
-  expect(await screen.findByText(/no upcoming games/i)).toBeInTheDocument();
+  expect(await screen.findByText(/no games need a keeper/i)).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: /coming next/i })).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: /find an opponent team/i })).toBeInTheDocument();
   const steps = screen.getByRole("list", { name: /how it works/i });
@@ -54,7 +54,7 @@ it("routes /keeper to the keeper profile page", () => {
 it("links keepers to their profile from the header", () => {
   const { unmount } = render(<App />);
   expect(within(screen.getByRole("banner")).getByRole("link", { name: "I'm a keeper" })).toHaveAttribute("href", "/keeper");
-  expect(within(screen.getByRole("banner")).getByRole("link", { name: /gk lagbe/i })).toHaveAttribute("href", "/new");
+  expect(within(screen.getByRole("banner")).getByRole("link", { name: /need a keeper/i })).toHaveAttribute("href", "/new");
   unmount();
   saveKeeperProfile({ name: "Mehedi", phone: "8801912345678", regions: [], note: "" });
   render(<App />);
@@ -64,7 +64,7 @@ it("links keepers to their profile from the header", () => {
 it("routes /new to the post form", () => {
   window.history.pushState(null, "", "/new");
   render(<App />);
-  expect(screen.getByRole("heading", { level: 1, name: /gk lagbe/i })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { level: 1, name: /need a keeper/i })).toBeInTheDocument();
 });
 
 it("asks for the manage link when the token is missing", () => {

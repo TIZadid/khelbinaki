@@ -48,7 +48,7 @@ describe("Feed", () => {
     expect(screen.getByRole("heading", { name: /^today/i })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /^tomorrow/i })).toBeInTheDocument();
     // the tally counts up, so wait for it to land
-    await waitFor(() => expect(screen.getByRole("heading", { name: /open games/i })).toHaveTextContent("3"));
+    await waitFor(() => expect(screen.getByRole("heading", { name: /gk lagbe/i })).toHaveTextContent("3"));
     expect(within(rowFor("7:30 PM")).getByText("In 1h 30m")).toBeInTheDocument();
     expect(rowFor("7:30 PM").querySelector("[data-soonest]")).not.toBeNull();
     expect(rowFor("10:00 PM").querySelector("[data-soonest]")).toBeNull();
@@ -68,7 +68,7 @@ describe("Feed", () => {
 
   it("offers posting a match from the feed header", () => {
     renderFeed(ready(POSTS));
-    expect(screen.getByRole("link", { name: /gk lagbe/i })).toHaveAttribute("href", "/new");
+    expect(screen.getByRole("link", { name: /need a keeper/i })).toHaveAttribute("href", "/new");
   });
 
   it("filters by area chip", () => {
@@ -89,7 +89,7 @@ describe("Feed", () => {
     expect(screen.getByLabelText(/loading games/i)).toBeInTheDocument();
 
     rerender(<Feed state={ready([])} retry={retry} now={NOW} />);
-    expect(screen.getByText(/no upcoming games/i)).toBeInTheDocument();
+    expect(screen.getByText(/no games need a keeper/i)).toBeInTheDocument();
 
     rerender(<Feed state={{ status: "error" }} retry={retry} now={NOW} />);
     fireEvent.click(screen.getByRole("button", { name: /try again/i }));

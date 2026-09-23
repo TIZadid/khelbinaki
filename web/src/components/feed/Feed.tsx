@@ -42,20 +42,22 @@ export function Feed({
   return (
     <section id="games" aria-labelledby="games-heading" className="page-x scroll-mt-6 pb-24 md:pb-30">
       <div className="flex flex-wrap items-end justify-between gap-4 border-b pb-6 md:pb-7">
-        <h2 id="games-heading" className="on-pitch font-display text-[52px] leading-[0.9] font-extrabold uppercase md:text-7xl">
-          Open games
-          {state.status === "ready" && (
-            <sup className="ml-2 text-lg text-primary md:text-2xl">
-              <CountUp value={openCount} />
-            </sup>
-          )}
-        </h2>
+        <div>
+          <h2 id="games-heading" className="on-pitch font-display text-[52px] leading-[0.9] font-extrabold uppercase md:text-7xl">
+            GK Lagbe
+            {state.status === "ready" && (
+              <sup className="ml-2 text-lg text-primary md:text-2xl">
+                <CountUp value={openCount} />
+              </sup>
+            )}
+          </h2>
+          <p className="mt-2 text-[15px] text-muted-foreground">Games looking for a goalkeeper</p>
+        </div>
         <Link
           to="/new"
-          aria-label="GK Lagbe — post a match and find a keeper"
           className={cn(btn.outline, "h-12 border-primary text-primary hover:bg-primary hover:text-primary-foreground")}
         >
-          <Plus aria-hidden="true" className="size-4" /> GK Lagbe
+          <Plus aria-hidden="true" className="size-4" /> Need a keeper
         </Link>
       </div>
 
@@ -83,7 +85,7 @@ export function Feed({
       )}
 
       {state.status === "ready" && posts.length === 0 && (
-        <p className="mt-12 text-center text-muted-foreground">No upcoming games yet. Check back soon.</p>
+        <p className="mt-12 text-center text-muted-foreground">No games need a keeper right now. Check back soon.</p>
       )}
 
       {state.status === "ready" && posts.length > 0 && (

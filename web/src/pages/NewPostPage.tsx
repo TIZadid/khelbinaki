@@ -93,9 +93,9 @@ export function NewPostPage() {
   return (
     <div className="mx-auto w-full max-w-xl px-5 pt-10 pb-20 md:px-10">
       <p className="eyebrow text-primary">For hosts · no sign-up</p>
-      <h1 className="mt-3.5 font-display text-6xl leading-[0.88] font-extrabold uppercase">GK Lagbe</h1>
+      <h1 className="mt-3.5 font-display text-6xl leading-[0.88] font-extrabold uppercase">Need a keeper</h1>
       <p className="mt-3 text-[17px] leading-relaxed text-muted-foreground">
-        Post your match and keepers near you will see it.
+        Post your match and keepers near you will see it in the GK Lagbe feed.
       </p>
 
       <form noValidate onSubmit={onSubmit} className="mt-8 flex flex-col gap-7">
