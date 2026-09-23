@@ -80,17 +80,17 @@ note, created_at; UNIQUE (post_id, phone). Only the post's host (edit token) can
    (`interests`), which only the host sees via their edit token, then the host
    WhatsApps them. Never build chat, inboxes, or paid relays/SMS.
 
+5. **Keeper profile** lives only in the keeper's browser (localStorage key
+   `khelbinaki.keeper.v1`): name, WhatsApp, areas, note. It pre-fills "I'm interested"
+   and makes the feed open on the keeper's areas. Never send it anywhere except with
+   an interest request.
+
 6. **Alerts** (`alerts` table, migration 0003): keepers opt in to browser push
    (VAPID, bodyless — the service worker fetches the newest games) and/or Telegram.
    Areas are a lowercase comma-separated list; empty means anywhere. New posts fan
    out in `waitUntil`; a failed alert must never fail the post. Secrets in the API
    Worker: `VAPID_PRIVATE_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`
    (the local copy lives in gitignored `api/.dev.vars`).
-
-5. **Keeper profile** lives only in the keeper's browser (localStorage key
-   `khelbinaki.keeper.v1`): name, WhatsApp, areas, note. It pre-fills "I'm interested"
-   and makes the feed open on the keeper's areas. Never send it anywhere except with
-   an interest request.
 
 ## Build order (do in this sequence)
 
