@@ -18,20 +18,20 @@ export function Feed({
   now: Date;
 }) {
   const keeper = useKeeperProfile();
-  const myAreas = useMemo(() => new Set((keeper?.areas ?? []).map((a) => a.trim().toLowerCase())), [keeper]);
+  const myRegions = useMemo(() => new Set(keeper?.regions ?? []), [keeper]);
   // undefined = nothing picked yet, so open on the keeper's areas when those have games.
   const [area, setArea] = useState<string | null | undefined>(undefined);
 
   const posts = state.status === "ready" ? state.data : [];
   const openCount = posts.filter((p) => p.status === "open").length;
-  const areaKey = (p: { area: string }) => p.area.trim().toLowerCase();
-  const hasMine = posts.some((p) => myAreas.has(areaKey(p)));
+  const mine = (p: { district: string; division: string }) => myRegions.has(p.district) || myRegions.has(p.division);
+  const hasMine = posts.some(mine);
   const selected = area !== undefined ? area : hasMine ? MY_AREAS_KEY : null;
   const visible =
     selected === MY_AREAS_KEY
-      ? posts.filter((p) => myAreas.has(areaKey(p)))
+      ? posts.filter(mine)
       : selected
-        ? posts.filter((p) => areaKey(p) === selected)
+        ? posts.filter((p) => p.district === selected)
         : posts;
   const soonest = visible.find((p) => p.status === "open" && isStartingSoon(new Date(p.start_datetime), now));
 
@@ -79,7 +79,7 @@ export function Feed({
         <>
           <div className="mt-6">
             <AreaChips
-              options={areaOptions(posts.map((p) => p.area))}
+              options={areaOptions(posts.map((p) => p.district))}
               selected={selected}
               onSelect={setArea}
               showMine={hasMine}

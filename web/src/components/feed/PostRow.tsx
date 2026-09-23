@@ -1,5 +1,6 @@
 import { ArrowUpRight } from "lucide-react";
 import type { PublicPost } from "@/lib/api";
+import { districtName } from "@/lib/bd";
 import { postPath } from "@/lib/contact";
 import { Link } from "@/lib/router";
 import { formatCountdown, formatTime, isStartingSoon } from "@/lib/time";
@@ -13,7 +14,7 @@ export function PostRow({ post, now, soonest = false }: { post: PublicPost; now:
   const start = new Date(post.start_datetime);
   const filled = post.status === "filled";
   const soon = !filled && isStartingSoon(start, now);
-  const detail = [post.turf_name, `by ${post.host_name}`].filter(Boolean).join(" · ");
+  const detail = [post.turf_name, districtName(post.district), `by ${post.host_name}`].filter(Boolean).join(" · ");
 
   return (
     <div

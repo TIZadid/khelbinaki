@@ -54,7 +54,7 @@ it("links keepers to their profile from the header", () => {
   expect(within(screen.getByRole("banner")).getByRole("link", { name: "I'm a keeper" })).toHaveAttribute("href", "/keeper");
   expect(within(screen.getByRole("banner")).getByRole("link", { name: /post a match/i })).toHaveAttribute("href", "/new");
   unmount();
-  saveKeeperProfile({ name: "Mehedi", phone: "8801912345678", areas: [], note: "" });
+  saveKeeperProfile({ name: "Mehedi", phone: "8801912345678", regions: [], note: "" });
   render(<App />);
   expect(within(screen.getByRole("banner")).getByRole("link", { name: "My profile" })).toBeInTheDocument();
 });

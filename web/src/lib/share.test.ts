@@ -8,6 +8,8 @@ const post: PublicPost = {
   contact_mode: "direct",
   host_name: "Rafi",
   area: "Mirpur",
+  district: "dhaka",
+  division: "div-dhaka",
   turf_name: "Kings Arena",
   start_datetime: "2026-10-01T13:30:00.000Z", // Thu 1 Oct, 7:30 PM Dhaka
   duration_minutes: 60,
@@ -22,9 +24,9 @@ const URL_ = `${ORIGIN}/p/aB3dE9xK2q`;
 
 describe("shareText", () => {
   it("reads as one line in a group chat", () => {
-    expect(shareText(post)).toBe("Need a keeper! Kings Arena, Mirpur · Thu 1 Oct at 7:30 PM · ৳150/head");
+    expect(shareText(post)).toBe("Need a keeper! Kings Arena, Mirpur, Dhaka · Thu 1 Oct at 7:30 PM · ৳150/head");
     expect(shareText({ ...post, turf_name: null, cost_per_head: null })).toBe(
-      "Need a keeper! Mirpur · Thu 1 Oct at 7:30 PM",
+      "Need a keeper! Mirpur, Dhaka · Thu 1 Oct at 7:30 PM",
     );
   });
 });

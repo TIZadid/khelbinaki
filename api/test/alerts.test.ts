@@ -1,7 +1,7 @@
 import { env } from "cloudflare:workers";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { alertMessage, notifyNewPost } from "../src/alerts/notify";
-import { listAlertsFor, normalizeAreas, wantsArea } from "../src/alerts/repo";
+import { listAlertsFor, normalizeRegions, wantsRegion } from "../src/alerts/repo";
 import { buildVapidJwt, sendPush } from "../src/lib/webpush";
 import { createApp } from "../src/app";
 import type { PublicPost } from "../src/posts/repo";
@@ -16,6 +16,8 @@ const post: PublicPost = {
   contact_mode: "direct",
   host_name: "Rafi",
   area: "Mirpur",
+  district: "dhaka",
+  division: "div-dhaka",
   turf_name: "Kings Arena",
   start_datetime: "2026-10-01T13:30:00.000Z",
   duration_minutes: 60,
@@ -41,15 +43,16 @@ beforeEach(async () => {
   await env.DB.prepare("DELETE FROM telegram_links").run();
 });
 
-describe("areas", () => {
-  it("stores up to five, lowercase and unique", () => {
-    expect(normalizeAreas([" Mirpur ", "MIRPUR", "Uttara", "", "a", "b", "c", "d"])).toBe("mirpur,uttara,a,b,c");
+describe("regions", () => {
+  it("keeps known districts and divisions, drops the rest", () => {
+    expect(normalizeRegions([" Dhaka ", "DHAKA", "sylhet", "atlantis", "coxs-bazar"])).toBe("dhaka,sylhet,coxs-bazar");
   });
 
-  it("an empty list means anywhere", () => {
-    expect(wantsArea("", "Banani")).toBe(true);
-    expect(wantsArea("mirpur,uttara", "MIRPUR")).toBe(true);
-    expect(wantsArea("mirpur", "Banani")).toBe(false);
+  it("an empty list means anywhere, and a division covers its districts", () => {
+    expect(wantsRegion("", "coxs-bazar", "div-chattogram")).toBe(true);
+    expect(wantsRegion("div-chattogram", "coxs-bazar", "div-chattogram")).toBe(true);
+    expect(wantsRegion("coxs-bazar", "coxs-bazar", "div-chattogram")).toBe(true);
+    expect(wantsRegion("sylhet", "coxs-bazar", "div-chattogram")).toBe(false);
   });
 });
 
@@ -57,22 +60,23 @@ describe("POST /alerts", () => {
   it("remembers a push subscription and its areas", async () => {
     const res = await send(app, "POST", "/alerts", {
       subscription: { endpoint: PUSH_ENDPOINT },
-      areas: ["Mirpur", "Uttara"],
+      regions: ["dhaka", "sylhet"],
       turnstile_token: "tok",
     });
     expect(res.status).toBe(201);
-    expect(await res.json()).toEqual({ ok: true, areas: "mirpur,uttara" });
+    expect(await res.json()).toEqual({ ok: true, regions: "dhaka,sylhet" });
 
-    expect(await listAlertsFor(env.DB, "Mirpur")).toHaveLength(1);
-    expect(await listAlertsFor(env.DB, "Banani")).toHaveLength(0);
+    expect(await listAlertsFor(env.DB, "dhaka", "div-dhaka")).toHaveLength(1);
+    expect(await listAlertsFor(env.DB, "sylhet", "div-sylhet")).toHaveLength(1);
+    expect(await listAlertsFor(env.DB, "khulna", "div-khulna")).toHaveLength(0);
   });
 
   it("updates the areas when the same browser subscribes again", async () => {
-    await send(app, "POST", "/alerts", { subscription: { endpoint: PUSH_ENDPOINT }, areas: ["Mirpur"], turnstile_token: "t" });
-    await send(app, "POST", "/alerts", { subscription: { endpoint: PUSH_ENDPOINT }, areas: ["Banani"], turnstile_token: "t" });
+    await send(app, "POST", "/alerts", { subscription: { endpoint: PUSH_ENDPOINT }, regions: ["dhaka"], turnstile_token: "t" });
+    await send(app, "POST", "/alerts", { subscription: { endpoint: PUSH_ENDPOINT }, regions: ["khulna"], turnstile_token: "t" });
 
-    expect(await listAlertsFor(env.DB, "Mirpur")).toHaveLength(0);
-    expect(await listAlertsFor(env.DB, "Banani")).toHaveLength(1);
+    expect(await listAlertsFor(env.DB, "dhaka", "div-dhaka")).toHaveLength(0);
+    expect(await listAlertsFor(env.DB, "khulna", "div-khulna")).toHaveLength(1);
   });
 
   it("refuses bots and junk", async () => {
@@ -84,7 +88,7 @@ describe("POST /alerts", () => {
   it("forgets a subscription on request", async () => {
     await send(app, "POST", "/alerts", { subscription: { endpoint: PUSH_ENDPOINT }, turnstile_token: "t" });
     expect(await (await send(app, "POST", "/alerts/off", { endpoint: PUSH_ENDPOINT })).json()).toEqual({ ok: true });
-    expect(await listAlertsFor(env.DB, "Mirpur")).toHaveLength(0);
+    expect(await listAlertsFor(env.DB, "dhaka", "div-dhaka")).toHaveLength(0);
   });
 });
 
@@ -94,7 +98,7 @@ describe("Telegram linking", () => {
 
     const codeRes = await app.request(
       "/alerts/telegram",
-      { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ areas: ["Mirpur"], turnstile_token: "t" }) },
+      { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ regions: ["dhaka"], turnstile_token: "t" }) },
       withBot,
     );
     expect(codeRes.status).toBe(201);
@@ -109,15 +113,15 @@ describe("Telegram linking", () => {
       );
 
     expect((await hook({ message: { chat: { id: 4242 }, text: `/start ${code}` } })).status).toBe(200);
-    const alerts = await listAlertsFor(env.DB, "Mirpur");
-    expect(alerts).toMatchObject([{ channel: "telegram", address: "4242", areas: "mirpur" }]);
+    const alerts = await listAlertsFor(env.DB, "dhaka", "div-dhaka");
+    expect(alerts).toMatchObject([{ channel: "telegram", address: "4242", regions: "dhaka" }]);
 
     // The code is spent, so a replay links nothing new.
     await hook({ message: { chat: { id: 9999 }, text: `/start ${code}` } });
-    expect(await listAlertsFor(env.DB, "Mirpur")).toHaveLength(1);
+    expect(await listAlertsFor(env.DB, "dhaka", "div-dhaka")).toHaveLength(1);
 
     await hook({ message: { chat: { id: 4242 }, text: "/stop" } });
-    expect(await listAlertsFor(env.DB, "Mirpur")).toHaveLength(0);
+    expect(await listAlertsFor(env.DB, "dhaka", "div-dhaka")).toHaveLength(0);
   });
 
   it("ignores calls without the secret path", async () => {
@@ -164,9 +168,9 @@ describe("web push VAPID", () => {
 
 describe("notifyNewPost", () => {
   it("messages Telegram chats and pushes browsers watching the area", async () => {
-    await send(app, "POST", "/alerts", { subscription: { endpoint: PUSH_ENDPOINT }, areas: ["Mirpur"], turnstile_token: "t" });
-    await env.DB.prepare("INSERT INTO alerts (id, channel, address, areas) VALUES ('t1', 'telegram', '4242', 'mirpur')").run();
-    await env.DB.prepare("INSERT INTO alerts (id, channel, address, areas) VALUES ('t2', 'telegram', '777', 'banani')").run();
+    await send(app, "POST", "/alerts", { subscription: { endpoint: PUSH_ENDPOINT }, regions: ["dhaka"], turnstile_token: "t" });
+    await env.DB.prepare("INSERT INTO alerts (id, channel, address, regions) VALUES ('t1', 'telegram', '4242', 'dhaka')").run();
+    await env.DB.prepare("INSERT INTO alerts (id, channel, address, regions) VALUES ('t2', 'telegram', '777', 'khulna')").run();
 
     const calls: string[] = [];
     const fetcher = vi.fn(async (url: string) => {
@@ -202,12 +206,12 @@ describe("notifyNewPost", () => {
     );
 
     expect(result).toEqual({ sent: 0, dropped: 1 });
-    expect(await listAlertsFor(env.DB, "Mirpur")).toHaveLength(0);
+    expect(await listAlertsFor(env.DB, "dhaka", "div-dhaka")).toHaveLength(0);
   });
 
   it("writes a message with the place, time, price and link", () => {
     expect(alertMessage(post, "https://khelbinaki.example")).toBe(
-      "Keeper needed: Kings Arena, Mirpur · Thu 1 Oct 7:30 PM · ৳150/head\nhttps://khelbinaki.example/p/abc123",
+      "Keeper needed: Kings Arena, Mirpur, Dhaka · Thu 1 Oct 7:30 PM · ৳150/head\nhttps://khelbinaki.example/p/abc123",
     );
   });
 });

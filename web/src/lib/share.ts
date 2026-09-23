@@ -1,11 +1,12 @@
 import type { PublicPost } from "./api";
+import { districtName } from "./bd";
 import { postUrl } from "./contact";
 import { formatDay, formatTime } from "./time";
 
 /** One line that reads well in a group chat or a Facebook post. */
 export function shareText(post: PublicPost): string {
   const start = new Date(post.start_datetime);
-  const place = post.turf_name ? `${post.turf_name}, ${post.area}` : post.area;
+  const place = [post.turf_name, post.area, districtName(post.district)].filter(Boolean).join(", ");
   const cost = post.cost_per_head != null ? ` · ৳${post.cost_per_head}/head` : "";
   return `Need a keeper! ${place} · ${formatDay(start)} at ${formatTime(start)}${cost}`;
 }

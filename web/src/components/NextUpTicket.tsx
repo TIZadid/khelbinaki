@@ -1,6 +1,7 @@
 import { ArrowUpRight } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import type { PublicPost } from "@/lib/api";
+import { districtName } from "@/lib/bd";
 import { postPath } from "@/lib/contact";
 import { Link } from "@/lib/router";
 import { countdownParts, formatCountdown, formatTime } from "@/lib/time";
@@ -34,7 +35,7 @@ function TimeBox({ value, label }: { value: string; label: string }) {
 export function NextUpTicket({ post, now }: { post: PublicPost; now: Date }) {
   const start = new Date(post.start_datetime);
   const [first, second] = countdownParts(start, now);
-  const place = post.turf_name ? `${post.turf_name}, ${post.area}` : post.area;
+  const place = [post.turf_name, post.area, districtName(post.district)].filter(Boolean).join(", ");
 
   return (
     <article aria-label="Next game" className="overflow-hidden rounded-3xl border border-[#242a1f] bg-card">

@@ -1,20 +1,20 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   clearKeeperProfile,
-  dedupeAreas,
+  dedupeRegions,
   loadKeeperProfile,
   saveKeeperProfile,
   subscribeKeeperProfile,
   validateKeeperProfile,
 } from "./keeper";
 
-const input = { name: " Mehedi ", phone: "019 1234 5678", areas: ["Mirpur", " mirpur ", "", "Uttara"], note: " 5 yrs in goal " };
+const input = { name: " Mehedi ", phone: "019 1234 5678", regions: ["Dhaka", " dhaka ", "", "div-sylhet", "atlantis"], note: " 5 yrs in goal " };
 
 describe("validateKeeperProfile", () => {
   it("trims, normalises the phone and dedupes areas", () => {
     expect(validateKeeperProfile(input)).toEqual({
       ok: true,
-      value: { name: "Mehedi", phone: "8801912345678", areas: ["Mirpur", "Uttara"], note: "5 yrs in goal" },
+      value: { name: "Mehedi", phone: "8801912345678", regions: ["dhaka", "div-sylhet"], note: "5 yrs in goal" },
     });
   });
 
@@ -22,21 +22,21 @@ describe("validateKeeperProfile", () => {
     const r = validateKeeperProfile({
       name: "  ",
       phone: "123",
-      areas: ["A", "B", "C", "D", "E", "F"],
+      regions: ["dhaka", "sylhet", "khulna", "rangpur", "barishal", "chattogram"],
       note: "x".repeat(201),
     });
-    expect(!r.ok && Object.keys(r.errors).sort()).toEqual(["areas", "name", "note", "phone"]);
+    expect(!r.ok && Object.keys(r.errors).sort()).toEqual(["name", "note", "phone", "regions"]);
   });
 });
 
-describe("dedupeAreas", () => {
-  it("keeps the first spelling and drops blanks", () => {
-    expect(dedupeAreas(["Mirpur", "MIRPUR", " ", "Agrabad "])).toEqual(["Mirpur", "Agrabad"]);
+describe("dedupeRegions", () => {
+  it("keeps known places once, in the order picked", () => {
+    expect(dedupeRegions(["Dhaka", "DHAKA", " ", "coxs-bazar", "atlantis"])).toEqual(["dhaka", "coxs-bazar"]);
   });
 });
 
 describe("on-device store", () => {
-  const profile = { name: "Mehedi", phone: "8801912345678", areas: ["Mirpur"], note: "" };
+  const profile = { name: "Mehedi", phone: "8801912345678", regions: ["dhaka"], note: "" };
 
   it("saves, loads and clears", () => {
     expect(loadKeeperProfile()).toBeNull();
@@ -47,9 +47,9 @@ describe("on-device store", () => {
   });
 
   it("ignores corrupt or foreign data", () => {
-    window.localStorage.setItem("khelbinaki.keeper.v1", "{");
+    window.localStorage.setItem("khelbinaki.keeper.v2", "{");
     expect(loadKeeperProfile()).toBeNull();
-    window.localStorage.setItem("khelbinaki.keeper.v1", JSON.stringify({ name: 1 }));
+    window.localStorage.setItem("khelbinaki.keeper.v2", JSON.stringify({ name: 1 }));
     expect(loadKeeperProfile()).toBeNull();
   });
 

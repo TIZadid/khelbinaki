@@ -11,6 +11,8 @@ const base: PublicPost = {
   host_name: "Rafi",
   contact_mode: "direct",
   area: "Mirpur",
+  district: "dhaka",
+  division: "div-dhaka",
   turf_name: "Kings Arena",
   start_datetime: "2026-10-01T13:30:00.000Z",
   duration_minutes: 60,
@@ -41,7 +43,7 @@ describe("PostPage", () => {
 
     expect(await screen.findByRole("heading", { level: 1, name: "Mirpur" })).toBeInTheDocument();
     expect(fetchMock.mock.calls[0][0]).toMatch(/\/posts\/p1$/);
-    expect(screen.getByText("Kings Arena")).toBeInTheDocument();
+    expect(screen.getByText("Kings Arena · Dhaka")).toBeInTheDocument();
     expect(screen.getByText("7:30")).toBeInTheDocument();
     expect(screen.getByText("Bring gloves")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /contact host/i })).toBeInTheDocument();

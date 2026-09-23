@@ -1,32 +1,29 @@
+import { isRegion } from "./bd";
 import { normalizeBdPhone } from "./phone";
 
 // A keeper's details, kept only in this browser. Sent to a host only with an "I'm interested" request.
-export type KeeperProfile = { name: string; phone: string; areas: string[]; note: string };
-export type ProfileErrors = Partial<Record<"name" | "phone" | "areas" | "note", string>>;
+export type KeeperProfile = { name: string; phone: string; regions: string[]; note: string };
+export type ProfileErrors = Partial<Record<"name" | "phone" | "regions" | "note", string>>;
 
-export const MAX_AREAS = 5;
-const STORAGE_KEY = "khelbinaki.keeper.v1";
+export const MAX_REGIONS = 5;
+// v2: free-text areas became districts/divisions, so old profiles are not read.
+const STORAGE_KEY = "khelbinaki.keeper.v2";
 const CHANGE_EVENT = "khelbinaki:keeper-profile";
 
-// Trimmed, blank-free, unique ignoring case; the first spelling wins.
-export function dedupeAreas(areas: string[]): string[] {
+// Known districts/divisions only, unique, in the order the keeper picked them.
+export function dedupeRegions(regions: string[]): string[] {
   const seen = new Set<string>();
-  const out: string[] = [];
-  for (const raw of areas) {
-    const area = raw.trim();
-    const key = area.toLowerCase();
-    if (area && !seen.has(key)) {
-      seen.add(key);
-      out.push(area);
-    }
+  for (const raw of regions) {
+    const slug = raw.trim().toLowerCase();
+    if (slug && isRegion(slug)) seen.add(slug);
   }
-  return out;
+  return [...seen];
 }
 
 export function validateKeeperProfile(input: {
   name: string;
   phone: string;
-  areas: string[];
+  regions: string[];
   note: string;
 }): { ok: true; value: KeeperProfile } | { ok: false; errors: ProfileErrors } {
   const errors: ProfileErrors = {};
@@ -38,15 +35,14 @@ export function validateKeeperProfile(input: {
   const phone = normalizeBdPhone(input.phone);
   if (!phone) errors.phone = "Enter a Bangladeshi mobile number like 01712345678";
 
-  const areas = dedupeAreas(input.areas);
-  if (areas.length > MAX_AREAS) errors.areas = `Up to ${MAX_AREAS} areas`;
-  else if (areas.some((a) => a.length > 40)) errors.areas = "Area names are at most 40 characters";
+  const regions = dedupeRegions(input.regions);
+  if (regions.length > MAX_REGIONS) errors.regions = `Up to ${MAX_REGIONS} places`;
 
   const note = input.note.trim();
   if (note.length > 200) errors.note = "At most 200 characters";
 
   if (Object.keys(errors).length > 0) return { ok: false, errors };
-  return { ok: true, value: { name, phone: phone as string, areas, note } };
+  return { ok: true, value: { name, phone: phone as string, regions, note } };
 }
 
 function isProfile(value: unknown): value is KeeperProfile {
@@ -56,8 +52,8 @@ function isProfile(value: unknown): value is KeeperProfile {
     typeof p.name === "string" &&
     typeof p.phone === "string" &&
     typeof p.note === "string" &&
-    Array.isArray(p.areas) &&
-    p.areas.every((a) => typeof a === "string")
+    Array.isArray(p.regions) &&
+    p.regions.every((r) => typeof r === "string")
   );
 }
 

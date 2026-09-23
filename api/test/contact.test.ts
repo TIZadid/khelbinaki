@@ -11,6 +11,7 @@ const postBody = {
   host_name: "Rafi",
   phone: "01712345678",
   area: "Mirpur",
+  district: "dhaka",
   start_datetime: "2026-10-01T14:00:00.000Z",
   turnstile_token: "tok",
 };
@@ -62,7 +63,7 @@ describe("POST /posts/:id/contact (direct mode)", () => {
     expect((await send(human, "POST", `/posts/${filled.post.id}/contact`, { turnstile_token: "t" })).status).toBe(410);
 
     await env.DB.prepare(
-      "INSERT INTO posts (id, host_name, phone, area, start_datetime, edit_token) VALUES ('started001', 'X', '8801711111111', 'Mirpur', '2026-10-01T09:00:00.000Z', 't')",
+      "INSERT INTO posts (id, host_name, phone, area, district, division, start_datetime, edit_token) VALUES ('started001', 'X', '8801711111111', 'Mirpur', 'dhaka', 'div-dhaka', '2026-10-01T09:00:00.000Z', 't')",
     ).run();
     expect((await send(human, "POST", "/posts/started001/contact", { turnstile_token: "t" })).status).toBe(410);
 

@@ -7,6 +7,8 @@ export type PublicPost = {
   contact_mode: ContactMode;
   host_name: string;
   area: string;
+  district: string;
+  division: string;
   turf_name: string | null;
   start_datetime: string;
   duration_minutes: number | null;
@@ -66,6 +68,7 @@ export type NewPostInput = {
   host_name: string;
   phone: string;
   area: string;
+  district: string;
   turf_name?: string;
   start_datetime: string;
   duration_minutes?: number;

@@ -1,4 +1,5 @@
 import { Bell, BellOff, Send } from "lucide-react";
+import { regionName } from "@/lib/bd";
 import { useEffect, useState } from "react";
 import { Turnstile } from "@/components/Turnstile";
 import { type AlertState, currentSubscription, disablePush, enablePush, pushSupported, telegramLink } from "@/lib/alerts";
@@ -9,7 +10,7 @@ import { cn } from "@/lib/utils";
  * Keepers choose how they hear about new games. Both channels are free; both
  * need the one-off spam check, so the widget only loads once they ask for it.
  */
-export function AlertSettings({ areas }: { areas: string[] }) {
+export function AlertSettings({ regions }: { regions: string[] }) {
   const [push, setPush] = useState<AlertState>("off");
   const [wanted, setWanted] = useState<"push" | "telegram" | null>(null);
   const [busy, setBusy] = useState(false);
@@ -32,13 +33,13 @@ export function AlertSettings({ areas }: { areas: string[] }) {
     setBusy(true);
     setMessage("");
     if (wanted === "push") {
-      const state = await enablePush(areas, token);
+      const state = await enablePush(regions, token);
       setPush(state);
       if (state === "blocked") setMessage("Your browser is blocking notifications for this site.");
       if (state === "off") setMessage("Couldn't switch alerts on. Try again.");
     }
     if (wanted === "telegram") {
-      const result = await telegramLink(areas, token);
+      const result = await telegramLink(regions, token);
       setLink(result);
       if (!result) setMessage("Telegram alerts aren't set up yet. Try again later.");
     }
@@ -46,7 +47,8 @@ export function AlertSettings({ areas }: { areas: string[] }) {
     setBusy(false);
   };
 
-  const areaLabel = areas.length > 0 ? areas.join(", ") : "anywhere in Bangladesh";
+  const placeLabel =
+    regions.length > 0 ? regions.map((slug) => regionName(slug) ?? slug).join(", ") : "anywhere in Bangladesh";
 
   return (
     <section aria-labelledby="alerts-heading" className="mt-10 rounded-3xl border border-[#242a1f] bg-card p-5 md:p-7">
@@ -54,7 +56,7 @@ export function AlertSettings({ areas }: { areas: string[] }) {
         Tell me about new games
       </h2>
       <p className="mt-2.5 text-[15px] leading-relaxed text-muted-foreground">
-        Get a notification when a game is posted in <span className="text-foreground">{areaLabel}</span>. Free, and you
+        Get a notification when a game is posted in <span className="text-foreground">{placeLabel}</span>. Free, and you
         can stop any time.
       </p>
 

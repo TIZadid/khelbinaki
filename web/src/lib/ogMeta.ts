@@ -2,6 +2,7 @@
 // typed with it. These tags make each game's link describe that game.
 export type MetaPost = {
   area: string;
+  district?: string;
   turf_name: string | null;
   start_datetime: string;
   cost_per_head: number | null;
@@ -10,7 +11,11 @@ export type MetaPost = {
   status: string;
 };
 
+import { districtName } from "./bd";
+
 const TZ = "Asia/Dhaka";
+
+const districtLabel = (slug?: string) => (slug ? districtName(slug) : null);
 
 function whenLabel(iso: string): string {
   const date = new Date(iso);
@@ -23,7 +28,7 @@ function whenLabel(iso: string): string {
 }
 
 export function buildMeta(post: MetaPost, url: string): { title: string; description: string; url: string } {
-  const place = post.turf_name ? `${post.turf_name}, ${post.area}` : post.area;
+  const place = [post.turf_name, post.area, districtLabel(post.district)].filter(Boolean).join(", ");
   const filled = post.status === "filled";
   const title = `${filled ? "Filled" : "Keeper needed"} · ${place} · ${whenLabel(post.start_datetime)}`;
   const bits = [

@@ -1,4 +1,5 @@
 import type { PublicPost } from "./api";
+import { districtName } from "./bd";
 import { formatDay, formatTime } from "./time";
 
 export function postPath(id: string): string {
@@ -10,7 +11,7 @@ export function postUrl(id: string, origin: string): string {
 }
 
 function place(post: PublicPost): string {
-  return post.turf_name ? `${post.turf_name}, ${post.area}` : post.area;
+  return [post.turf_name, post.area, districtName(post.district)].filter(Boolean).join(", ");
 }
 
 function when(post: PublicPost): string {

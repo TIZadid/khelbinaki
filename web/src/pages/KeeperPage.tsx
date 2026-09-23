@@ -1,13 +1,15 @@
 import { X } from "lucide-react";
-import { type FormEvent, type KeyboardEvent, useState } from "react";
+import { type FormEvent, useState } from "react";
 import { AlertSettings } from "@/components/keeper/AlertSettings";
 import { useKeeperProfile } from "@/hooks/useKeeperProfile";
 import { formatPhone } from "@/lib/contact";
+import { RegionSelect } from "@/components/RegionSelect";
+import { regionName } from "@/lib/bd";
 import {
-  MAX_AREAS,
+  MAX_REGIONS,
   type ProfileErrors,
   clearKeeperProfile,
-  dedupeAreas,
+  dedupeRegions,
   saveKeeperProfile,
   validateKeeperProfile,
 } from "@/lib/keeper";
@@ -30,34 +32,29 @@ export function KeeperPage() {
   const saved = useKeeperProfile();
   const [name, setName] = useState(saved?.name ?? "");
   const [phone, setPhone] = useState(saved ? formatPhone(saved.phone) : "");
-  const [areas, setAreas] = useState<string[]>(saved?.areas ?? []);
-  const [areaDraft, setAreaDraft] = useState("");
+  const [regions, setRegions] = useState<string[]>(saved?.regions ?? []);
+  const [regionDraft, setRegionDraft] = useState("");
   const [note, setNote] = useState(saved?.note ?? "");
   const [errors, setErrors] = useState<ProfileErrors>({});
   const [status, setStatus] = useState<"idle" | "saved" | "failed">("idle");
 
-  const addArea = () => {
-    setAreas(dedupeAreas([...areas, areaDraft]));
-    setAreaDraft("");
-  };
-
-  const onAreaKey = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key !== "Enter") return;
-    e.preventDefault(); // Enter adds the area instead of submitting the form.
-    addArea();
+  const addRegion = (slug: string) => {
+    if (!slug) return;
+    setRegions(dedupeRegions([...regions, slug]).slice(0, MAX_REGIONS));
+    setRegionDraft("");
   };
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
-    const result = validateKeeperProfile({ name, phone, areas: [...areas, areaDraft], note });
+    const result = validateKeeperProfile({ name, phone, regions: [...regions, regionDraft], note });
     if (!result.ok) {
       setErrors(result.errors);
       setStatus("idle");
       return;
     }
     setErrors({});
-    setAreas(result.value.areas);
-    setAreaDraft("");
+    setRegions(result.value.regions);
+    setRegionDraft("");
     setStatus(saveKeeperProfile(result.value) ? "saved" : "failed");
   };
 
@@ -65,8 +62,8 @@ export function KeeperPage() {
     clearKeeperProfile();
     setName("");
     setPhone("");
-    setAreas([]);
-    setAreaDraft("");
+    setRegions([]);
+    setRegionDraft("");
     setNote("");
     setErrors({});
     setStatus("idle");
@@ -118,42 +115,33 @@ export function KeeperPage() {
           </div>
 
           <div>
-            <label htmlFor="keeper-area" className={labelStyle}>
-              Areas you play in
+            <label htmlFor="keeper-region" className={labelStyle}>
+              Where do you play?
             </label>
-            <p className="mt-1 text-sm text-muted-foreground">Up to {MAX_AREAS}. The feed opens on these.</p>
-            <div className="mt-2 flex gap-2">
-              <input
-                id="keeper-area"
-                className={field}
-                value={areaDraft}
-                onChange={(e) => setAreaDraft(e.target.value)}
-                onKeyDown={onAreaKey}
-                placeholder="e.g. Mirpur"
-                aria-invalid={errors.areas ? true : undefined}
-                aria-describedby={errors.areas ? "keeper-area-error" : undefined}
-              />
-              <button
-                type="button"
-                onClick={addArea}
-                aria-label="Add area"
-                className="shrink-0 rounded-lg border px-4 font-semibold hover:border-primary hover:text-primary"
-              >
-                Add
-              </button>
-            </div>
-            <FieldError id="keeper-area-error" message={errors.areas} />
-            {areas.length > 0 && (
+            <p className="mt-1 text-sm text-muted-foreground">
+              Pick up to {MAX_REGIONS} districts, or a whole division. The feed opens on these, and alerts follow them.
+            </p>
+            <RegionSelect
+              id="keeper-region"
+              value={regionDraft}
+              onChange={addRegion}
+              includeDivisions
+              placeholder="Add a district or division"
+              className={cn(field, "mt-2")}
+              invalid={Boolean(errors.regions)}
+            />
+            <FieldError id="keeper-region-error" message={errors.regions} />
+            {regions.length > 0 && (
               <ul className="mt-3 flex flex-wrap gap-2">
-                {areas.map((area) => (
-                  <li key={area.toLowerCase()}>
-                    <span className="inline-flex items-center gap-1 rounded-full border py-1 pr-1 pl-3 text-sm">
-                      {area}
+                {regions.map((slug) => (
+                  <li key={slug}>
+                    <span className="inline-flex items-center gap-1 rounded-full border border-primary py-1 pr-1 pl-3 text-sm text-primary">
+                      {regionName(slug) ?? slug}
                       <button
                         type="button"
-                        onClick={() => setAreas(areas.filter((a) => a !== area))}
-                        aria-label={`Remove ${area}`}
-                        className="rounded-full p-1 text-muted-foreground hover:text-foreground"
+                        onClick={() => setRegions(regions.filter((r) => r !== slug))}
+                        aria-label={`Remove ${regionName(slug) ?? slug}`}
+                        className="rounded-full p-1 hover:text-foreground"
                       >
                         <X aria-hidden="true" className="size-3.5" />
                       </button>
@@ -214,7 +202,7 @@ export function KeeperPage() {
         </form>
       </div>
 
-      {saved && <AlertSettings areas={saved.areas} />}
+      {saved && <AlertSettings regions={saved.regions} />}
     </div>
   );
 }

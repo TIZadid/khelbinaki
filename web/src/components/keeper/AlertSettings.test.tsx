@@ -50,21 +50,21 @@ describe("AlertSettings", () => {
   it("subscribes this device to games in the keeper's areas", async () => {
     const { manager } = stubPushSupport();
     const fetchMock = stubFetch();
-    render(<AlertSettings areas={["Mirpur", "Uttara"]} />);
+    render(<AlertSettings regions={["div-dhaka", "coxs-bazar"]} />);
 
-    expect(screen.getByText(/Mirpur, Uttara/)).toBeInTheDocument();
+    expect(screen.getByText(/All of Dhaka, Cox's Bazar/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /turn on/i }));
 
     expect(await screen.findByRole("button", { name: /turn off/i })).toBeInTheDocument();
     expect(manager.subscribe).toHaveBeenCalled();
     const body = JSON.parse(String(fetchMock.mock.calls[0][1]?.body ?? "{}"));
-    expect(body).toMatchObject({ areas: ["Mirpur", "Uttara"], turnstile_token: "tok" });
+    expect(body).toMatchObject({ regions: ["div-dhaka", "coxs-bazar"], turnstile_token: "tok" });
   });
 
   it("hands over a Telegram link", async () => {
     stubPushSupport();
     stubFetch();
-    render(<AlertSettings areas={[]} />);
+    render(<AlertSettings regions={[]} />);
 
     fireEvent.click(screen.getByRole("button", { name: /connect/i }));
     const link = await screen.findByRole("link", { name: /open telegram/i });
@@ -73,7 +73,7 @@ describe("AlertSettings", () => {
 
   it("says when the browser blocks notifications", async () => {
     stubPushSupport({ permission: "denied" });
-    render(<AlertSettings areas={["Mirpur"]} />);
+    render(<AlertSettings regions={["dhaka"]} />);
 
     expect(await screen.findByText(/blocked in your browser settings/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /turn on/i })).toBeDisabled();

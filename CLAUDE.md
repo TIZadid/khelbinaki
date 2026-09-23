@@ -55,6 +55,8 @@ CREATE TABLE posts (
   notes TEXT,
   status TEXT NOT NULL DEFAULT 'open', -- 'open' | 'filled' | 'archived'
   contact_mode TEXT NOT NULL DEFAULT 'direct', -- 'direct' | 'requests' (migration 0002)
+  district TEXT NOT NULL DEFAULT '', -- slug from src/lib/bd.ts, e.g. 'coxs-bazar' (migration 0004)
+  division TEXT NOT NULL DEFAULT '', -- 'div-<division>', e.g. 'div-chattogram' (migration 0004)
   edit_token TEXT NOT NULL,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -85,9 +87,17 @@ note, created_at; UNIQUE (post_id, phone). Only the post's host (edit token) can
    and makes the feed open on the keeper's areas. Never send it anywhere except with
    an interest request.
 
+7. **Places** (owner decision 2026-09-23): hosts pick a **district** from the fixed
+   list in `src/lib/bd.ts` (8 divisions, 64 districts — the same file is copied into
+   `api/` and `web/`, keep them identical) plus a free-text local `area` ("Mirpur 10").
+   Keepers never type a place: they follow districts or whole divisions. A division's
+   region slug is prefixed `div-` because every division shares its name with one of
+   its districts.
+
 6. **Alerts** (`alerts` table, migration 0003): keepers opt in to browser push
    (VAPID, bodyless — the service worker fetches the newest games) and/or Telegram.
-   Areas are a lowercase comma-separated list; empty means anywhere. New posts fan
+   Regions (districts or `div-` divisions) are a lowercase comma-separated list;
+   empty means anywhere in Bangladesh. New posts fan
    out in `waitUntil`; a failed alert must never fail the post. Secrets in the API
    Worker: `VAPID_PRIVATE_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`
    (the local copy lives in gitignored `api/.dev.vars`).
@@ -143,16 +153,16 @@ npx wrangler secret put <NAME>
 
 | Method & path | Body | Success | Errors |
 |---|---|---|---|
-| `GET /posts?area=` | – | `200 {posts}` upcoming, non-archived, soonest first, max 100 | – |
+| `GET /posts?area=&district=` | – | `200 {posts}` upcoming, non-archived, soonest first, max 100 | – |
 | `GET /posts/:id` | – | `200 {post}` (past/filled too) | `404` |
-| `POST /posts` | post fields + `contact_mode` + `turnstile_token` | `201 {post, edit_token}` | `400 invalid_json`, `400 validation {fields}`, `403 captcha_failed` |
+| `POST /posts` | post fields + `district` + `contact_mode` + `turnstile_token` | `201 {post, edit_token}` | `400 invalid_json`, `400 validation {fields}`, `403 captcha_failed` |
 | `PATCH /posts/:id` | `{edit_token, status: "open"\|"filled"}` | `200 {post}` | `400`, `403 forbidden`, `404` |
 | `POST /posts/:id/contact` | `{turnstile_token}` | `200 {phone}` (direct mode only) | `404`, `409 requests_only`, `410 closed`, `403 captcha_failed` |
 | `POST /posts/:id/interests` | `{name, phone, note?, turnstile_token}` | `201/200 {ok:true}` (requests mode) | `404`, `409 direct_only`, `410 closed`, `400`, `403`, `429 full` (30/post) |
 | `GET /posts/:id/interests` | `Authorization: Bearer <edit_token>` | `200 {interests}` | `403 forbidden`, `404` |
-| `POST /alerts` | `{subscription, areas[], turnstile_token}` | `201 {ok, areas}` — browser push | `400`, `403 captcha_failed` |
+| `POST /alerts` | `{subscription, regions[], turnstile_token}` | `201 {ok, regions}` — browser push | `400`, `403 captcha_failed` |
 | `POST /alerts/off` | `{endpoint}` | `200 {ok}` | `400` |
-| `POST /alerts/telegram` | `{areas[], turnstile_token}` | `201 {code, link}` | `403`, `503 telegram_unavailable` |
+| `POST /alerts/telegram` | `{regions[], turnstile_token}` | `201 {code, link}` | `403`, `503 telegram_unavailable` |
 | `POST /telegram/:secret` | Telegram update | `200 {ok}` — `/start <code>` links a chat, `/stop` unlinks | `403` |
 | `POST /telegram/setup/:secret` | – | `200 {ok}` — points Telegram at the webhook | `403`, `503 no_bot_token` |
 

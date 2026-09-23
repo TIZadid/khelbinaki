@@ -1,3 +1,5 @@
+import { divisionOf, isDistrict } from "../lib/bd";
+
 export type ContactMode = "direct" | "requests";
 
 export type NewPost = {
@@ -11,6 +13,8 @@ export type NewPost = {
   slots_needed: number;
   notes: string | null;
   contact_mode: ContactMode;
+  district: string;
+  division: string;
 };
 
 export type NewInterest = { name: string; phone: string; note: string | null };
@@ -88,6 +92,19 @@ export function validateNewPost(input: unknown, now: Date): Validation<NewPost> 
     }
   }
 
+  let district: string | null = null;
+  let division: string | null = null;
+  const rawDistrict = text("district", 40, true);
+  if (rawDistrict !== null) {
+    const slug = rawDistrict.toLowerCase();
+    if (isDistrict(slug)) {
+      district = slug;
+      division = divisionOf(slug);
+    } else {
+      errors.district = "Choose a district";
+    }
+  }
+
   const host_name = text("host_name", 60, true);
   const area = text("area", 60, true);
   const turf_name = text("turf_name", 80, false);
@@ -123,6 +140,8 @@ export function validateNewPost(input: unknown, now: Date): Validation<NewPost> 
       slots_needed,
       notes,
       contact_mode,
+      district: district as string,
+      division: division as string,
     },
   };
 }

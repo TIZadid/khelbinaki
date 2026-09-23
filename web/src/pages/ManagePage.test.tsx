@@ -9,6 +9,8 @@ const post: PublicPost = {
   contact_mode: "requests",
   host_name: "Nabil",
   area: "Mirpur",
+  district: "dhaka",
+  division: "div-dhaka",
   turf_name: "Striker Turf",
   start_datetime: "2026-10-01T17:00:00.000Z",
   duration_minutes: 90,

@@ -11,6 +11,8 @@ const post: PublicPost = {
   contact_mode: "direct",
   host_name: "Rafi",
   area: "Mirpur",
+  district: "dhaka",
+  division: "div-dhaka",
   turf_name: "Kings Arena",
   start_datetime: "2026-10-01T13:30:00.000Z",
   duration_minutes: 60,
@@ -65,7 +67,7 @@ describe("InterestForm", () => {
   const requestsPost = { ...post, contact_mode: "requests" as const, host_name: "Nabil" };
 
   it("pre-fills from the keeper profile and sends the request", async () => {
-    saveKeeperProfile({ name: "Mehedi", phone: "8801912345678", areas: ["Mirpur"], note: "5 yrs in goal" });
+    saveKeeperProfile({ name: "Mehedi", phone: "8801912345678", regions: ["dhaka"], note: "5 yrs in goal" });
     const fetchMock = stubFetch({ ok: true }, 201);
     render(<InterestForm post={requestsPost} />);
 

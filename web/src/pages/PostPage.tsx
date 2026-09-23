@@ -6,6 +6,7 @@ import { InterestForm } from "@/components/post/InterestForm";
 import { useAsync } from "@/hooks/useAsync";
 import { useNow } from "@/hooks/useNow";
 import { fetchPost, type PublicPost } from "@/lib/api";
+import { districtName } from "@/lib/bd";
 import { Link } from "@/lib/router";
 import { formatCountdown, formatDay, formatTime, isStartingSoon } from "@/lib/time";
 import { btn } from "@/lib/ui";
@@ -99,7 +100,9 @@ function PostDetail({ post, now }: { post: PublicPost; now: Date }) {
         {status}
       </p>
       <h1 className="mt-3.5 font-display text-7xl leading-[0.88] font-extrabold uppercase md:text-8xl">{post.area}</h1>
-      {post.turf_name && <p className="mt-2 text-[17px] text-muted-foreground">{post.turf_name}</p>}
+      <p className="mt-2 text-[17px] text-muted-foreground">
+        {[post.turf_name, districtName(post.district)].filter(Boolean).join(" · ")}
+      </p>
 
       <p className="mt-9 flex items-baseline gap-3.5 font-display font-bold">
         <span className="text-[120px] leading-[0.85]">{clock}</span>

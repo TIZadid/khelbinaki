@@ -1,4 +1,5 @@
 import { sendPush } from "../lib/webpush";
+import { districtName } from "../lib/bd";
 import type { PublicPost } from "../posts/repo";
 import { deleteAlert, listAlertsFor } from "./repo";
 
@@ -13,7 +14,7 @@ export type NotifyEnv = {
 
 /** What a keeper reads in Telegram when a game near them is posted. */
 export function alertMessage(post: PublicPost, siteUrl: string): string {
-  const place = post.turf_name ? `${post.turf_name}, ${post.area}` : post.area;
+  const where = [post.turf_name, post.area, districtName(post.district)].filter(Boolean).join(", ");
   const start = new Date(post.start_datetime);
   const day = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Asia/Dhaka",
@@ -25,7 +26,7 @@ export function alertMessage(post: PublicPost, siteUrl: string): string {
     .format(start)
     .replace(/ /g, " ");
   const cost = post.cost_per_head != null ? ` · ৳${post.cost_per_head}/head` : "";
-  return `Keeper needed: ${place} · ${day} ${time}${cost}\n${siteUrl}/p/${post.id}`;
+  return `Keeper needed: ${where} · ${day} ${time}${cost}\n${siteUrl}/p/${post.id}`;
 }
 
 async function sendTelegram(token: string, chatId: string, text: string, fetcher: typeof fetch): Promise<boolean> {
@@ -46,7 +47,7 @@ export async function notifyNewPost(
   post: PublicPost,
   fetcher: typeof fetch = (input, init) => fetch(input, init),
 ): Promise<{ sent: number; dropped: number }> {
-  const alerts = await listAlertsFor(env.DB, post.area);
+  const alerts = await listAlertsFor(env.DB, post.district, post.division);
   let sent = 0;
   let dropped = 0;
 

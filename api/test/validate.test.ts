@@ -6,6 +6,7 @@ const valid = {
   host_name: "  Rafi ",
   phone: "01712345678",
   area: "Mirpur",
+  district: "dhaka",
   start_datetime: "2026-10-01T20:00:00+06:00",
 };
 
@@ -39,6 +40,8 @@ describe("validateNewPost", () => {
         slots_needed: 1,
         notes: null,
         contact_mode: "direct",
+        district: "dhaka",
+        division: "div-dhaka",
       },
     });
   });
@@ -54,7 +57,14 @@ describe("validateNewPost", () => {
   it("reports every problem at once", () => {
     const r = validateNewPost({ phone: "123", start_datetime: "2026-09-30T10:00:00Z", cost_per_head: -5 }, NOW);
     expect(r.ok).toBe(false);
-    expect(!r.ok && Object.keys(r.errors).sort()).toEqual(["area", "cost_per_head", "host_name", "phone", "start_datetime"]);
+    expect(!r.ok && Object.keys(r.errors).sort()).toEqual([
+      "area",
+      "cost_per_head",
+      "district",
+      "host_name",
+      "phone",
+      "start_datetime",
+    ]);
   });
 
   it("requires a timezone and a sane date", () => {
@@ -117,5 +127,18 @@ describe("validateInterest", () => {
   it("reports missing name, bad phone and long note", () => {
     const r = validateInterest({ phone: "123", note: "x".repeat(201) });
     expect(!r.ok && Object.keys(r.errors).sort()).toEqual(["name", "note", "phone"]);
+  });
+});
+
+describe("district", () => {
+  it("accepts a known district and fills in its division", () => {
+    const r = validateNewPost({ ...valid, district: "Coxs-Bazar" }, NOW);
+    expect(r.ok && [r.value.district, r.value.division]).toEqual(["coxs-bazar", "div-chattogram"]);
+  });
+
+  it("rejects anything not on the list", () => {
+    expect(!validateNewPost({ ...valid, district: "atlantis" }, NOW).ok).toBe(true);
+    const r = validateNewPost({ ...valid, district: "atlantis" }, NOW);
+    expect(!r.ok && r.errors.district).toBe("Choose a district");
   });
 });

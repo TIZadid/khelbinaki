@@ -1,7 +1,8 @@
 import { type Context, Hono } from "hono";
 import { cors } from "hono/cors";
 import { notifyNewPost } from "./alerts/notify";
-import { deleteAlert, normalizeAreas, saveAlert, saveTelegramCode, takeTelegramCode } from "./alerts/repo";
+import { deleteAlert, normalizeRegions, saveAlert, saveTelegramCode, takeTelegramCode } from "./alerts/repo";
+import { regionName } from "./lib/bd";
 import { isAllowedOrigin } from "./lib/origins";
 import { randomId, randomToken } from "./lib/random";
 import type { VerifyHuman } from "./lib/turnstile";
@@ -63,7 +64,8 @@ export function createApp(deps: Deps) {
 
   app.get("/posts", async (c) => {
     const area = c.req.query("area")?.trim() || undefined;
-    return c.json({ posts: await listFeed(c.env.DB, deps.now(), { area }) });
+    const district = c.req.query("district")?.trim() || undefined;
+    return c.json({ posts: await listFeed(c.env.DB, deps.now(), { area, district }) });
   });
 
   app.get("/posts/:id", async (c) => {
@@ -146,14 +148,14 @@ export function createApp(deps: Deps) {
     if (!body) return c.json({ error: "invalid_json" }, 400);
     if (!(await isHuman(c, body))) return c.json({ error: "captcha_failed" }, 403);
 
-    const areas = normalizeAreas(Array.isArray(body.areas) ? body.areas.filter((a): a is string => typeof a === "string") : []);
+    const regions = normalizeRegions(Array.isArray(body.regions) ? body.regions.filter((r): r is string => typeof r === "string") : []);
     const subscription = body.subscription as { endpoint?: unknown } | undefined;
     if (typeof subscription?.endpoint !== "string" || !/^https:\/\//.test(subscription.endpoint)) {
       return c.json({ error: "validation", fields: { subscription: "A push subscription is required" } }, 400);
     }
 
-    await saveAlert(c.env.DB, randomId(12), "push", subscription.endpoint, areas);
-    return c.json({ ok: true, areas }, 201);
+    await saveAlert(c.env.DB, randomId(12), "push", subscription.endpoint, regions);
+    return c.json({ ok: true, regions }, 201);
   });
 
   app.post("/alerts/off", async (c) => {
@@ -170,9 +172,9 @@ export function createApp(deps: Deps) {
     if (!(await isHuman(c, body))) return c.json({ error: "captcha_failed" }, 403);
     if (!c.env.TELEGRAM_BOT_USERNAME) return c.json({ error: "telegram_unavailable" }, 503);
 
-    const areas = normalizeAreas(Array.isArray(body.areas) ? body.areas.filter((a): a is string => typeof a === "string") : []);
+    const regions = normalizeRegions(Array.isArray(body.regions) ? body.regions.filter((r): r is string => typeof r === "string") : []);
     const code = randomId(10);
-    await saveTelegramCode(c.env.DB, code, areas);
+    await saveTelegramCode(c.env.DB, code, regions);
     return c.json({ code, link: `https://t.me/${c.env.TELEGRAM_BOT_USERNAME}?start=${code}` }, 201);
   });
 
@@ -208,14 +210,14 @@ export function createApp(deps: Deps) {
     const start = /^\/start\s+([0-9A-Za-z]{1,32})/.exec(text);
     let reply = "Send the link from the Khelbi Naki site to start getting alerts.";
     if (start) {
-      const areas = await takeTelegramCode(c.env.DB, start[1]);
-      if (areas === null) {
+      const regions = await takeTelegramCode(c.env.DB, start[1]);
+      if (regions === null) {
         reply = "That link has already been used. Get a fresh one from the site.";
       } else {
-        await saveAlert(c.env.DB, randomId(12), "telegram", String(chatId), areas);
-        reply = areas
-          ? `Done. I'll message you when a game is posted in: ${areas.split(",").join(", ")}.`
-          : "Done. I'll message you when any new game is posted.";
+        await saveAlert(c.env.DB, randomId(12), "telegram", String(chatId), regions);
+        reply = regions
+          ? `Done. I'll message you when a game is posted in: ${regions.split(",").map((slug) => regionName(slug) ?? slug).join(", ")}.`
+          : "Done. I'll message you when any new game is posted anywhere in Bangladesh.";
       }
     }
     if (/^\/stop/.test(text)) {

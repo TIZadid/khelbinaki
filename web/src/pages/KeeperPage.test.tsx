@@ -10,9 +10,7 @@ describe("KeeperPage", () => {
     render(<KeeperPage />);
     type(/your name/i, "Mehedi");
     type(/whatsapp number/i, "019 1234 5678");
-    type(/areas you play in/i, "Mirpur");
-    fireEvent.click(screen.getByRole("button", { name: /add area/i }));
-    type(/areas you play in/i, "Uttara"); // typed but not added: still saved
+    fireEvent.change(screen.getByLabelText(/where do you play/i), { target: { value: "dhaka" } });
     type(/about you/i, "5 years in goal");
     fireEvent.click(screen.getByRole("button", { name: /save profile/i }));
 
@@ -20,19 +18,21 @@ describe("KeeperPage", () => {
     expect(loadKeeperProfile()).toEqual({
       name: "Mehedi",
       phone: "8801912345678",
-      areas: ["Mirpur", "Uttara"],
+      regions: ["dhaka"],
       note: "5 years in goal",
     });
   });
 
-  it("adds areas with Enter and removes them", () => {
+  it("adds and removes places from the list", () => {
     render(<KeeperPage />);
-    const areaInput = screen.getByLabelText(/areas you play in/i);
-    fireEvent.change(areaInput, { target: { value: "Agrabad" } });
-    fireEvent.keyDown(areaInput, { key: "Enter" });
-    expect(screen.getByRole("button", { name: "Remove Agrabad" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Remove Agrabad" }));
-    expect(screen.queryByRole("button", { name: "Remove Agrabad" })).toBeNull();
+    fireEvent.change(screen.getByLabelText(/where do you play/i), { target: { value: "coxs-bazar" } });
+    expect(screen.getByRole("button", { name: "Remove Cox's Bazar" })).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/where do you play/i), { target: { value: "div-sylhet" } });
+    expect(screen.getByRole("button", { name: "Remove All of Sylhet" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove Cox's Bazar" }));
+    expect(screen.queryByRole("button", { name: "Remove Cox's Bazar" })).toBeNull();
   });
 
   it("shows field errors and saves nothing", () => {
@@ -46,11 +46,11 @@ describe("KeeperPage", () => {
   });
 
   it("prefills a saved profile and deletes it", () => {
-    saveKeeperProfile({ name: "Mehedi", phone: "8801912345678", areas: ["Mirpur"], note: "" });
+    saveKeeperProfile({ name: "Mehedi", phone: "8801912345678", regions: ["dhaka"], note: "" });
     render(<KeeperPage />);
     expect(screen.getByLabelText(/your name/i)).toHaveValue("Mehedi");
     expect(screen.getByLabelText(/whatsapp number/i)).toHaveValue("01912-345678");
-    expect(screen.getByRole("button", { name: "Remove Mirpur" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Remove Dhaka" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /delete profile/i }));
     expect(loadKeeperProfile()).toBeNull();

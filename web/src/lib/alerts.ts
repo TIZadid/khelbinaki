@@ -20,7 +20,7 @@ export async function currentSubscription(): Promise<PushSubscription | null> {
 }
 
 /** Asks permission, subscribes, and tells the API which areas to watch. */
-export async function enablePush(areas: string[], turnstileToken: string): Promise<AlertState> {
+export async function enablePush(regions: string[], turnstileToken: string): Promise<AlertState> {
   if (!pushSupported()) return "unsupported";
   const permission = await Notification.requestPermission();
   if (permission !== "granted") return permission === "denied" ? "blocked" : "off";
@@ -37,7 +37,7 @@ export async function enablePush(areas: string[], turnstileToken: string): Promi
   const response = await fetch(`${API_URL}/alerts`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ subscription: subscription.toJSON(), areas, turnstile_token: turnstileToken }),
+    body: JSON.stringify({ subscription: subscription.toJSON(), regions, turnstile_token: turnstileToken }),
   });
   return response.ok ? "on" : "off";
 }
@@ -54,11 +54,11 @@ export async function disablePush(): Promise<void> {
 }
 
 /** Returns the t.me link that ties this keeper's Telegram chat to their areas. */
-export async function telegramLink(areas: string[], turnstileToken: string): Promise<string | null> {
+export async function telegramLink(regions: string[], turnstileToken: string): Promise<string | null> {
   const response = await fetch(`${API_URL}/alerts/telegram`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ areas, turnstile_token: turnstileToken }),
+    body: JSON.stringify({ regions, turnstile_token: turnstileToken }),
   });
   if (!response.ok) return null;
   const data = (await response.json()) as { link?: string };

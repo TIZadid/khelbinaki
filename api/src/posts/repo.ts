@@ -8,6 +8,8 @@ export type PublicPost = {
   contact_mode: ContactMode;
   host_name: string;
   area: string;
+  district: string;
+  division: string;
   turf_name: string | null;
   start_datetime: string;
   duration_minutes: number | null;
@@ -32,15 +34,15 @@ export const MAX_INTERESTS = 30;
 
 // Everything except edit_token and phone (both private) and lat/lng (unused for now).
 const PUBLIC_COLUMNS =
-  "id, listing_type, contact_mode, host_name, area, turf_name, start_datetime, duration_minutes, cost_per_head, slots_needed, notes, status, created_at";
+  "id, listing_type, contact_mode, host_name, area, district, division, turf_name, start_datetime, duration_minutes, cost_per_head, slots_needed, notes, status, created_at";
 
 const FEED_LIMIT = 100;
 
 export async function insertPost(db: D1Database, id: string, editToken: string, post: NewPost): Promise<PublicPost> {
   const row = await db
     .prepare(
-      `INSERT INTO posts (id, host_name, phone, area, turf_name, start_datetime, duration_minutes, cost_per_head, slots_needed, notes, contact_mode, edit_token)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `INSERT INTO posts (id, host_name, phone, area, district, division, turf_name, start_datetime, duration_minutes, cost_per_head, slots_needed, notes, contact_mode, edit_token)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        RETURNING ${PUBLIC_COLUMNS}`,
     )
     .bind(
@@ -48,6 +50,8 @@ export async function insertPost(db: D1Database, id: string, editToken: string, 
       post.host_name,
       post.phone,
       post.area,
+      post.district,
+      post.division,
       post.turf_name,
       post.start_datetime,
       post.duration_minutes,
@@ -65,13 +69,17 @@ export async function insertPost(db: D1Database, id: string, editToken: string, 
 export async function listFeed(
   db: D1Database,
   now: Date,
-  opts: { area?: string; listingType?: string } = {},
+  opts: { area?: string; district?: string; listingType?: string } = {},
 ): Promise<PublicPost[]> {
   const where = ["listing_type = ?", "status != 'archived'", "start_datetime > ?"];
   const params: unknown[] = [opts.listingType ?? "gk_needed", now.toISOString()];
   if (opts.area) {
     where.push("area = ? COLLATE NOCASE");
     params.push(opts.area);
+  }
+  if (opts.district) {
+    where.push("district = ?");
+    params.push(opts.district.toLowerCase());
   }
   const { results } = await db
     .prepare(`SELECT ${PUBLIC_COLUMNS} FROM posts WHERE ${where.join(" AND ")} ORDER BY start_datetime ASC LIMIT ${FEED_LIMIT}`)

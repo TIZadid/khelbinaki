@@ -1,4 +1,5 @@
 import { motion } from "motion/react";
+import { districtName } from "@/lib/bd";
 import { cn } from "@/lib/utils";
 
 export type AreaOption = { key: string; label: string; count: number };
@@ -6,14 +7,15 @@ export type AreaOption = { key: string; label: string; count: number };
 // Sentinel for the chip that filters to the keeper profile's areas.
 export const MY_AREAS_KEY = "__mine";
 
-// One chip per area (case-insensitive), most posts first.
-export function areaOptions(areas: string[]): AreaOption[] {
+// One chip per district, most games first.
+export function areaOptions(districts: string[]): AreaOption[] {
   const byKey = new Map<string, AreaOption>();
-  for (const area of areas) {
-    const key = area.trim().toLowerCase();
+  for (const district of districts) {
+    const key = district.trim().toLowerCase();
+    if (!key) continue;
     const existing = byKey.get(key);
     if (existing) existing.count += 1;
-    else byKey.set(key, { key, label: area.trim(), count: 1 });
+    else byKey.set(key, { key, label: districtName(key) ?? key, count: 1 });
   }
   return [...byKey.values()].sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
 }
@@ -56,9 +58,9 @@ export function AreaChips({
   };
 
   return (
-    <div role="group" aria-label="Filter by area" className="flex flex-wrap gap-2">
-      {chip(null, "All areas")}
-      {showMine && chip(MY_AREAS_KEY, "My areas")}
+    <div role="group" aria-label="Filter by district" className="flex flex-wrap gap-2">
+      {chip(null, "All of Bangladesh")}
+      {showMine && chip(MY_AREAS_KEY, "My places")}
       {options.map((o) => chip(o.key, o.label, o.count))}
     </div>
   );

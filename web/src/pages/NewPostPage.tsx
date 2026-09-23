@@ -1,4 +1,5 @@
 import { type FormEvent, useState } from "react";
+import { RegionSelect } from "@/components/RegionSelect";
 import { Turnstile } from "@/components/Turnstile";
 import { type ContactMode, createPost } from "@/lib/api";
 import { managePath, rememberMyPost } from "@/lib/myPosts";
@@ -20,6 +21,7 @@ function dhakaToday(): string {
 
 export function NewPostPage() {
   const [values, setValues] = useState({
+    district: "",
     area: "",
     turf_name: "",
     date: dhakaToday(),
@@ -43,7 +45,8 @@ export function NewPostPage() {
     e.preventDefault();
     const next: Record<string, string> = {};
     if (!values.host_name.trim()) next.host_name = "Tell keepers your name";
-    if (!values.area.trim()) next.area = "Where is the game?";
+    if (!values.district) next.district = "Choose a district";
+    if (!values.area.trim()) next.area = "Which part of town?";
     const phone = normalizeBdPhone(values.phone);
     if (!phone) next.phone = "Enter a Bangladeshi mobile number like 01712345678";
     const start = new Date(`${values.date}T${values.time}:00${DHAKA_OFFSET}`);
@@ -59,6 +62,7 @@ export function NewPostPage() {
       host_name: values.host_name.trim(),
       phone: phone as string,
       area: values.area.trim(),
+      district: values.district,
       turf_name: values.turf_name.trim() || undefined,
       start_datetime: start.toISOString(),
       duration_minutes: values.duration,
@@ -95,6 +99,19 @@ export function NewPostPage() {
         <fieldset className="flex flex-col gap-4 border-0 p-0">
           <legend className={legend}>The game</legend>
           <div className="clear-both">
+            <label htmlFor="f-district" className="text-sm font-semibold">
+              District
+            </label>
+            <RegionSelect
+              id="f-district"
+              value={values.district}
+              onChange={(district) => set({ district })}
+              className={field}
+              invalid={Boolean(errors.district)}
+            />
+            {err("district")}
+          </div>
+          <div>
             <label htmlFor="f-area" className="text-sm font-semibold">
               Area
             </label>
@@ -102,7 +119,7 @@ export function NewPostPage() {
               id="f-area"
               value={values.area}
               onChange={(e) => set({ area: e.target.value })}
-              placeholder="e.g. Mirpur"
+              placeholder="e.g. Mirpur 10"
               className={field}
               aria-invalid={errors.area ? true : undefined}
             />

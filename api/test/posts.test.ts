@@ -15,6 +15,7 @@ const validBody = {
   host_name: "Rafi",
   phone: "01712345678",
   area: "Mirpur",
+  district: "dhaka",
   turf_name: "Kings Arena",
   start_datetime: "2026-10-01T14:00:00.000Z",
   duration_minutes: 60,
@@ -38,7 +39,7 @@ async function create(overrides: Record<string, unknown> = {}) {
 
 async function insertRaw(id: string, start: string, status = "open") {
   await env.DB.prepare(
-    "INSERT INTO posts (id, host_name, phone, area, start_datetime, status, edit_token) VALUES (?, 'X', '8801711111111', 'Mirpur', ?, ?, 't')",
+    "INSERT INTO posts (id, host_name, phone, area, district, division, start_datetime, status, edit_token) VALUES (?, 'X', '8801711111111', 'Mirpur', 'dhaka', 'div-dhaka', ?, ?, 't')",
   )
     .bind(id, start, status)
     .run();
@@ -52,6 +53,8 @@ describe("POST /posts", () => {
       host_name: "Rafi",
       contact_mode: "direct",
       area: "Mirpur",
+      district: "dhaka",
+      division: "div-dhaka",
       turf_name: "Kings Arena",
       start_datetime: "2026-10-01T14:00:00.000Z",
       cost_per_head: 150,
