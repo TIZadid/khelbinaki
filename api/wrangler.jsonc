@@ -11,7 +11,8 @@
     "SITE_URL": "https://khelbinaki.zlabz.workers.dev",
     "VAPID_PUBLIC_KEY": "BBPgyWJg3ko3TwZp6gG9jAcs2bKvtqSLeO37ffIWGvXBURdLYX21xcuBLzdfXz59LXgUQ_vMrvJTAg561o3ArxQ",
     "VAPID_SUBJECT": "https://khelbinaki.zlabz.workers.dev",
-    "TELEGRAM_BOT_USERNAME": "gklagbebot"
+    "TELEGRAM_BOT_USERNAME": "gklagbebot",
+    "TELEGRAM_OPP_BOT_USERNAME": "opponentlagbebot"
   },
   "d1_databases": [
     {

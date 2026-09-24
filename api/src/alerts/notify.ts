@@ -1,18 +1,18 @@
 import { sendPush } from "../lib/webpush";
 import { districtName } from "../lib/bd";
 import type { PublicPost } from "../posts/repo";
+import { type BotEnv, botsFor, sendTelegram } from "./bots";
 import { deleteAlert, listAlertsFor } from "./repo";
 
-export type NotifyEnv = {
+export type NotifyEnv = BotEnv & {
   DB: D1Database;
   SITE_URL: string;
   VAPID_PUBLIC_KEY?: string;
   VAPID_PRIVATE_KEY?: string;
   VAPID_SUBJECT?: string;
-  TELEGRAM_BOT_TOKEN?: string;
 };
 
-/** What a keeper reads in Telegram when a game near them is posted. */
+/** What someone reads in Telegram when a post near them goes up. */
 export function alertMessage(post: PublicPost, siteUrl: string): string {
   const where = [post.turf_name, post.area, districtName(post.district)].filter(Boolean).join(", ");
   const start = new Date(post.start_datetime);
@@ -24,42 +24,39 @@ export function alertMessage(post: PublicPost, siteUrl: string): string {
   }).format(start);
   const time = new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Dhaka", hour: "numeric", minute: "2-digit" })
     .format(start)
-    .replace(/ /g, " ");
+    .replace(/ /g, " ");
+  const link = `${siteUrl}/p/${post.id}`;
+  if (post.listing_type === "opponent_needed") {
+    const format = post.players_per_side ? ` · ${post.players_per_side}-a-side` : "";
+    const cost = post.cost_per_head != null ? ` · ৳${post.cost_per_head}/team` : "";
+    return `Opponent needed: ${post.team_name ?? post.host_name}${format} · ${where} · ${day} ${time}${cost}\n${link}`;
+  }
   const cost = post.cost_per_head != null ? ` · ৳${post.cost_per_head}/head` : "";
-  return `Keeper needed: ${where} · ${day} ${time}${cost}\n${siteUrl}/p/${post.id}`;
-}
-
-async function sendTelegram(token: string, chatId: string, text: string, fetcher: typeof fetch): Promise<boolean> {
-  const response = await fetcher(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text }),
-  });
-  return response.ok;
+  return `Keeper needed: ${where} · ${day} ${time}${cost}\n${link}`;
 }
 
 /**
- * Tells every keeper watching this area. Failures are swallowed on purpose:
- * posting a game must never fail because a notification did.
+ * Tells everyone who wants this post's board and follows its place. Telegram
+ * alerts go out through the bot they signed up with. Failures are swallowed on
+ * purpose: posting must never fail because a notification did.
  */
 export async function notifyNewPost(
   env: NotifyEnv,
   post: PublicPost,
   fetcher: typeof fetch = (input, init) => fetch(input, init),
 ): Promise<{ sent: number; dropped: number }> {
-  // Alerts are a keeper feature: opponent posts don't wake keepers up.
-  if (post.listing_type !== "gk_needed") return { sent: 0, dropped: 0 };
-  const alerts = await listAlertsFor(env.DB, post.district, post.division);
+  const alerts = await listAlertsFor(env.DB, post.district, post.division, post.listing_type);
+  const bots = botsFor(env);
   let sent = 0;
   let dropped = 0;
 
   for (const alert of alerts) {
     try {
-      if (alert.channel === "telegram") {
-        if (!env.TELEGRAM_BOT_TOKEN) continue;
-        if (await sendTelegram(env.TELEGRAM_BOT_TOKEN, alert.address, alertMessage(post, env.SITE_URL), fetcher)) {
-          sent += 1;
-        }
+      if (alert.channel === "telegram" || alert.channel === "telegram_opp") {
+        const token = (alert.channel === "telegram_opp" ? bots.opp : bots.gk).token;
+        if (!token) continue;
+        const response = await sendTelegram(token, alert.address, alertMessage(post, env.SITE_URL), fetcher);
+        if (response.ok) sent += 1;
         continue;
       }
 

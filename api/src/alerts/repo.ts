@@ -1,7 +1,19 @@
-export type AlertChannel = "push" | "telegram";
 import { isRegion } from "../lib/bd";
 
-export type Alert = { id: string; channel: AlertChannel; address: string; regions: string };
+// "telegram" is @gklagbebot, "telegram_opp" is @opponentlagbebot.
+export type AlertChannel = "push" | "telegram" | "telegram_opp";
+export type Board = "gk_needed" | "opponent_needed";
+export type BotKey = "gk" | "opp";
+
+export const BOARDS: readonly Board[] = ["gk_needed", "opponent_needed"];
+
+export type Alert = { id: string; channel: AlertChannel; address: string; regions: string; boards: string };
+
+/** Known boards only, unique, comma-joined; "" when none are valid. */
+export function normalizeBoards(input: unknown): string {
+  const list = Array.isArray(input) ? input : [];
+  return BOARDS.filter((board) => list.includes(board)).join(",");
+}
 
 /**
  * Regions are districts or whole divisions, stored as a lowercase comma-separated
@@ -28,13 +40,14 @@ export async function saveAlert(
   channel: AlertChannel,
   address: string,
   regions: string,
+  boards = "gk_needed",
 ): Promise<void> {
   await db
     .prepare(
-      `INSERT INTO alerts (id, channel, address, regions) VALUES (?, ?, ?, ?)
-       ON CONFLICT (channel, address) DO UPDATE SET regions = excluded.regions`,
+      `INSERT INTO alerts (id, channel, address, regions, boards) VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT (channel, address) DO UPDATE SET regions = excluded.regions, boards = excluded.boards`,
     )
-    .bind(id, channel, address, regions)
+    .bind(id, channel, address, regions, boards)
     .run();
 }
 
@@ -43,57 +56,73 @@ export async function deleteAlert(db: D1Database, channel: AlertChannel, address
   return result.meta.changes > 0;
 }
 
-/** Everyone following this district or its division, plus everyone following everywhere. */
-export async function listAlertsFor(db: D1Database, district: string, division: string): Promise<Alert[]> {
+/** Everyone who wants this board and follows this district, its division, or everywhere. */
+export async function listAlertsFor(
+  db: D1Database,
+  district: string,
+  division: string,
+  board: Board = "gk_needed",
+): Promise<Alert[]> {
   const { results } = await db
     .prepare(
-      `SELECT id, channel, address, regions FROM alerts
-       WHERE regions = '' OR instr(',' || regions || ',', ?) > 0 OR instr(',' || regions || ',', ?) > 0`,
+      `SELECT id, channel, address, regions, boards FROM alerts
+       WHERE instr(',' || boards || ',', ?) > 0
+         AND (regions = '' OR instr(',' || regions || ',', ?) > 0 OR instr(',' || regions || ',', ?) > 0)`,
     )
-    .bind(`,${district.toLowerCase()},`, `,${division.toLowerCase()},`)
+    .bind(`,${board},`, `,${district.toLowerCase()},`, `,${division.toLowerCase()},`)
     .all<Alert>();
   return results;
 }
 
-export async function saveTelegramCode(db: D1Database, code: string, regions: string): Promise<void> {
-  await db.prepare("INSERT OR REPLACE INTO telegram_links (code, regions) VALUES (?, ?)").bind(code, regions).run();
+export async function saveTelegramCode(db: D1Database, code: string, regions: string, bot: BotKey = "gk"): Promise<void> {
+  await db
+    .prepare("INSERT OR REPLACE INTO telegram_links (code, regions, bot) VALUES (?, ?, ?)")
+    .bind(code, regions, bot)
+    .run();
 }
 
-type TelegramLink = { regions: string; chat_id: string | null };
+type TelegramLink = { regions: string; chat_id: string | null; bot: BotKey };
+
+export const channelOf = (bot: BotKey): AlertChannel => (bot === "opp" ? "telegram_opp" : "telegram");
+export const boardOf = (bot: BotKey): Board => (bot === "opp" ? "opponent_needed" : "gk_needed");
 
 /**
  * The first chat to open the bot with a code claims it; after that the code only
  * works for that same chat. Returns the regions to watch, or null if it's unknown
  * or already claimed by someone else.
  */
-export async function claimTelegramCode(db: D1Database, code: string, chatId: string): Promise<string | null> {
-  const row = await db.prepare("SELECT regions, chat_id FROM telegram_links WHERE code = ?").bind(code).first<TelegramLink>();
-  if (!row || (row.chat_id !== null && row.chat_id !== chatId)) return null;
+export async function claimTelegramCode(
+  db: D1Database,
+  code: string,
+  chatId: string,
+  bot: BotKey = "gk",
+): Promise<string | null> {
+  const row = await db.prepare("SELECT regions, chat_id, bot FROM telegram_links WHERE code = ?").bind(code).first<TelegramLink>();
+  // A code only works in the bot it was made for.
+  if (!row || row.bot !== bot || (row.chat_id !== null && row.chat_id !== chatId)) return null;
   if (row.chat_id === null) await db.prepare("UPDATE telegram_links SET chat_id = ? WHERE code = ?").bind(chatId, code).run();
   return row.regions;
 }
 
 export type TelegramStatus =
   | { status: "unknown" }
-  | { status: "waiting" } // code handed out, Start not tapped yet
-  | { status: "linked"; regions: string }
-  | { status: "stopped" }; // they sent /stop, or turned it off from the site
+  | { status: "waiting"; board: Board } // code handed out, Start not tapped yet
+  | { status: "linked"; regions: string; board: Board }
+  | { status: "stopped"; board: Board }; // they sent /stop, or turned it off from the site
 
 export async function telegramStatus(db: D1Database, code: string): Promise<TelegramStatus> {
-  const row = await db.prepare("SELECT regions, chat_id FROM telegram_links WHERE code = ?").bind(code).first<TelegramLink>();
+  const row = await db.prepare("SELECT regions, chat_id, bot FROM telegram_links WHERE code = ?").bind(code).first<TelegramLink>();
   if (!row) return { status: "unknown" };
-  if (row.chat_id === null) return { status: "waiting" };
-  const alert = await db
-    .prepare("SELECT regions FROM alerts WHERE channel = 'telegram' AND address = ?")
-    .bind(row.chat_id)
-    .first<{ regions: string }>();
-  return alert ? { status: "linked", regions: alert.regions } : { status: "stopped" };
+  const board = boardOf(row.bot);
+  if (row.chat_id === null) return { status: "waiting", board };
+  const regions = await alertRegions(db, channelOf(row.bot), row.chat_id);
+  return regions === null ? { status: "stopped", board } : { status: "linked", regions, board };
 }
 
-/** The chat a claimed code points at, or null. */
-export async function telegramChatFor(db: D1Database, code: string): Promise<string | null> {
-  const row = await db.prepare("SELECT chat_id FROM telegram_links WHERE code = ?").bind(code).first<{ chat_id: string | null }>();
-  return row?.chat_id ?? null;
+/** The chat (and its bot's channel) a claimed code points at, or null. */
+export async function telegramChatFor(db: D1Database, code: string): Promise<{ chatId: string; channel: AlertChannel } | null> {
+  const row = await db.prepare("SELECT chat_id, bot FROM telegram_links WHERE code = ?").bind(code).first<{ chat_id: string | null; bot: BotKey }>();
+  return row?.chat_id ? { chatId: row.chat_id, channel: channelOf(row.bot) } : null;
 }
 
 /** Changes the places of an existing alert. False when there's no such alert. */
@@ -102,11 +131,12 @@ export async function updateAlertRegions(
   channel: AlertChannel,
   address: string,
   regions: string,
+  boards?: string,
 ): Promise<boolean> {
-  const result = await db
-    .prepare("UPDATE alerts SET regions = ? WHERE channel = ? AND address = ?")
-    .bind(regions, channel, address)
-    .run();
+  const result = await (boards
+    ? db.prepare("UPDATE alerts SET regions = ?, boards = ? WHERE channel = ? AND address = ?").bind(regions, boards, channel, address)
+    : db.prepare("UPDATE alerts SET regions = ? WHERE channel = ? AND address = ?").bind(regions, channel, address)
+  ).run();
   return result.meta.changes > 0;
 }
 
