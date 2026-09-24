@@ -44,7 +44,7 @@ export function PostPage({ id, now: fixedNow }: { id: string; now?: Date }) {
           <button
             type="button"
             onClick={retry}
-            className="mt-4 h-11 rounded-full border border-line px-5 text-sm font-semibold hover:border-primary hover:text-primary"
+            className="mt-4 h-11 rounded-full border border-line px-5 text-sm font-semibold hover:border-board hover:text-board"
           >
             Try again
           </button>
@@ -56,7 +56,7 @@ export function PostPage({ id, now: fixedNow }: { id: string; now?: Date }) {
           <p className="text-muted-foreground">
             This post doesn't exist. Posts are cleared away two days after their match, so it may have ended a while ago.
           </p>
-          <Link to="/" className="link-draw mt-4 inline-block font-semibold text-primary">
+          <Link to="/" className="link-draw mt-4 inline-block font-semibold text-board">
             Back to GK Lagbe and Opponent Lagbe
           </Link>
         </div>
@@ -89,7 +89,7 @@ function PostDetail({ post, now }: { post: PublicPost; now: Date }) {
   }, [title, post.start_datetime]); // eslint-disable-line react-hooks/exhaustive-deps -- start derives from start_datetime
 
   const big = (value: ReactNode, lime = false) => (
-    <span className={cn("font-display text-[34px] leading-none font-bold", lime && "text-primary")}>{value}</span>
+    <span className={cn("font-display text-[34px] leading-none font-bold", lime && "text-board")}>{value}</span>
   );
   const facts: [string, ReactNode][] = [
     [copy.costLabel, post.cost_per_head != null ? big(`৳${post.cost_per_head}`, true) : opponent ? "Ask the team" : "Ask host"],
@@ -115,8 +115,8 @@ function PostDetail({ post, now }: { post: PublicPost; now: Date }) {
     : `${post.host_name}'s number stays hidden until you tap Contact host.`;
 
   return (
-    <article className="mt-8 md:mt-12">
-      <p className={cn("eyebrow", soon && "text-primary")}>
+    <article className={cn("mt-8 md:mt-12", copy.tone)}>
+      <p className={cn("eyebrow", soon && "text-board")}>
         {copy.board} · {formatDay(start)}
         {status}
       </p>
@@ -131,7 +131,7 @@ function PostDetail({ post, now }: { post: PublicPost; now: Date }) {
           <span className="text-outline" style={{ "--outline": "var(--line-strong)" } as CSSProperties}>
             vs
           </span>
-          <RevealWords text="you?" delay={0.2} wordClassName="text-primary" />
+          <RevealWords text="you?" delay={0.2} wordClassName="text-board" />
         </p>
       )}
       <p className="mt-3 text-[17px] text-muted-foreground">{place}</p>

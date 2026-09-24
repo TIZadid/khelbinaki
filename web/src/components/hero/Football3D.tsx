@@ -33,7 +33,9 @@ import { ConvexGeometry } from "three/addons/geometries/ConvexGeometry.js";
 
 // The site's palette: near-black green bodies, lime details, off-white highlights.
 const INK = new Color("#172010");
-const LIME = new Color("#a6d421");
+const LIME = new Color("#94c11a");
+// GK Lagbe's amber, for the keeper's glove strap and the cone.
+const AMBER = new Color("#f0a23a");
 const CHALK = new Color("#e9eee2");
 
 /** How much bigger the canvas is than the box it's centred on, so floating pieces never hit its edge. */
@@ -136,10 +138,11 @@ function makeKit(bin: Bin): KitPiece[] {
   };
   const ink = new MeshLambertMaterial({ color: INK, flatShading: true });
   const lime = new MeshLambertMaterial({ color: LIME, flatShading: true });
+  const amber = new MeshLambertMaterial({ color: AMBER, flatShading: true });
   const chalk = new MeshLambertMaterial({ color: CHALK, flatShading: true });
   const limeLine = new LineBasicMaterial({ color: LIME, transparent: true, opacity: 0.85 });
   const chalkLine = new LineBasicMaterial({ color: CHALK, transparent: true, opacity: 0.35 });
-  bin.materials.push(ink, lime, chalk, limeLine, chalkLine);
+  bin.materials.push(ink, lime, amber, chalk, limeLine, chalkLine);
 
   // A solid part, optionally outlined so dark shapes still read on a dark page.
   const part = (geometry: BufferGeometry, material: Material, line: LineBasicMaterial | null = limeLine) => {
@@ -239,7 +242,7 @@ function makeKit(bin: Bin): KitPiece[] {
   const cuff = new Mesh(pad(0.46, 0.18, 0.1), ink);
   cuff.position.y = -0.27;
   glove.add(cuff);
-  const strap = new Mesh(keep(new BoxGeometry(0.56, 0.07, 0.26)), lime);
+  const strap = new Mesh(keep(new BoxGeometry(0.56, 0.07, 0.26)), amber);
   strap.position.set(0, -0.27, 0);
   strap.rotation.z = 0.12;
   glove.add(strap);
@@ -259,7 +262,7 @@ function makeKit(bin: Bin): KitPiece[] {
 
   // Training cone on its square base.
   const cone = new Group();
-  const body = part(new ConeGeometry(0.2, 0.46, 20, 1, true), lime, null);
+  const body = part(new ConeGeometry(0.2, 0.46, 20, 1, true), amber, null);
   body.position.y = 0.25;
   cone.add(body);
   cone.add(part(new BoxGeometry(0.46, 0.04, 0.46), ink));

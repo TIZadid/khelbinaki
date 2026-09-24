@@ -39,6 +39,7 @@ export function PostRow({ post, now, soonest = false }: { post: PublicPost; now:
     <div
       data-soonest={soonest || undefined}
       className={cn(
+        copy.tone,
         "group relative isolate grid grid-cols-[1fr_auto] gap-x-4 gap-y-3 border-t py-5 [grid-template-areas:'time_price'_'place_place'_'act_act']",
         "md:h-28 md:grid-cols-[170px_minmax(0,1fr)_100px_80px_110px_200px] md:items-center md:gap-6 md:py-0 md:[grid-template-areas:'time_place_fmt_dur_price_act']",
         filled && "opacity-45",
@@ -51,13 +52,13 @@ export function PostRow({ post, now, soonest = false }: { post: PublicPost; now:
       />
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute top-3 bottom-3 -left-3 w-[3px] scale-y-0 rounded-full bg-primary transition-transform duration-300 ease-out group-hover:scale-y-100 md:-left-5"
+        className="pointer-events-none absolute top-3 bottom-3 -left-3 w-[3px] scale-y-0 rounded-full bg-board transition-transform duration-300 ease-out group-hover:scale-y-100 md:-left-5"
       />
 
       <p
         className={cn(
           "font-display text-[44px] leading-none font-bold whitespace-nowrap transition-transform duration-300 ease-out [grid-area:time] md:text-[52px] md:group-hover:translate-x-1.5",
-          soonest && "text-primary",
+          soonest && "text-board",
         )}
       >
         {formatTime(start)}
@@ -68,12 +69,12 @@ export function PostRow({ post, now, soonest = false }: { post: PublicPost; now:
           {/* Stretched link: the whole row opens the post; the action button sits above it. */}
           <Link
             to={postPath(post.id)}
-            className="text-lg font-semibold after:absolute after:inset-0 hover:text-primary focus-visible:outline-none focus-visible:after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-ring md:text-xl"
+            className="text-lg font-semibold after:absolute after:inset-0 hover:text-board focus-visible:outline-none focus-visible:after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-ring md:text-xl"
           >
             {title}
           </Link>
           {opponent && <span className="font-display text-lg font-bold text-subtle uppercase">vs ?</span>}
-          {soon && <span className={cn(pill, "border-primary text-primary")}>{formatCountdown(start, now).replace(/^in/, "In")}</span>}
+          {soon && <span className={cn(pill, "border-board text-board")}>{formatCountdown(start, now).replace(/^in/, "In")}</span>}
           {filled && <span className={cn(pill, "border-[#3a4233] text-muted-foreground")}>{copy.filledBadge}</span>}
         </div>
         <p className="mt-1 truncate text-sm text-subtle md:text-[15px]">

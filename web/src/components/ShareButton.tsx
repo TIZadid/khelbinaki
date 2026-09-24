@@ -83,7 +83,7 @@ export function ShareButton({
                   className={cn(
                     btn.outline,
                     "h-12",
-                    target.key === "whatsapp" && "border-primary bg-primary text-primary-foreground hover:text-primary-foreground",
+                    target.key === "whatsapp" && "border-board bg-board text-board-foreground hover:text-board-foreground",
                   )}
                 >
                   {target.label}

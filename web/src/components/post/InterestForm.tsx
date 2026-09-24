@@ -11,7 +11,7 @@ import { btn } from "@/lib/ui";
 import { cn } from "@/lib/utils";
 
 const field =
-  "mt-2 w-full rounded-xl border border-line bg-background px-4 py-3 text-base outline-none focus-visible:border-primary aria-[invalid=true]:border-destructive";
+  "mt-2 w-full rounded-xl border border-line bg-background px-4 py-3 text-base outline-none focus-visible:border-board aria-[invalid=true]:border-destructive";
 
 const messages = (opponent: boolean): Record<string, string> => ({
   closed: opponent ? "This team has already found an opponent." : "This game is no longer taking keepers.",
@@ -37,7 +37,7 @@ export function InterestForm({ post }: { post: PublicPost }) {
 
   if (status === "sent") {
     return (
-      <section aria-labelledby="sent-heading" className="mt-9 rounded-3xl border border-primary/40 bg-card p-6 md:p-7">
+      <section aria-labelledby="sent-heading" className="mt-9 rounded-3xl border border-board/40 bg-card p-6 md:p-7">
         <h2 id="sent-heading" className="font-display text-[34px] leading-none font-extrabold uppercase">
           Sent to {post.host_name}
         </h2>
@@ -46,7 +46,7 @@ export function InterestForm({ post }: { post: PublicPost }) {
             ? "They'll WhatsApp you to fix the match. Nothing else to do — your number stays with them."
             : "They'll WhatsApp you if you're picked. Nothing else to do — your number stays with them."}
         </p>
-        <Link to={`/#${copy.anchor}`} className="link-draw mt-5 inline-block font-semibold text-primary">
+        <Link to={`/#${copy.anchor}`} className="link-draw mt-5 inline-block font-semibold text-board">
           Back to {copy.board}
         </Link>
       </section>
@@ -95,10 +95,10 @@ export function InterestForm({ post }: { post: PublicPost }) {
       {keeper && (
         <p className="mt-4 flex items-center justify-between gap-3 rounded-xl bg-muted px-3.5 py-2.5 text-[13px] text-muted-foreground">
           <span className="flex items-center gap-2">
-            <span aria-hidden="true" className="size-[7px] rounded-full bg-primary" />
+            <span aria-hidden="true" className="size-[7px] rounded-full bg-board" />
             Filled in from your keeper profile
           </span>
-          <Link to="/keeper" className="font-semibold text-primary">
+          <Link to="/keeper" className="font-semibold text-board">
             Edit
           </Link>
         </p>

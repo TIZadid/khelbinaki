@@ -33,7 +33,7 @@ export function ManagePage({ id }: { id: string }) {
           This page opens with the private link you got when you posted. Open it on the phone you posted from, find it
           wherever you saved it, or post again.
         </p>
-        <Link to="/" className="link-draw mt-6 inline-block font-semibold text-primary">
+        <Link to="/" className="link-draw mt-6 inline-block font-semibold text-board">
           Back to the boards
         </Link>
       </div>
@@ -113,11 +113,11 @@ function ManageView({
   };
 
   return (
-    <>
+    <div className={board.tone}>
       <div className="flex items-center justify-between gap-4">
         <p className="eyebrow">Your post on {board.board} · {formatDay(start)}</p>
         <span className="flex items-center gap-2 text-xs font-semibold tracking-[0.16em] uppercase">
-          <span aria-hidden="true" className={cn("size-[7px] rounded-full", filled ? "bg-muted-foreground" : "bg-primary")} />
+          <span aria-hidden="true" className={cn("size-[7px] rounded-full", filled ? "bg-muted-foreground" : "bg-board")} />
           {filled ? board.filledBadge : "Open"}
         </span>
       </div>
@@ -136,7 +136,7 @@ function ManageView({
           .join(" · ")}
       </p>
 
-      <section aria-labelledby="share-heading" className="mt-8 rounded-3xl bg-primary p-5 text-primary-foreground md:p-6">
+      <section aria-labelledby="share-heading" className="mt-8 rounded-3xl bg-board p-5 text-board-foreground md:p-6">
         <h2 id="share-heading" className="font-display text-[34px] leading-none font-extrabold uppercase">
           Share your post
         </h2>
@@ -163,7 +163,7 @@ function ManageView({
           <div className="flex items-baseline justify-between gap-4 border-b pb-3.5">
             <h2 id="interested-heading" className="font-display text-[34px] leading-none font-extrabold uppercase">
               {board.interestedHeading}
-              <sup className="ml-1.5 text-sm text-primary">{interests.length}</sup>
+              <sup className="ml-1.5 text-sm text-board">{interests.length}</sup>
             </h2>
             <span className="text-[13px] text-subtle">Only you see these</span>
           </div>
@@ -220,7 +220,7 @@ function ManageView({
           type="button"
           onClick={toggleFilled}
           disabled={busy}
-          className="h-13 rounded-full border border-foreground font-semibold transition-colors hover:border-primary hover:text-primary disabled:opacity-60"
+          className="h-13 rounded-full border border-foreground font-semibold transition-colors hover:border-board hover:text-board disabled:opacity-60"
         >
           {filled ? "Reopen this post" : opponent ? "We have an opponent" : "Mark as filled"}
         </button>
@@ -247,6 +247,6 @@ function ManageView({
           <Copy aria-hidden="true" className="size-4" /> {copied === "manage" ? "Copied" : "Copy manage link"}
         </button>
       </section>
-    </>
+    </div>
   );
 }

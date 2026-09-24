@@ -14,7 +14,7 @@ import { btn } from "@/lib/ui";
 import { cn } from "@/lib/utils";
 
 const field =
-  "mt-2 w-full rounded-xl border border-line bg-card/80 px-4 py-3 text-base outline-none transition-[border-color,box-shadow] duration-150 hover:border-[#3a4233] focus-visible:border-primary focus-visible:shadow-[0_0_0_4px_rgb(166_212_33/0.12)] aria-[invalid=true]:border-destructive";
+  "mt-2 w-full rounded-xl border border-line bg-card/80 px-4 py-3 text-base outline-none transition-[border-color,box-shadow] duration-150 hover:border-[#3a4233] focus-visible:border-board focus-visible:shadow-[0_0_0_4px_rgb(166_212_33/0.12)] aria-[invalid=true]:border-destructive";
 const choice = (active: boolean) =>
   cn(
     "h-11 flex-1 rounded-full border text-sm font-medium transition-[border-color,color,background-color,transform] duration-150 active:scale-[0.97]",
@@ -43,7 +43,7 @@ function Section({ n, title, children }: { n: string; title: string; children: R
   return (
     <fieldset className="flex flex-col gap-4 border-0 border-t border-border p-0 pt-7 first:border-t-0 first:pt-0">
       <legend className="float-left flex items-baseline gap-3 pb-3">
-        <span className="font-display text-lg font-bold text-primary">{n}</span>
+        <span className="font-display text-lg font-bold text-board">{n}</span>
         <span className="eyebrow">{title}</span>
       </legend>
       <div className="clear-both flex flex-col gap-4">{children}</div>
@@ -140,7 +140,7 @@ export function NewPostPage({ type = "gk_needed" }: { type?: ListingType }) {
     );
 
   return (
-    <div className="page-x pt-10 pb-24 md:pt-16">
+    <div className={cn("page-x pt-10 pb-24 md:pt-16", copy.tone)}>
       <div className="grid gap-12 lg:grid-cols-[minmax(0,36rem)_minmax(0,1fr)] lg:gap-20">
         <div>
           {/* Two separate boards, two separate forms: this just hops between them. */}
@@ -152,18 +152,18 @@ export function NewPostPage({ type = "gk_needed" }: { type?: ListingType }) {
                 aria-current={t === type ? "page" : undefined}
                 className={cn(
                   "relative isolate rounded-full px-4 py-2 text-sm font-semibold transition-colors",
-                  t === type ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+                  t === type ? "text-board-foreground" : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 {t === type && (
-                  <motion.span layoutId="post-type" className="absolute inset-0 -z-10 rounded-full bg-primary" transition={{ type: "spring", stiffness: 420, damping: 34 }} />
+                  <motion.span layoutId="post-type" className="absolute inset-0 -z-10 rounded-full bg-board" transition={{ type: "spring", stiffness: 420, damping: 34 }} />
                 )}
                 {LISTINGS[t].board}
               </Link>
             ))}
           </nav>
 
-          <p className="eyebrow mt-8 text-primary">{opponent ? "For teams" : "For hosts"} · free · no sign-up</p>
+          <p className="eyebrow mt-8 text-board">{opponent ? "For teams" : "For hosts"} · free · no sign-up</p>
           <h1 aria-label={copy.postCta} className="mt-3.5 font-display text-[64px] leading-[0.86] font-extrabold uppercase md:text-[88px]">
             <RevealWords text={copy.postCta} />
           </h1>
@@ -380,7 +380,7 @@ export function NewPostPage({ type = "gk_needed" }: { type?: ListingType }) {
                   key={value}
                   className={cn(
                     "flex cursor-pointer gap-3.5 rounded-2xl border bg-card/80 p-4.5 transition-colors duration-150",
-                    mode === value ? "border-primary" : "border-[#242a1f] hover:border-line",
+                    mode === value ? "border-board" : "border-[#242a1f] hover:border-line",
                   )}
                 >
                   <input
@@ -389,7 +389,7 @@ export function NewPostPage({ type = "gk_needed" }: { type?: ListingType }) {
                     value={value}
                     checked={mode === value}
                     onChange={() => setMode(value)}
-                    className="mt-1 size-5 accent-primary"
+                    className="mt-1 size-5 accent-board"
                   />
                   <span>
                     <span className="block font-semibold">{title}</span>
@@ -461,7 +461,7 @@ function Preview({
       <div className="flex items-end justify-between gap-4 p-6">
         <div className="min-w-0">
           <p className="eyebrow text-subtle">{valid ? formatDay(start) : "Pick a date"}</p>
-          <p className="mt-2 font-display text-[64px] leading-none font-bold text-primary">{valid ? formatTime(start) : "--:--"}</p>
+          <p className="mt-2 font-display text-[64px] leading-none font-bold text-board">{valid ? formatTime(start) : "--:--"}</p>
         </div>
         <div className="text-right">
           <p className="font-display text-4xl leading-none font-bold">{values.cost.trim() ? `৳${values.cost.trim()}` : "Ask"}</p>

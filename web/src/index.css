@@ -11,7 +11,8 @@
   --card-foreground: #eef3e6;
   --popover: #111410;
   --popover-foreground: #eef3e6;
-  --primary: #a6d421;
+  /* Brand green (also Opponent Lagbe), a touch darker than the original #a6d421. */
+  --primary: #94c11a;
   --primary-foreground: #0a0c09;
   --secondary: #181c15;
   --secondary-foreground: #eef3e6;
@@ -24,8 +25,26 @@
   --border: #1d2219;
   --line: #2b3226;
   --input: #2b3226;
-  --ring: #a6d421;
+  --ring: #94c11a;
   --line-strong: #4a5342;
+  /* GK Lagbe's colour. */
+  --gk: #f0a23a;
+  --gk-foreground: #0a0c09;
+  /* The current board's colour: brand green unless a .board-gk ancestor says amber. */
+  --board: var(--primary);
+  --board-foreground: var(--primary-foreground);
+}
+
+/* Anything that belongs to one board takes its colour: GK Lagbe amber, Opponent Lagbe green. */
+.board-gk {
+  --board: var(--gk);
+  --board-foreground: var(--gk-foreground);
+  --ring: var(--gk);
+}
+.board-opp {
+  --board: var(--primary);
+  --board-foreground: var(--primary-foreground);
+  --ring: var(--primary);
 }
 
 @theme inline {
@@ -39,6 +58,9 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-board: var(--board);
+  --color-board-foreground: var(--board-foreground);
+  --color-gk: var(--gk);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -179,7 +201,7 @@ html.lenis body {
   border-radius: inherit;
   opacity: 0;
   transition: opacity var(--state) ease;
-  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgb(166 212 33 / 0.13), transparent 60%);
+  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--board) 14%, transparent), transparent 60%);
 }
 .spotlight:hover::before {
   opacity: 1;

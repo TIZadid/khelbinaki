@@ -153,7 +153,7 @@ export function AlertSettings({ regions, hasProfile = true }: { regions: string[
           <div>
             <p className="flex items-center gap-2 font-semibold">
               Phone or browser notification
-              {push === "on" && <Check aria-label="on" className="size-4 text-primary" />}
+              {push === "on" && <Check aria-label="on" className="size-4 text-board" />}
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
               {push === "unsupported"
@@ -195,7 +195,7 @@ export function AlertSettings({ regions, hasProfile = true }: { regions: string[
           <div className="min-w-0 flex-1">
             <p className="flex items-center gap-2 font-semibold">
               Telegram
-              {tgStatus === "linked" && <Check aria-label="on" className="size-4 text-primary" />}
+              {tgStatus === "linked" && <Check aria-label="on" className="size-4 text-board" />}
             </p>
             <p aria-live="polite" className="mt-1 text-sm text-muted-foreground">
               {telegramLine}

@@ -38,6 +38,8 @@ export type ListingCopy = {
   shareLead: string;
   /** Link-preview and notification prefix. */
   headline: string;
+  /** Colour scope (index.css): GK Lagbe amber, Opponent Lagbe green. Put it on anything that belongs to the board. */
+  tone: "board-gk" | "board-opp";
 };
 
 export const LISTINGS: Record<ListingType, ListingCopy> = {
@@ -61,6 +63,7 @@ export const LISTINGS: Record<ListingType, ListingCopy> = {
     noRequests: "No keepers yet. Share your post in a group to get some.",
     shareLead: "Most keepers come from groups. Post it where your players are.",
     headline: "Keeper needed",
+    tone: "board-gk",
   },
   opponent_needed: {
     board: "Opponent Lagbe",
@@ -82,6 +85,7 @@ export const LISTINGS: Record<ListingType, ListingCopy> = {
     noRequests: "No teams yet. Share your post in a group to find one.",
     shareLead: "Most matches come from groups. Post it where the teams are.",
     headline: "Opponent needed",
+    tone: "board-opp",
   },
 };
 

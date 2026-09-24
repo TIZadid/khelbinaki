@@ -92,7 +92,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <Magnetic>
                   <Link
                     to={LISTINGS.gk_needed.newPath}
-                    className="inline-flex h-11 items-center rounded-full border border-primary px-5 text-sm font-semibold text-primary transition-[color,background-color] duration-150 hover:bg-primary hover:text-primary-foreground"
+                    className="board-gk inline-flex h-11 items-center rounded-full border border-board px-5 text-sm font-semibold text-board transition-[color,background-color] duration-150 hover:bg-board hover:text-board-foreground"
                   >
                     {LISTINGS.gk_needed.postCta}
                   </Link>
@@ -100,7 +100,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <Magnetic>
                   <Link
                     to={LISTINGS.opponent_needed.newPath}
-                    className="inline-flex h-11 items-center rounded-full border border-line px-5 text-sm font-semibold transition-[color,border-color] duration-150 hover:border-foreground"
+                    className="board-opp inline-flex h-11 items-center rounded-full border border-board px-5 text-sm font-semibold text-board transition-[color,background-color] duration-150 hover:bg-board hover:text-board-foreground"
                   >
                     {LISTINGS.opponent_needed.postCta}
                   </Link>
@@ -112,7 +112,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 aria-expanded={menuOpen}
                 aria-controls="site-menu"
                 aria-label={menuOpen ? "Close menu" : "Open menu"}
-                className="inline-flex size-11 items-center justify-center rounded-full border border-line transition-colors hover:border-primary hover:text-primary lg:hidden"
+                className="inline-flex size-11 items-center justify-center rounded-full border border-line transition-colors hover:border-board hover:text-board lg:hidden"
               >
                 {menuOpen ? <X aria-hidden="true" className="size-5" /> : <Menu aria-hidden="true" className="size-5" />}
               </button>
@@ -150,12 +150,12 @@ export function AppShell({ children }: { children: ReactNode }) {
                     >
                       <Link to={item.to} onClick={() => setMenuOpen(false)} className="group flex items-end justify-between gap-4 py-4">
                         <span>
-                          <span className="block font-display text-5xl leading-none font-extrabold uppercase transition-colors group-hover:text-primary">
+                          <span className="block font-display text-5xl leading-none font-extrabold uppercase transition-colors group-hover:text-board">
                             {item.label}
                           </span>
                           <span className="mt-1.5 block text-sm text-subtle">{item.hint}</span>
                         </span>
-                        <ArrowUpRight aria-hidden="true" className="size-6 shrink-0 text-subtle transition-transform group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-primary" />
+                        <ArrowUpRight aria-hidden="true" className="size-6 shrink-0 text-subtle transition-transform group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-board" />
                       </Link>
                     </motion.li>
                   ))}
@@ -169,14 +169,14 @@ export function AppShell({ children }: { children: ReactNode }) {
                   <Link
                     to={LISTINGS.gk_needed.newPath}
                     onClick={() => setMenuOpen(false)}
-                    className="inline-flex h-14 items-center justify-center rounded-full bg-primary text-[17px] font-semibold text-primary-foreground"
+                    className="board-gk inline-flex h-14 items-center justify-center rounded-full bg-board text-[17px] font-semibold text-board-foreground"
                   >
                     {LISTINGS.gk_needed.postCta}
                   </Link>
                   <Link
                     to={LISTINGS.opponent_needed.newPath}
                     onClick={() => setMenuOpen(false)}
-                    className="inline-flex h-14 items-center justify-center rounded-full border border-line text-[17px] font-semibold"
+                    className="board-opp inline-flex h-14 items-center justify-center rounded-full bg-board text-[17px] font-semibold text-board-foreground"
                   >
                     {LISTINGS.opponent_needed.postCta}
                   </Link>
@@ -206,7 +206,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             initial={{ y: "0%" }}
             animate={{ y: "-100%" }}
             transition={{ duration: 0.6, ease: [0.76, 0, 0.24, 1] }}
-            className="pointer-events-none fixed inset-0 z-50 border-b-2 border-primary bg-card"
+            className="pointer-events-none fixed inset-0 z-50 border-b-2 border-board bg-card"
           />
         )}
 
@@ -251,16 +251,16 @@ function Footer() {
         </div>
         {columns.map((column) => (
           <div key={column.heading}>
-            <h2 className="font-display text-lg font-bold tracking-[0.08em] text-primary uppercase">{column.heading}</h2>
+            <h2 className="font-display text-lg font-bold tracking-[0.08em] text-board uppercase">{column.heading}</h2>
             <ul className="mt-4 flex flex-col gap-2.5 text-[15px]">
               {column.links.map((link) => (
                 <li key={link.label}>
                   {link.external ? (
-                    <a href={link.to} target="_blank" rel="noopener noreferrer" className="link-draw text-foreground/85 hover:text-primary">
+                    <a href={link.to} target="_blank" rel="noopener noreferrer" className="link-draw text-foreground/85 hover:text-board">
                       {link.label}
                     </a>
                   ) : (
-                    <Link to={link.to} className="link-draw text-foreground/85 hover:text-primary">
+                    <Link to={link.to} className="link-draw text-foreground/85 hover:text-board">
                       {link.label}
                     </Link>
                   )}
@@ -285,7 +285,7 @@ function Footer() {
             clipPath: reduce || filled ? "inset(0 0 0 0)" : "inset(0 100% 0 0)",
             transition: reduce ? undefined : "clip-path 1.4s cubic-bezier(0.76, 0, 0.24, 1)",
           }}
-          className="absolute inset-y-0 left-5 md:left-10 font-display text-[15.5vw] leading-[0.92] font-extrabold whitespace-nowrap text-primary uppercase xl:text-[11.5rem]"
+          className="absolute inset-y-0 left-5 md:left-10 font-display text-[15.5vw] leading-[0.92] font-extrabold whitespace-nowrap text-board uppercase xl:text-[11.5rem]"
         >
           Khelbi Naki?
         </p>

@@ -42,11 +42,11 @@ export function NextUpTicket({ post, now }: { post: PublicPost; now: Date }) {
   const format = formatLabel(post.players_per_side);
 
   return (
-    <article aria-label="Next kick-off" className="overflow-hidden rounded-3xl border border-[#242a1f] bg-card/90 shadow-[0_30px_80px_-30px_rgb(0_0_0/0.8)] backdrop-blur">
+    <article aria-label="Next kick-off" className={`${copy.tone} overflow-hidden rounded-3xl border border-[#242a1f] bg-card/90 shadow-[0_30px_80px_-30px_rgb(0_0_0/0.8)] backdrop-blur`}>
       <div className="flex flex-col gap-4 p-5 md:gap-6 md:px-8 md:pt-7 md:pb-8">
         <div className="eyebrow flex justify-between">
           <span>{copy.board}</span>
-          <span className="text-primary">Kicks off in</span>
+          <span className="text-board">Kicks off in</span>
         </div>
         <div className="flex items-center gap-3" role="timer" aria-label={`Starts ${formatCountdown(start, now)}`}>
           <TimeBox {...first} />
@@ -59,7 +59,7 @@ export function NextUpTicket({ post, now }: { post: PublicPost; now: Date }) {
       <div className="flex flex-col gap-4 border-t border-dashed border-line p-5 md:gap-5 md:px-8 md:pt-7 md:pb-8">
         <div className="flex items-end justify-between gap-4">
           <div className="min-w-0">
-            <Link to={postPath(post.id)} className="font-display text-[38px] leading-none font-bold hover:text-primary md:text-[44px]">
+            <Link to={postPath(post.id)} className="font-display text-[38px] leading-none font-bold hover:text-board md:text-[44px]">
               {formatTime(start)}
             </Link>
             <p className="mt-2 truncate font-semibold">{title}</p>
@@ -67,7 +67,7 @@ export function NextUpTicket({ post, now }: { post: PublicPost; now: Date }) {
           </div>
           {post.cost_per_head != null && (
             <div className="text-right">
-              <p className="font-display text-3xl leading-none font-bold text-primary md:text-4xl">৳{post.cost_per_head}</p>
+              <p className="font-display text-3xl leading-none font-bold text-board md:text-4xl">৳{post.cost_per_head}</p>
               <p className="mt-1.5 text-sm text-subtle">{copy.costUnit}</p>
             </div>
           )}

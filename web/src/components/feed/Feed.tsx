@@ -56,14 +56,14 @@ export function Feed({
   const headingId = `${copy.anchor}-heading`;
 
   return (
-    <section id={copy.anchor} aria-labelledby={headingId} className="page-x scroll-mt-20 py-20 md:py-28">
+    <section id={copy.anchor} aria-labelledby={headingId} className={cn("page-x scroll-mt-20 py-20 md:py-28", copy.tone)}>
       <div className="grid gap-6 border-b pb-7 md:grid-cols-[1fr_auto] md:items-end md:pb-9">
         <div className="flex items-end gap-5 md:gap-8">
           {index && (
             <span
               aria-hidden="true"
               className="text-outline hidden font-display text-[120px] leading-[0.78] font-extrabold md:block"
-              style={{ "--outline": "var(--primary)" } as CSSProperties}
+              style={{ "--outline": "var(--board)" } as CSSProperties}
             >
               {index}
             </span>
@@ -72,7 +72,7 @@ export function Feed({
             <h2 id={headingId} className="on-pitch font-display text-[56px] leading-[0.86] font-extrabold uppercase md:text-[96px]">
               <RevealWords text={copy.board} inView />
               {state.status === "ready" && (
-                <sup className="ml-2 align-super text-lg text-primary md:text-3xl">
+                <sup className="ml-2 align-super text-lg text-board md:text-3xl">
                   <CountUp value={openCount} />
                 </sup>
               )}
@@ -82,7 +82,7 @@ export function Feed({
               {type === "gk_needed" && (
                 <>
                   {" · "}
-                  <Link to="/keeper#alerts" className="link-draw font-semibold text-primary">
+                  <Link to="/keeper#alerts" className="link-draw font-semibold text-board">
                     Get alerts for new games
                   </Link>
                 </>
@@ -93,7 +93,7 @@ export function Feed({
         <Magnetic className="inline-flex self-start md:self-end">
           <Link
             to={copy.newPath}
-            className={cn(btn.outline, "h-12 border-primary px-5 text-primary hover:bg-primary hover:text-primary-foreground")}
+            className={cn(btn.outline, "h-12 border-board px-5 text-board hover:bg-board hover:text-board-foreground")}
           >
             <Plus aria-hidden="true" className="size-4" /> {copy.postCta}
           </Link>
@@ -122,7 +122,7 @@ export function Feed({
       {state.status === "ready" && posts.length === 0 && (
         <div className="mt-10 flex flex-col items-center gap-5 rounded-3xl border border-dashed border-line px-6 py-12 text-center">
           <p className="max-w-md text-muted-foreground">{copy.empty}</p>
-          <Link to={copy.newPath} className={cn(btn.outline, "border-primary text-primary")}>
+          <Link to={copy.newPath} className={cn(btn.outline, "border-board text-board")}>
             <Plus aria-hidden="true" className="size-4" /> {copy.postCta}
           </Link>
         </div>

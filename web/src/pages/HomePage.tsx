@@ -68,10 +68,10 @@ export function HomePage() {
       {next && (
         <section aria-labelledby="next-heading" className="page-x grid items-center gap-10 pt-20 md:grid-cols-[1fr_27.5rem] md:gap-16 md:pt-28">
           <div>
-            <p className="eyebrow text-primary">Next kick-off</p>
+            <p className="eyebrow text-board">Next kick-off</p>
             <h2 id="next-heading" className="on-pitch mt-4 font-display text-[56px] leading-[0.86] font-extrabold uppercase md:text-[88px]">
               <RevealWords text="The ball rolls" inView className="block" />
-              <RevealWords text="soon." inView delay={0.1} className="block" wordClassName="text-primary" />
+              <RevealWords text="soon." inView delay={0.1} className="block" wordClassName="text-board" />
             </h2>
             <p className="mt-5 max-w-md text-[17px] leading-relaxed text-muted-foreground">
               The soonest open post on either board. Seats like this go fast — if it suits you, get in touch now.
@@ -118,8 +118,8 @@ function Hero({ state, openOf }: { state: AsyncState<PublicPost[]>; openOf: (typ
         <FadeUp>
           <p className="eyebrow flex items-center gap-3">
             <span aria-hidden="true" className="relative flex size-2">
-              <span className="absolute inline-flex size-full rounded-full bg-primary opacity-75 motion-safe:animate-ping" />
-              <span className="relative inline-flex size-2 rounded-full bg-primary" />
+              <span className="absolute inline-flex size-full rounded-full bg-board opacity-75 motion-safe:animate-ping" />
+              <span className="relative inline-flex size-2 rounded-full bg-board" />
             </span>
             {/* One text run, so the count never wraps apart from its words. */}
             <span>
@@ -142,7 +142,7 @@ function Hero({ state, openOf }: { state: AsyncState<PublicPost[]>; openOf: (typ
           className="on-pitch font-display text-[clamp(5.75rem,21vw,13rem)] md:text-[14vw] xl:text-[13rem] leading-[0.8] font-extrabold tracking-[-0.015em] uppercase"
         >
           <RevealWords text="Khelbi" className="block" />
-          <RevealWords text="Naki?" className="block" wordClassName="text-primary" delay={0.12} />
+          <RevealWords text="Naki?" className="block" wordClassName="text-board" delay={0.12} />
         </h1>
 
         <FadeUp delay={0.15}>
@@ -174,7 +174,7 @@ function Hero({ state, openOf }: { state: AsyncState<PublicPost[]>; openOf: (typ
       >
         Scroll
         <span aria-hidden="true" className="relative h-10 w-px overflow-hidden bg-line">
-          <span className="absolute inset-x-0 top-0 h-1/2 bg-primary motion-safe:animate-[scroll-cue_1.8s_ease-in-out_infinite]" />
+          <span className="absolute inset-x-0 top-0 h-1/2 bg-board motion-safe:animate-[scroll-cue_1.8s_ease-in-out_infinite]" />
         </span>
       </a>
     </section>
@@ -183,12 +183,11 @@ function Hero({ state, openOf }: { state: AsyncState<PublicPost[]>; openOf: (typ
 
 function LaneCard({ type, count, n }: { type: ListingType; count: number | null; n: string }) {
   const copy = LISTINGS[type];
-  const primary = type === "gk_needed";
   return (
-    <Spotlight className="group flex h-full flex-col rounded-3xl border border-[#242a1f] bg-card/80 p-5 backdrop-blur-md transition-colors duration-300 hover:border-line md:p-6">
+    <Spotlight className={cn(copy.tone, "group flex h-full flex-col rounded-3xl border border-[#242a1f] bg-card/80 p-5 backdrop-blur-md transition-colors duration-300 hover:border-line md:p-6")}>
       <div className="flex items-center justify-between text-[11px] font-semibold tracking-[0.18em] uppercase">
         <span className="flex items-center gap-2 text-muted-foreground">
-          <span aria-hidden="true" className={cn("size-[7px] rounded-full", count ? "bg-primary" : "bg-line")} />
+          <span aria-hidden="true" className={cn("size-[7px] rounded-full", count ? "bg-board" : "bg-line")} />
           {count === null ? "Loading" : `${count} open`}
         </span>
         <span className="text-subtle">{n}</span>
@@ -202,10 +201,7 @@ function LaneCard({ type, count, n }: { type: ListingType; count: number | null;
         <Link
           to={copy.newPath}
           className={cn(
-            "inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-sm font-semibold transition-[background-color,color,transform] duration-150 active:scale-[0.97]",
-            primary
-              ? "bg-primary text-primary-foreground hover:bg-primary/90"
-              : "border border-line hover:border-foreground",
+            "inline-flex h-10 items-center gap-1.5 rounded-full bg-board px-4 text-sm font-semibold text-board-foreground transition-[background-color,transform] duration-150 hover:bg-board/90 active:scale-[0.97]",
           )}
         >
           <Plus aria-hidden="true" className="size-4" /> {copy.postCta}
@@ -225,7 +221,7 @@ function HowItWorks() {
         <div className="mb-12 flex flex-wrap items-end justify-between gap-4 md:mb-20">
           <h2 id="how-heading" className="on-pitch font-display text-[56px] leading-[0.86] font-extrabold uppercase md:text-[96px]">
             <RevealWords text="How it" inView className="block" />
-            <RevealWords text="works" inView delay={0.08} className="block" wordClassName="text-primary" />
+            <RevealWords text="works" inView delay={0.08} className="block" wordClassName="text-board" />
           </h2>
           <p className="max-w-sm text-[15px] leading-relaxed text-muted-foreground md:text-[17px]">
             Same three steps whether you need a keeper or a team to play. Nobody signs up, nobody pays.
@@ -235,7 +231,7 @@ function HowItWorks() {
         <div className="relative">
           {/* On desktop a line fills across the steps as they scroll by; on phones the numerals light up alone. */}
           <div aria-hidden="true" className="absolute inset-x-0 top-0 hidden h-px bg-line md:block">
-            <motion.div style={{ scaleX: scrollYProgress }} className="absolute inset-0 origin-left bg-primary" />
+            <motion.div style={{ scaleX: scrollYProgress }} className="absolute inset-0 origin-left bg-board" />
           </div>
           <ol ref={ref} aria-label="How it works" className="grid gap-10 md:grid-cols-3 md:gap-0">
             {steps.map((step, i) => (
@@ -251,8 +247,8 @@ function HowItWorks() {
 function Step({ step, i, progress }: { step: (typeof steps)[number]; i: number; progress: MotionValue<number> }) {
   const start = i / 3;
   // Each numeral lights up lime as the line reaches it.
-  const outline = useTransform(progress, [start, start + 0.12], ["#4a5342", "#a6d421"]);
-  const dot = useTransform(progress, [start, start + 0.05], ["#2b3226", "#a6d421"]);
+  const outline = useTransform(progress, [start, start + 0.12], ["#4a5342", "#94c11a"]);
+  const dot = useTransform(progress, [start, start + 0.05], ["#2b3226", "#94c11a"]);
 
   return (
     <li className={cn("relative flex gap-6 md:block md:pt-12", i === 0 ? "md:pr-12" : i === 1 ? "md:px-12" : "md:pl-12")}>
@@ -280,22 +276,25 @@ function Closing() {
   return (
     <section aria-labelledby="closing-heading" className="relative overflow-hidden border-t">
       <div className="page-x flex flex-col items-center py-24 text-center md:py-36">
-        <p className="eyebrow text-primary">Your move</p>
+        <p className="eyebrow text-board">Your move</p>
         <h2 id="closing-heading" className="on-pitch mt-5 font-display text-[clamp(3.25rem,11vw,8rem)] leading-[0.84] font-extrabold uppercase">
           <RevealWords text="Need a keeper?" inView className="block" />
-          <RevealWords text="Need a match?" inView delay={0.1} className="block" wordClassName="text-primary" />
+          <RevealWords text="Need a match?" inView delay={0.1} className="block" wordClassName="text-board" />
         </h2>
         <p className="mt-6 max-w-lg text-[17px] leading-relaxed text-muted-foreground">
           Post it free. Players near you see it right away, and you settle the rest on WhatsApp.
         </p>
         <div className="mt-10 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
           <Magnetic className="flex">
-            <Link to={LISTINGS.gk_needed.newPath} className={cn(btn.primary, "w-full sm:w-auto")}>
+            <Link to={LISTINGS.gk_needed.newPath} className={cn(btn.primary, LISTINGS.gk_needed.tone, "w-full sm:w-auto")}>
               {LISTINGS.gk_needed.postCta} <ArrowUpRight aria-hidden="true" className="size-[18px]" />
             </Link>
           </Magnetic>
           <Magnetic className="flex">
-            <Link to={LISTINGS.opponent_needed.newPath} className={cn(btn.outline, "h-14 w-full px-7 text-[17px] sm:w-auto")}>
+            <Link
+              to={LISTINGS.opponent_needed.newPath}
+              className={cn(btn.outline, LISTINGS.opponent_needed.tone, "h-14 w-full border-board px-7 text-[17px] text-board sm:w-auto")}
+            >
               {LISTINGS.opponent_needed.postCta} <ArrowUpRight aria-hidden="true" className="size-[18px]" />
             </Link>
           </Magnetic>
@@ -306,7 +305,7 @@ function Closing() {
             href="https://github.com/TIZadid/khelbinaki/issues"
             target="_blank"
             rel="noopener noreferrer"
-            className="link-draw font-semibold text-primary"
+            className="link-draw font-semibold text-board"
           >
             Tell us here
           </a>

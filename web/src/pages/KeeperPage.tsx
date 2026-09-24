@@ -18,7 +18,7 @@ import { Link } from "@/lib/router";
 import { cn } from "@/lib/utils";
 
 const field =
-  "w-full rounded-lg border bg-background/60 px-4 py-3 text-base outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/40 aria-[invalid=true]:border-destructive";
+  "w-full rounded-lg border bg-background/60 px-4 py-3 text-base outline-none focus-visible:border-board focus-visible:ring-2 focus-visible:ring-ring/40 aria-[invalid=true]:border-destructive";
 const labelStyle = "text-sm font-semibold";
 
 function FieldError({ id, message }: { id: string; message?: string }) {
@@ -76,8 +76,8 @@ export function KeeperPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-xl px-5 pt-10 pb-20 md:px-10">
-      <p className="eyebrow text-primary">GK Lagbe · for goalkeepers</p>
+    <div className="board-gk mx-auto w-full max-w-xl px-5 pt-10 pb-20 md:px-10">
+      <p className="eyebrow text-board">GK Lagbe · for goalkeepers</p>
       <h1 className="mt-3.5 font-display text-6xl leading-[0.88] font-extrabold uppercase">Your keeper profile</h1>
       <p className="mt-3 text-muted-foreground">
         Save your details once. They stay on this phone and fill in "I'm interested" for you. A host only sees them
@@ -145,7 +145,7 @@ export function KeeperPage() {
               <ul className="mt-3 flex flex-wrap gap-2">
                 {regions.map((slug) => (
                   <li key={slug}>
-                    <span className="inline-flex items-center gap-1 rounded-full border border-primary py-1 pr-1 pl-3 text-sm text-primary">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-board py-1 pr-1 pl-3 text-sm text-board">
                       {regionName(slug) ?? slug}
                       <button
                         type="button"
@@ -181,7 +181,7 @@ export function KeeperPage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <button
               type="submit"
-              className="rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground hover:bg-primary/90"
+              className="rounded-full bg-board px-6 py-3 font-semibold text-board-foreground hover:bg-board/90"
             >
               Save profile
             </button>
@@ -199,7 +199,7 @@ export function KeeperPage() {
           {status === "saved" && (
             <p role="status" className="text-sm">
               Saved on this phone.{alertsMoved ? " Your alerts now follow these places too." : ""}{" "}
-              <Link to="/#gk-lagbe" className="font-semibold text-primary underline-offset-4 hover:underline">
+              <Link to="/#gk-lagbe" className="font-semibold text-board underline-offset-4 hover:underline">
                 See GK Lagbe in your places
               </Link>
             </p>
