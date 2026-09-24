@@ -1,7 +1,5 @@
 import { X } from "lucide-react";
 import { type FormEvent, useState } from "react";
-import { AlertSettings } from "@/components/keeper/AlertSettings";
-import { syncAlertRegions } from "@/lib/alerts";
 import { useKeeperProfile } from "@/hooks/useKeeperProfile";
 import { formatPhone } from "@/lib/contact";
 import { RegionSelect } from "@/components/RegionSelect";
@@ -38,7 +36,6 @@ export function KeeperPage() {
   const [note, setNote] = useState(saved?.note ?? "");
   const [errors, setErrors] = useState<ProfileErrors>({});
   const [status, setStatus] = useState<"idle" | "saved" | "failed">("idle");
-  const [alertsMoved, setAlertsMoved] = useState(false);
 
   const addRegion = (slug: string) => {
     if (!slug) return;
@@ -57,11 +54,7 @@ export function KeeperPage() {
     setErrors({});
     setRegions(result.value.regions);
     setRegionDraft("");
-    const saved = saveKeeperProfile(result.value);
-    setStatus(saved ? "saved" : "failed");
-    setAlertsMoved(false);
-    // Alerts on this phone follow the new places.
-    if (saved) syncAlertRegions(result.value.regions).then((moved) => setAlertsMoved(moved > 0));
+    setStatus(saveKeeperProfile(result.value) ? "saved" : "failed");
   };
 
   const onDelete = () => {
@@ -129,7 +122,7 @@ export function KeeperPage() {
               Where do you play?
             </label>
             <p className="mt-1 text-sm text-muted-foreground">
-              Pick up to {MAX_REGIONS} districts, or a whole division. GK Lagbe opens on these, and alerts follow them.
+              Pick up to {MAX_REGIONS} districts, or a whole division. GK Lagbe opens on these.
             </p>
             <RegionSelect
               id="keeper-region"
@@ -198,7 +191,7 @@ export function KeeperPage() {
 
           {status === "saved" && (
             <p role="status" className="text-sm">
-              Saved on this phone.{alertsMoved ? " Your alerts now follow these places too." : ""}{" "}
+              Saved on this phone.{" "}
               <Link to="/#gk-lagbe" className="font-semibold text-board underline-offset-4 hover:underline">
                 See GK Lagbe in your places
               </Link>
@@ -212,7 +205,17 @@ export function KeeperPage() {
         </form>
       </div>
 
-      <AlertSettings regions={saved?.regions ?? []} hasProfile={Boolean(saved)} />
+      <section aria-labelledby="alerts-link-heading" className="mt-10 rounded-3xl border border-[#242a1f] bg-card p-5 md:p-7">
+        <h2 id="alerts-link-heading" className="font-display text-[34px] leading-none font-extrabold uppercase">
+          Get alerts
+        </h2>
+        <p className="mt-2.5 text-[15px] leading-relaxed text-muted-foreground">
+          Hear the moment a game near you needs a keeper — on this device or on Telegram. Free, and you can stop any time.
+        </p>
+        <Link to="/alerts?board=gk" className="mt-4 inline-flex h-11 items-center rounded-full border border-board px-5 text-sm font-semibold text-board hover:bg-board hover:text-board-foreground">
+          Set up alerts
+        </Link>
+      </section>
     </div>
   );
 }

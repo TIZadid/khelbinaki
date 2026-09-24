@@ -79,14 +79,10 @@ export function Feed({
             </h2>
             <p className="mt-3 text-[15px] text-muted-foreground md:text-[17px]">
               {copy.tagline}
-              {type === "gk_needed" && (
-                <>
-                  {" · "}
-                  <Link to="/keeper#alerts" className="link-draw font-semibold text-board">
-                    Get alerts for new games
-                  </Link>
-                </>
-              )}
+              {" · "}
+              <Link to={type === "gk_needed" ? "/alerts?board=gk" : "/alerts?board=opp"} className="link-draw font-semibold text-board">
+                {type === "gk_needed" ? "Get alerts for new games" : "Get alerts for new matches"}
+              </Link>
             </p>
           </div>
         </div>

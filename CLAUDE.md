@@ -101,8 +101,12 @@ note, created_at; UNIQUE (post_id, phone). Only the post's host (edit token) can
    region slug is prefixed `div-` because every division shares its name with one of
    its districts.
 
-6. **Alerts** (`alerts` table, migration 0003): keepers opt in to browser push
-   (VAPID, bodyless — the service worker fetches the newest games) and/or Telegram.
+6. **Alerts** (`alerts` table, migrations 0003/0007; page `/alerts`): anyone picks
+   boards (GK Lagbe / Opponent Lagbe), places and channels — browser push (VAPID,
+   bodyless; the service worker shows the newest post) and/or Telegram, where each
+   board has its own bot: @gklagbebot (channel `telegram`) and @opponentlagbebot
+   (channel `telegram_opp`). Choices live in `khelbinaki.alerts.v1`, bot keys in
+   `khelbinaki.telegram.v2`.
    No login: push is tied to the browser's endpoint; Telegram to its link code, which
    stays in the browser (`khelbinaki.telegram.v1`) and is the key to check status,
    change places or turn it off (migration 0006 keeps used codes + their chat_id).
@@ -110,7 +114,7 @@ note, created_at; UNIQUE (post_id, phone). Only the post's host (edit token) can
    Regions (districts or `div-` divisions) are a lowercase comma-separated list;
    empty means anywhere in Bangladesh. New posts fan
    out in `waitUntil`; a failed alert must never fail the post. Secrets in the API
-   Worker: `VAPID_PRIVATE_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`
+   Worker: `VAPID_PRIVATE_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_OPP_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`
    (the local copy lives in gitignored `api/.dev.vars`).
 
 ## Build order (do in this sequence)
@@ -172,15 +176,16 @@ npx wrangler secret put <NAME>
 | `POST /posts/:id/contact` | `{turnstile_token}` | `200 {phone}` (direct mode only) | `404`, `409 requests_only`, `410 closed`, `403 captcha_failed` |
 | `POST /posts/:id/interests` | `{name, phone, note?, turnstile_token}` | `201/200 {ok:true}` (requests mode) | `404`, `409 direct_only`, `410 closed`, `400`, `403`, `429 full` (30/post) |
 | `GET /posts/:id/interests` | `Authorization: Bearer <edit_token>` | `200 {interests}` | `403 forbidden`, `404` |
-| `POST /alerts` | `{subscription, regions[], turnstile_token}` | `201 {ok, regions}` — browser push | `400`, `403 captcha_failed` |
+| `POST /alerts` | `{subscription, regions[], boards[], turnstile_token}` | `201 {ok, regions, boards}` — browser push | `400`, `403 captcha_failed` |
 | `POST /alerts/off` | `{endpoint}` | `200 {ok}` | `400` |
-| `POST /alerts/regions` | `{endpoint, regions[]}` | `200 {ok, regions}` — moves this browser's alerts (profile saved) | `400`, `404` |
-| `GET /alerts/telegram/:code` | – | `200 {status: unknown\|waiting\|linked\|stopped, regions?}` | – |
+| `POST /alerts/regions` | `{endpoint, regions[], boards?[]}` | `200 {ok, regions}` — moves this browser's alert | `400`, `404` |
+| `GET /alerts/telegram/:code` | – | `200 {status: unknown\|waiting\|linked\|stopped, regions?, board?}` | – |
 | `POST /alerts/telegram/:code/regions` | `{regions[]}` | `200 {ok, regions}` | `404` (not linked) |
 | `POST /alerts/telegram/:code/off` | – | `200 {ok}` | `404` |
-| `POST /alerts/telegram` | `{regions[], turnstile_token}` | `201 {code, link}` | `403`, `503 telegram_unavailable` |
-| `POST /telegram/:secret` | Telegram update | `200 {ok}` — `/start <code>` links a chat, `/status`, `/places`, `/stop` | `403` |
-| `POST /telegram/setup/:secret` | – | `200 {ok}` — points Telegram at the webhook | `403`, `503 no_bot_token` |
+| `POST /alerts/telegram` | `{regions[], board?, turnstile_token}` | `201 {code, link, board}` — link to that board's bot | `403`, `503 telegram_unavailable` |
+| `POST /telegram/:secret` | Telegram update (@gklagbebot) | `200 {ok}` — `/start <code>` links a chat, `/status`, `/places`, `/stop` | `403` |
+| `POST /telegram/opp/:secret` | Telegram update (@opponentlagbebot) | same, for Opponent Lagbe | `403` |
+| `POST /telegram/setup/:secret` | – | `200 {gk, opp}` — points each bot with a token at its webhook | `403`, `503 no_bot_token` |
 
 - Phones are stored as `8801XXXXXXXXX` (wa.me format) and are **never** returned in public responses; `start_datetime` must include a timezone and is stored as UTC ISO.
 - `edit_token` is only ever returned once, from `POST /posts`.

@@ -82,6 +82,9 @@ export function AppShell({ children }: { children: ReactNode }) {
               <Link to="/#how" className="link-draw pb-0.5 hover:text-foreground">
                 How it works
               </Link>
+              <Link to="/alerts" className="link-draw pb-0.5 hover:text-foreground">
+                Alerts
+              </Link>
               <Link to="/keeper" className="link-draw pb-0.5 hover:text-foreground">
                 {profileLabel}
               </Link>
@@ -139,6 +142,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   {[
                     ...boards.map((b) => ({ to: `/#${b.anchor}`, label: b.board, hint: b.tagline })),
                     { to: "/#how", label: "How it works", hint: "Three steps, no sign-up" },
+                    { to: "/alerts", label: "Alerts", hint: "Hear about new posts near you" },
                     { to: "/keeper", label: profileLabel, hint: "Save your details and get alerts" },
                   ].map((item, i) => (
                     <motion.li
@@ -233,7 +237,8 @@ function Footer() {
     {
       heading: "More",
       links: [
-        { to: "/keeper", label: "Keeper profile & alerts" },
+        { to: "/alerts", label: "Alerts" },
+        { to: "/keeper", label: "Keeper profile" },
         { to: "/cha", label: "Buy me a cha" },
         { to: "https://github.com/TIZadid/khelbinaki/issues", label: "Suggest a feature", external: true },
       ],
