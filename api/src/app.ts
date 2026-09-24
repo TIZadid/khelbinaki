@@ -224,7 +224,8 @@ export function createApp(deps: Deps) {
     if (!body) return c.json({ error: "invalid_json" }, 400);
     if (!(await isHuman(c, body))) return c.json({ error: "captcha_failed" }, 403);
     const bot = botForBoard(botsFor(c.env), body.board);
-    if (!bot.username) return c.json({ error: "telegram_unavailable" }, 503);
+    // Both are needed: without the token the bot could never answer the link.
+    if (!bot.username || !bot.token) return c.json({ error: "telegram_unavailable" }, 503);
 
     const regions = readRegions(body);
     const code = randomId(16);

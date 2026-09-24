@@ -1,5 +1,5 @@
 import { env } from "cloudflare:workers";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { alertMessage, notifyNewPost } from "../src/alerts/notify";
 import { listAlertsFor, normalizeRegions, wantsRegion } from "../src/alerts/repo";
 import { buildVapidJwt, sendPush } from "../src/lib/webpush";
@@ -40,7 +40,14 @@ function send(a: typeof app, method: string, path: string, body?: unknown) {
 
 const PUSH_ENDPOINT = "https://fcm.googleapis.com/fcm/send/abc";
 
+afterEach(() => vi.restoreAllMocks());
+
 beforeEach(async () => {
+  // Bot replies go to api.telegram.org; never let a test reach the real thing.
+  const realFetch = globalThis.fetch;
+  vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) =>
+    String(input).startsWith("https://api.telegram.org/") ? new Response("{}") : realFetch(input, init),
+  );
   await env.DB.prepare("DELETE FROM alerts").run();
   await env.DB.prepare("DELETE FROM telegram_links").run();
 });
@@ -116,7 +123,7 @@ describe("POST /alerts", () => {
 
 describe("Telegram linking", () => {
   it("hands out a one-use code, then ties the chat to those areas", async () => {
-    const withBot = { ...env, TELEGRAM_BOT_USERNAME: "khelbinaki_bot", TELEGRAM_WEBHOOK_SECRET: "hook-secret" };
+    const withBot = { ...env, TELEGRAM_BOT_USERNAME: "khelbinaki_bot", TELEGRAM_BOT_TOKEN: "gk-tok", TELEGRAM_WEBHOOK_SECRET: "hook-secret" };
 
     const codeRes = await app.request(
       "/alerts/telegram",
@@ -147,7 +154,7 @@ describe("Telegram linking", () => {
   });
 
   it("lets the browser holding the code check, re-place and stop its Telegram alerts", async () => {
-    const withBot = { ...env, TELEGRAM_BOT_USERNAME: "khelbinaki_bot", TELEGRAM_WEBHOOK_SECRET: "hook-secret" };
+    const withBot = { ...env, TELEGRAM_BOT_USERNAME: "khelbinaki_bot", TELEGRAM_BOT_TOKEN: "gk-tok", TELEGRAM_WEBHOOK_SECRET: "hook-secret" };
     const call = (method: string, path: string, body?: unknown) =>
       app.request(
         path,
@@ -209,6 +216,7 @@ describe("Telegram linking", () => {
       ...env,
       TELEGRAM_BOT_USERNAME: "gklagbebot",
       TELEGRAM_OPP_BOT_USERNAME: "opponentlagbebot",
+      TELEGRAM_OPP_BOT_TOKEN: "opp-tok",
       TELEGRAM_WEBHOOK_SECRET: "hook-secret",
     };
     const call = (path: string, body: unknown) =>
@@ -233,7 +241,14 @@ describe("Telegram linking", () => {
   });
 
   it("says so when a board's bot isn't set up, and the other still works", async () => {
-    const onlyGk = { ...env, TELEGRAM_BOT_USERNAME: "gklagbebot", TELEGRAM_OPP_BOT_USERNAME: "" };
+    // The opponent bot has a username but no token yet: it can't answer, so no link.
+    const onlyGk = {
+      ...env,
+      TELEGRAM_BOT_USERNAME: "gklagbebot",
+      TELEGRAM_BOT_TOKEN: "gk-tok",
+      TELEGRAM_OPP_BOT_USERNAME: "opponentlagbebot",
+      TELEGRAM_OPP_BOT_TOKEN: "",
+    };
     const ask = (board?: string) =>
       app.request(
         "/alerts/telegram",
