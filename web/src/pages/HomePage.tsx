@@ -142,7 +142,7 @@ function Hero({ state, openOf }: { state: AsyncState<PublicPost[]>; openOf: (typ
           className="on-pitch font-display text-[clamp(5.75rem,21vw,13rem)] md:text-[14vw] xl:text-[13rem] leading-[0.8] font-extrabold tracking-[-0.015em] uppercase"
         >
           <RevealWords text="Khelbi" className="block" />
-          <RevealWords text="Naki?" className="block" wordClassName="text-board" delay={0.12} />
+          <RevealWords text="Naki?" className="glow block" wordClassName="text-primary" delay={0.12} />
         </h1>
 
         <FadeUp delay={0.15}>
@@ -247,8 +247,8 @@ function HowItWorks() {
 function Step({ step, i, progress }: { step: (typeof steps)[number]; i: number; progress: MotionValue<number> }) {
   const start = i / 3;
   // Each numeral lights up lime as the line reaches it.
-  const outline = useTransform(progress, [start, start + 0.12], ["#4a5342", "#94c11a"]);
-  const dot = useTransform(progress, [start, start + 0.05], ["#2b3226", "#94c11a"]);
+  const outline = useTransform(progress, [start, start + 0.12], ["#4a5342", "#a8e23a"]);
+  const dot = useTransform(progress, [start, start + 0.05], ["#2b3226", "#a8e23a"]);
 
   return (
     <li className={cn("relative flex gap-6 md:block md:pt-12", i === 0 ? "md:pr-12" : i === 1 ? "md:px-12" : "md:pl-12")}>

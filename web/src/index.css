@@ -11,8 +11,8 @@
   --card-foreground: #eef3e6;
   --popover: #111410;
   --popover-foreground: #eef3e6;
-  /* Brand green (also Opponent Lagbe), a touch darker than the original #a6d421. */
-  --primary: #94c11a;
+  /* The site's own glowing green: brand only (logo, headline, site-wide accents). */
+  --primary: #a8e23a;
   --primary-foreground: #0a0c09;
   --secondary: #181c15;
   --secondary-foreground: #eef3e6;
@@ -25,26 +25,39 @@
   --border: #1d2219;
   --line: #2b3226;
   --input: #2b3226;
-  --ring: #94c11a;
+  --ring: #a8e23a;
   --line-strong: #4a5342;
-  /* GK Lagbe's colour. */
-  --gk: #f0a23a;
+  /* The two boards each have their own, darker colour, apart from the brand. */
+  --gk: #d4861f; /* GK Lagbe: dark amber */
   --gk-foreground: #0a0c09;
-  /* The current board's colour: brand green unless a .board-gk ancestor says amber. */
+  --opp: #2e9e5b; /* Opponent Lagbe: dark green */
+  --opp-foreground: #0a0c09;
+  /* The current board's colour: brand green outside any board, else the board's own. */
   --board: var(--primary);
   --board-foreground: var(--primary-foreground);
 }
 
-/* Anything that belongs to one board takes its colour: GK Lagbe amber, Opponent Lagbe green. */
+/* Anything that belongs to one board takes its colour: GK Lagbe dark amber, Opponent Lagbe dark green. */
 .board-gk {
   --board: var(--gk);
   --board-foreground: var(--gk-foreground);
   --ring: var(--gk);
 }
 .board-opp {
-  --board: var(--primary);
-  --board-foreground: var(--primary-foreground);
-  --ring: var(--primary);
+  --board: var(--opp);
+  --board-foreground: var(--opp-foreground);
+  --ring: var(--opp);
+}
+
+/* The brand green glows a little where it matters (logo, headline, progress bar). */
+.glow {
+  text-shadow: 0 0 28px color-mix(in srgb, var(--primary) 45%, transparent);
+}
+.glow-box {
+  box-shadow: 0 0 14px color-mix(in srgb, var(--primary) 70%, transparent);
+}
+.glow-svg {
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--primary) 55%, transparent));
 }
 
 @theme inline {
@@ -61,6 +74,7 @@
   --color-board: var(--board);
   --color-board-foreground: var(--board-foreground);
   --color-gk: var(--gk);
+  --color-opp: var(--opp);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);

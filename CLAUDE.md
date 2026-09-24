@@ -197,8 +197,9 @@ call `window.scrollTo` directly), and a three.js football in the hero
 (`components/hero/Football3D.tsx`), lazy-loaded and skipped on Data Saver / no WebGL.
 Everything must respect `prefers-reduced-motion`.
 
-Board colours (owner, 2026-09-24): **GK Lagbe = amber `#f0a23a`**, **Opponent Lagbe =
-green `#94c11a`**, which is also the brand green (logo, site-wide accents). Board-specific
+Colours (owner, 2026-09-25): the **brand** is a glowing green `#a8e23a` (logo,
+headline, site-wide accents only); each board has its own darker colour —
+**GK Lagbe = dark amber `#d4861f`**, **Opponent Lagbe = dark green `#2e9e5b`**. Board-specific
 UI uses the `board` colour (`text-board`, `bg-board`, `border-board`,
 `text-board-foreground`); put the board's `tone` class from `listing.ts`
 (`board-gk` / `board-opp`) on its surface. Never hard-code either hex in a component.

@@ -34,7 +34,7 @@ export function BrandMark({ className }: { className?: string }) {
 export function Brand({ className, to = "/" }: { className?: string; to?: string }) {
   return (
     <Link to={to} aria-label="Khelbi Naki — home" className={cn("group relative inline-flex items-center gap-2.5", className)}>
-      <BrandMark className="size-[1.05em] shrink-0 transition-transform duration-500 ease-out group-hover:rotate-[72deg] motion-reduce:transition-none" />
+      <BrandMark className="glow-svg size-[1.05em] shrink-0 transition-transform duration-500 ease-out group-hover:rotate-[72deg] motion-reduce:transition-none" />
       <span className="relative">
         Khelbi <span className="text-primary">Naki?</span>
         <span className="absolute -bottom-1 left-0 h-[2px] w-0 bg-primary transition-[width] duration-300 ease-out group-hover:w-full motion-reduce:transition-none" />

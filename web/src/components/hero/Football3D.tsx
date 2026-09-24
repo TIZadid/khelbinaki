@@ -33,9 +33,9 @@ import { ConvexGeometry } from "three/addons/geometries/ConvexGeometry.js";
 
 // The site's palette: near-black green bodies, lime details, off-white highlights.
 const INK = new Color("#172010");
-const LIME = new Color("#94c11a");
-// GK Lagbe's amber, for the keeper's glove strap and the cone.
-const AMBER = new Color("#f0a23a");
+const LIME = new Color("#a8e23a");
+// GK Lagbe's dark amber, for the keeper's glove strap and the cone.
+const AMBER = new Color("#d4861f");
 const CHALK = new Color("#e9eee2");
 
 /** How much bigger the canvas is than the box it's centred on, so floating pieces never hit its edge. */
