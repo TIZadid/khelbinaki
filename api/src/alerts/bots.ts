@@ -1,5 +1,6 @@
 import { regionName } from "../lib/bd";
 import { randomId } from "../lib/random";
+import { claimLinkCode, createOtp, ensureAccount, saveVerifiedPhone } from "../auth/accounts";
 import { type AlertChannel, type Board, type BotKey, alertRegions, claimTelegramCode, deleteAlert, saveAlert } from "./repo";
 
 /** One Telegram bot per board: @gklagbebot for GK Lagbe, @opponentlagbebot for Opponent Lagbe. */
@@ -81,15 +82,85 @@ export async function replyTo(db: D1Database, bot: Bot, chat: string, text: stri
   }
   return (
     `I send ${bot.name} alerts: a message whenever ${bot.what}.\n\n` +
-    "/status — which places I'm watching\n/places — how to change them\n/stop — no more alerts\n\n" +
+    "/status — which places I'm watching\n/places — how to change them\n/stop — no more alerts\n/login — a code to sign in on the site\n\n" +
     `To start, tap Connect Telegram on ${page}`
   );
 }
 
-export async function sendTelegram(token: string, chatId: string | number, text: string, fetcher: typeof fetch = fetch) {
+export async function sendTelegram(
+  token: string,
+  chatId: string | number,
+  text: string,
+  fetcher: typeof fetch = fetch,
+  replyMarkup?: unknown,
+) {
   return fetcher(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text }),
+    body: JSON.stringify({ chat_id: chatId, text, ...(replyMarkup ? { reply_markup: replyMarkup } : {}) }),
   });
+}
+
+// ---- Sign-in (Part 3): both bots can sign someone in ------------------------------
+
+export type TelegramMessage = {
+  chat?: { id?: number };
+  from?: { id?: number; first_name?: string; last_name?: string };
+  text?: string;
+  contact?: { phone_number?: string; user_id?: number };
+};
+
+const SHARE_NUMBER = {
+  keyboard: [[{ text: "📱 Share my number", request_contact: true }]],
+  one_time_keyboard: true,
+  resize_keyboard: true,
+};
+
+/**
+ * Sign-in messages: /start login_<code>, /login, and a shared contact. Returns the
+ * reply (and keyboard), or null when the message isn't about signing in.
+ */
+export async function authReply(
+  db: D1Database,
+  message: TelegramMessage,
+  siteUrl: string,
+): Promise<{ text: string; markup?: unknown } | null> {
+  const fromId = message.from?.id;
+  if (typeof fromId !== "number") return null;
+  const tgId = String(fromId);
+  const telegramName = [message.from?.first_name, message.from?.last_name].filter(Boolean).join(" ");
+  const text = message.text ?? "";
+
+  const login = /^\/start\s+login_([0-9A-Za-z]{10,40})/.exec(text);
+  if (login) {
+    // The account exists before the code counts as claimed, so the site's next poll finds it.
+    await ensureAccount(db, tgId, telegramName);
+    if (!(await claimLinkCode(db, login[1], tgId))) {
+      return { text: `That sign-in link has expired or was already used. Tap Continue with Telegram again on ${siteUrl}/keeper` };
+    }
+    return {
+      text:
+        "Signed in on Khelbi Naki ✅ Go back to the site — it's already updated.\n\n" +
+        "Want hosts to see a verified number? Tap Share my number below (optional).",
+      markup: SHARE_NUMBER,
+    };
+  }
+
+  if (/^\/login\b/.test(text)) {
+    await ensureAccount(db, tgId, telegramName);
+    const code = await createOtp(db, tgId);
+    return {
+      text: `Your Khelbi Naki sign-in code: ${code}\n\nType it on the site within 10 minutes. It works once. Never share it with anyone.`,
+    };
+  }
+
+  if (message.contact) {
+    await ensureAccount(db, tgId, telegramName);
+    const outcome = await saveVerifiedPhone(db, tgId, message.contact);
+    const done = { remove_keyboard: true };
+    if (outcome === "saved") return { text: "Saved ✅ Your number is now verified on Khelbi Naki.", markup: done };
+    if (outcome === "not_bd") return { text: "Only Bangladeshi mobile numbers work on Khelbi Naki.", markup: done };
+    return { text: "Please share your own number, with the button below.", markup: SHARE_NUMBER };
+  }
+  return null;
 }

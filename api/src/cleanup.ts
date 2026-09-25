@@ -11,18 +11,33 @@ export const RETENTION = {
   deleteAfterHours: 48,
   /** Telegram link codes nobody used, or whose alerts were turned off. */
   staleTelegramHours: 24,
+  /** Telegram-backed accounts nobody has used in this long are deleted. */
+  accountDays: 180,
+  /** Signed-in sessions unused this long end. */
+  sessionDays: 60,
+  /** Sign-in codes (links and 6-digit codes) are short-lived anyway. */
+  loginCodeHours: 24,
 } as const;
 
 const slotEnd = `datetime(start_datetime, '+' || COALESCE(duration_minutes, ${RETENTION.defaultSlotMinutes}) || ' minutes')`;
 
-export type CleanupResult = { archived: number; deleted: number; requests: number; telegramLinks: number };
+export type CleanupResult = {
+  archived: number;
+  deleted: number;
+  requests: number;
+  telegramLinks: number;
+  accounts: number;
+  sessions: number;
+};
 
 export async function cleanup(db: D1Database, now: Date): Promise<CleanupResult> {
   const at = now.toISOString();
   const expired = `${slotEnd} <= datetime(?, '-${RETENTION.deleteAfterHours} hours')`;
   const stale = `created_at <= datetime(?, '-${RETENTION.staleTelegramHours} hours')`;
 
-  const [archived, requests, deleted, unclaimed, stopped] = await db.batch([
+  const staleAccounts = `SELECT tg_id FROM accounts WHERE last_seen_at <= datetime(?, '-${RETENTION.accountDays} days')`;
+
+  const [archived, requests, deleted, unclaimed, stopped, , , , , accounts, sessions] = await db.batch([
     db.prepare(`UPDATE posts SET status = 'archived' WHERE status != 'archived' AND ${slotEnd} <= datetime(?)`).bind(at),
     // Requests go first so nothing depends on foreign-key cascades being switched on.
     db.prepare(`DELETE FROM interests WHERE post_id IN (SELECT id FROM posts WHERE ${expired})`).bind(at),
@@ -31,9 +46,21 @@ export async function cleanup(db: D1Database, now: Date): Promise<CleanupResult>
     db
       .prepare(
         `DELETE FROM telegram_links WHERE chat_id IS NOT NULL AND ${stale}
-         AND NOT EXISTS (SELECT 1 FROM alerts WHERE channel = 'telegram' AND address = telegram_links.chat_id)`,
+         AND NOT EXISTS (
+           SELECT 1 FROM alerts
+           WHERE channel = CASE telegram_links.bot WHEN 'opp' THEN 'telegram_opp' ELSE 'telegram' END
+             AND address = telegram_links.chat_id
+         )`,
       )
       .bind(at),
+    // Accounts nobody has used in 6 months go, exactly like "Delete my data".
+    db.prepare(`DELETE FROM alerts WHERE channel IN ('telegram', 'telegram_opp') AND address IN (${staleAccounts})`).bind(at),
+    db.prepare(`DELETE FROM telegram_links WHERE chat_id IN (${staleAccounts})`).bind(at),
+    db.prepare(`UPDATE posts SET owner_tg_id = NULL WHERE owner_tg_id IN (${staleAccounts})`).bind(at),
+    db.prepare(`DELETE FROM sessions WHERE tg_id IN (${staleAccounts})`).bind(at),
+    db.prepare(`DELETE FROM accounts WHERE tg_id IN (${staleAccounts})`).bind(at),
+    db.prepare(`DELETE FROM sessions WHERE last_used_at <= datetime(?, '-${RETENTION.sessionDays} days')`).bind(at),
+    db.prepare(`DELETE FROM login_codes WHERE created_at <= datetime(?, '-${RETENTION.loginCodeHours} hours')`).bind(at),
   ]);
 
   return {
@@ -41,5 +68,7 @@ export async function cleanup(db: D1Database, now: Date): Promise<CleanupResult>
     requests: requests.meta.changes,
     deleted: deleted.meta.changes,
     telegramLinks: unclaimed.meta.changes + stopped.meta.changes,
+    accounts: accounts.meta.changes,
+    sessions: sessions.meta.changes,
   };
 }

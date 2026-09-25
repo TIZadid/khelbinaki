@@ -1,7 +1,20 @@
 import { type Context, Hono } from "hono";
 import { cors } from "hono/cors";
 import { notifyNewPost } from "./alerts/notify";
-import { botForBoard, botsFor, replyTo, sendTelegram } from "./alerts/bots";
+import {
+  createLinkCode,
+  createSession,
+  deleteAccount,
+  endSession,
+  getAccount,
+  ownedPosts,
+  pollLinkCode,
+  redeemOtp,
+  sessionAccount,
+  updateProfile,
+  validateProfile,
+} from "./auth/accounts";
+import { type TelegramMessage, authReply, botForBoard, botsFor, replyTo, sendTelegram } from "./alerts/bots";
 import {
   type BotKey,
   deleteAlert,
@@ -105,6 +118,9 @@ export function createApp(deps: Deps) {
 
     const editToken = randomToken();
     const post = await insertPost(c.env.DB, randomId(), editToken, result.value);
+    // Signed in with Telegram? Then the post belongs to the account (My posts on any device).
+    const owner = await sessionAccount(c.env.DB, c.req.header("Authorization"));
+    if (owner) await c.env.DB.prepare("UPDATE posts SET owner_tg_id = ? WHERE id = ?").bind(owner, post.id).run();
     // Keepers watching this area hear about new keeper posts after the response goes out.
     // (Tests call the app without an ExecutionContext, so fall back to awaiting.)
     const fanOut = notifyNewPost(c.env, post).catch(() => undefined);
@@ -284,16 +300,80 @@ export function createApp(deps: Deps) {
     if (!webhookSecretOk(c)) return c.json({ error: "forbidden" }, 403);
     const bot = botsFor(c.env)[key];
     const update = (await readObject(c)) ?? {};
-    const message = update.message as { chat?: { id?: number }; text?: string } | undefined;
+    const message = update.message as TelegramMessage | undefined;
     const chatId = message?.chat?.id;
-    if (typeof chatId !== "number") return c.json({ ok: true });
+    if (!message || typeof chatId !== "number") return c.json({ ok: true });
 
-    const reply = await replyTo(c.env.DB, bot, String(chatId), message?.text ?? "", c.env.SITE_URL);
-    if (bot.token) await sendTelegram(bot.token, chatId, reply).catch(() => undefined);
+    // Sign-in messages first, then the alert commands.
+    const auth = await authReply(c.env.DB, message, c.env.SITE_URL);
+    const reply = auth ?? { text: await replyTo(c.env.DB, bot, String(chatId), message.text ?? "", c.env.SITE_URL) };
+    if (bot.token) await sendTelegram(bot.token, chatId, reply.text, fetch, "markup" in reply ? reply.markup : undefined).catch(() => undefined);
     return c.json({ ok: true });
   };
   app.post("/telegram/opp/:secret", webhook("opp"));
   app.post("/telegram/:secret", webhook("gk"));
+
+  // ---- Continue with Telegram (optional accounts) ----
+
+  const signedIn = async (c: Ctx, tgId: string) => {
+    const session = await createSession(c.env.DB, tgId);
+    return c.json({ session, account: await getAccount(c.env.DB, tgId) });
+  };
+
+  // The site asks for a sign-in link; pressing Start in either bot with it signs in.
+  app.post("/auth/start", async (c) => {
+    const body = (await readObject(c)) ?? {};
+    if (!(await isHuman(c, body))) return c.json({ error: "captcha_failed" }, 403);
+    const code = await createLinkCode(c.env.DB);
+    const bots = botsFor(c.env);
+    const link = (username?: string) => (username ? `https://t.me/${username}?start=login_${code}` : null);
+    return c.json({ code, links: { gk: link(bots.gk.username), opp: link(bots.opp.username) } }, 201);
+  });
+
+  app.get("/auth/poll/:code", async (c) => {
+    const result = await pollLinkCode(c.env.DB, c.req.param("code"));
+    if (!result) return c.json({ error: "not_found" }, 404);
+    if (result.status === "waiting") return c.json({ status: "waiting" });
+    return signedIn(c, result.tgId);
+  });
+
+  // No Telegram on this device: the 6-digit code a bot sent after /login.
+  app.post("/auth/otp", async (c) => {
+    const body = (await readObject(c)) ?? {};
+    if (!(await isHuman(c, body))) return c.json({ error: "captcha_failed" }, 403);
+    const tgId = await redeemOtp(c.env.DB, typeof body.code === "string" ? body.code.trim() : "");
+    if (!tgId) return c.json({ error: "bad_code" }, 400);
+    return signedIn(c, tgId);
+  });
+
+  app.post("/auth/logout", async (c) => {
+    await endSession(c.env.DB, c.req.header("Authorization"));
+    return c.json({ ok: true });
+  });
+
+  app.get("/me", async (c) => {
+    const tgId = await sessionAccount(c.env.DB, c.req.header("Authorization"));
+    const account = tgId ? await getAccount(c.env.DB, tgId) : null;
+    if (!tgId || !account) return c.json({ error: "signed_out" }, 401);
+    return c.json({ account, posts: await ownedPosts(c.env.DB, tgId) });
+  });
+
+  app.put("/me", async (c) => {
+    const tgId = await sessionAccount(c.env.DB, c.req.header("Authorization"));
+    if (!tgId) return c.json({ error: "signed_out" }, 401);
+    const result = validateProfile(await readObject(c));
+    if (!result.ok) return c.json({ error: "validation", fields: result.errors }, 400);
+    await updateProfile(c.env.DB, tgId, result.value);
+    return c.json({ account: await getAccount(c.env.DB, tgId) });
+  });
+
+  // Delete my data.
+  app.delete("/me", async (c) => {
+    const tgId = await sessionAccount(c.env.DB, c.req.header("Authorization"));
+    if (!tgId) return c.json({ error: "signed_out" }, 401);
+    await deleteAccount(c.env.DB, tgId);
+    return c.json({ ok: true });
+  });
 
   return app;
 }
