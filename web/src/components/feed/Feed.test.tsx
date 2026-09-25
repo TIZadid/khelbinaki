@@ -88,6 +88,24 @@ describe("Feed", () => {
     expect(screen.getByRole("link", { name: /need a keeper/i })).toHaveAttribute("href", "/new");
   });
 
+  it("searches by the words people remember, and offers to clear a search with no match", () => {
+    renderFeed(ready(POSTS));
+    fireEvent.change(screen.getByLabelText(/search gk lagbe/i), { target: { value: "agrabad" } });
+    expect(screen.getByText("6:00 PM")).toBeInTheDocument();
+    expect(screen.queryByText("7:30 PM")).toBeNull();
+
+    fireEvent.change(screen.getByLabelText(/search gk lagbe/i), { target: { value: "nowhere" } });
+    expect(screen.getByText(/nothing on gk lagbe matches/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /^clear search$/i }));
+    expect(screen.getByText("7:30 PM")).toBeInTheDocument();
+  });
+
+  it("shows a short preview with a link to the whole board", () => {
+    render(<Feed type="gk_needed" mode="preview" state={ready(POSTS)} retry={vi.fn()} now={NOW} />);
+    expect(screen.queryByLabelText(/search gk lagbe/i)).toBeNull();
+    expect(screen.getByRole("link", { name: /on gk lagbe|open gk lagbe/i })).toHaveAttribute("href", "/gk-lagbe");
+  });
+
   it("filters by area chip", () => {
     renderFeed(ready(POSTS));
 

@@ -1,7 +1,9 @@
 import { LISTINGS } from "@/lib/listing";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { Link } from "@/lib/router";
 
 export function NotFoundPage() {
+  usePageTitle("Page not found");
   return (
     <div className="page-x flex flex-col items-center py-24 text-center md:py-32">
       <p className="text-outline font-display text-[160px] leading-none font-extrabold md:text-[240px]" style={{ "--outline": "var(--board)" } as React.CSSProperties}>
@@ -11,7 +13,7 @@ export function NotFoundPage() {
       <p className="mt-3 max-w-md text-muted-foreground">Offside. That link doesn't go anywhere on Khelbi Naki.</p>
       <div className="mt-8 flex flex-wrap justify-center gap-5">
         {[LISTINGS.gk_needed, LISTINGS.opponent_needed].map((board) => (
-          <Link key={board.anchor} to={`/#${board.anchor}`} className={`${board.tone} link-draw font-semibold text-board`}>
+          <Link key={board.anchor} to={board.path} className={`${board.tone} link-draw font-semibold text-board`}>
             Go to {board.board}
           </Link>
         ))}

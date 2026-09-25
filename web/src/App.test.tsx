@@ -1,6 +1,5 @@
 import { render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { saveKeeperProfile } from "@/lib/keeper";
 import App from "./App";
 
 beforeEach(() => {
@@ -66,18 +65,50 @@ it("routes /keeper to the keeper profile page", () => {
   expect(screen.getByRole("heading", { level: 1, name: /your keeper profile/i })).toBeInTheDocument();
 });
 
-it("links keepers to their profile from the header", () => {
-  const { unmount } = render(<App />);
-  expect(within(screen.getByRole("banner")).getByRole("link", { name: "I'm a keeper" })).toHaveAttribute("href", "/keeper");
+it("links every main place from the header, marking where you are", () => {
+  window.history.pushState(null, "", "/gk-lagbe");
+  render(<App />);
   const banner = within(screen.getByRole("banner"));
   expect(banner.getByRole("link", { name: /need a keeper/i })).toHaveAttribute("href", "/new");
   expect(banner.getByRole("link", { name: /need an opponent/i })).toHaveAttribute("href", "/new/opponent");
-  expect(banner.getByRole("link", { name: "GK Lagbe" })).toHaveAttribute("href", "/#gk-lagbe");
-  expect(banner.getByRole("link", { name: "Opponent Lagbe" })).toHaveAttribute("href", "/#opponent-lagbe");
-  unmount();
-  saveKeeperProfile({ name: "Mehedi", phone: "8801912345678", regions: [], note: "" });
+  expect(banner.getByRole("link", { name: "GK Lagbe" })).toHaveAttribute("aria-current", "page");
+  expect(banner.getByRole("link", { name: "Opponent Lagbe" })).toHaveAttribute("href", "/opponent-lagbe");
+  expect(banner.getByRole("link", { name: "Opponent Lagbe" })).not.toHaveAttribute("aria-current");
+  expect(banner.getByRole("link", { name: "Me" })).toHaveAttribute("href", "/me");
+  expect(banner.getByRole("link", { name: "Help" })).toHaveAttribute("href", "/help");
+});
+
+it("has a phone tab bar with icon-and-word tabs, lighting the current one", () => {
+  window.history.pushState(null, "", "/alerts");
   render(<App />);
-  expect(within(screen.getByRole("banner")).getByRole("link", { name: "My profile" })).toBeInTheDocument();
+  const tabs = screen.getAllByRole("navigation", { name: "Main" }).find((nav) => nav.querySelector("ul.grid")) as HTMLElement;
+  const alerts = within(tabs).getByRole("link", { name: /alerts/i });
+  expect(alerts).toHaveAttribute("aria-current", "page");
+  expect(within(tabs).getAllByRole("link").map((a) => a.textContent)).toEqual(["Home", "GK Lagbe", "Opponent", "Alerts", "Me"]);
+});
+
+it("gives each board its own page, with breadcrumbs, search and a page title", async () => {
+  window.history.pushState(null, "", "/opponent-lagbe");
+  render(<App />);
+  expect(screen.getByRole("heading", { level: 1, name: /opponent lagbe/i })).toBeInTheDocument();
+  const crumbs = within(screen.getByRole("navigation", { name: "Breadcrumb" }));
+  expect(crumbs.getByRole("link", { name: /home/i })).toHaveAttribute("href", "/");
+  expect(crumbs.getByText("Opponent Lagbe")).toHaveAttribute("aria-current", "page");
+  expect(document.title).toMatch(/^Opponent Lagbe — Khelbi Naki/);
+});
+
+it("shows only a preview of each board on the home page, with a way to see all", async () => {
+  render(<App />);
+  await screen.findByText(/no games need a keeper/i);
+  expect(screen.getByRole("heading", { level: 2, name: /^gk lagbe$/i })).toBeInTheDocument();
+});
+
+it("routes /me to a hub of your things", () => {
+  window.history.pushState(null, "", "/me");
+  render(<App />);
+  expect(screen.getByRole("heading", { level: 1, name: "Me" })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: /keeper profile/i })).toHaveAttribute("href", "/keeper");
+  expect(screen.getByRole("link", { name: /my posts/i })).toHaveAttribute("href", "/my-posts");
 });
 
 it("routes /new to the post form", () => {

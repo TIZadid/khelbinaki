@@ -1,10 +1,10 @@
-import { ArrowUpRight, Menu, X } from "lucide-react";
+import { ArrowUp, ArrowUpRight, Bell, Hand, HelpCircle, House, Menu, Swords, UserRound, X } from "lucide-react";
 import {
   AnimatePresence,
   MotionConfig,
   motion,
-  useMotionValueEvent,
   useInView,
+  useMotionValueEvent,
   useReducedMotion,
   useScroll,
 } from "motion/react";
@@ -12,11 +12,11 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
 import { Brand } from "@/components/Brand";
 import { Magnetic } from "@/components/motion/Magnetic";
 import { ScrollProgress } from "@/components/motion/ScrollProgress";
-import { useKeeperProfile } from "@/hooks/useKeeperProfile";
+import { Toaster } from "@/components/nav/Toaster";
 import { LISTINGS } from "@/lib/listing";
-import { loadMyPosts } from "@/lib/myPosts";
+import { type Section, useSection } from "@/lib/nav";
 import { Link, usePath } from "@/lib/router";
-import { lockScroll, startSmoothScroll } from "@/lib/smoothScroll";
+import { lockScroll, scrollToTarget, startSmoothScroll } from "@/lib/smoothScroll";
 import { cn } from "@/lib/utils";
 import { PitchBackground } from "./PitchBackground";
 
@@ -24,13 +24,31 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 
 const boards = [LISTINGS.gk_needed, LISTINGS.opponent_needed];
 
+// The main places, in the order people reach for them. Each has a colour scope so
+// "you are here" shows in that section's colour.
+const PLACES: { section: Section; to: string; label: string; short: string; icon: typeof House; tone: string }[] = [
+  { section: "home", to: "/", label: "Home", short: "Home", icon: House, tone: "board-site" },
+  { section: "gk", to: LISTINGS.gk_needed.path, label: LISTINGS.gk_needed.board, short: LISTINGS.gk_needed.short, icon: Hand, tone: LISTINGS.gk_needed.tone },
+  {
+    section: "opp",
+    to: LISTINGS.opponent_needed.path,
+    label: LISTINGS.opponent_needed.board,
+    short: LISTINGS.opponent_needed.short,
+    icon: Swords,
+    tone: LISTINGS.opponent_needed.tone,
+  },
+  { section: "alerts", to: "/alerts", label: "Alerts", short: "Alerts", icon: Bell, tone: "board-site" },
+  { section: "me", to: "/me", label: "Me", short: "Me", icon: UserRound, tone: "board-site" },
+];
+
 export function AppShell({ children }: { children: ReactNode }) {
-  const keeper = useKeeperProfile();
   const path = usePath();
+  const section = useSection(path);
   const reduce = useReducedMotion();
   const [menuOpen, setMenuOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [farDown, setFarDown] = useState(false);
   const [firstPath] = useState(path);
   const [seenPath, setSeenPath] = useState(path);
   const { scrollY } = useScroll();
@@ -52,15 +70,23 @@ export function AppShell({ children }: { children: ReactNode }) {
     const previous = scrollY.getPrevious() ?? 0;
     setScrolled(y > 12);
     setHidden(y > 160 && y > previous && !menuOpen);
+    setFarDown(y > 1400);
   });
-
-  const profileLabel = keeper ? "My profile" : "I'm a keeper";
-  // Read on every render (each page change re-renders), so a new post shows up at once.
-  const hasPosts = loadMyPosts().length > 0;
 
   return (
     <MotionConfig reducedMotion="user">
       <div className="flex min-h-dvh flex-col">
+        {/* Keyboard and screen-reader users can jump straight past the menus. */}
+        <a
+          href="#main"
+          onClick={(e) => {
+            e.preventDefault();
+            document.getElementById("main")?.focus();
+          }}
+          className="fixed top-3 left-3 z-[80] -translate-y-24 rounded-full bg-primary px-5 py-3 font-semibold text-primary-foreground transition-transform focus-visible:translate-y-0"
+        >
+          Skip to content
+        </a>
         <PitchBackground />
         <div aria-hidden="true" className="grain" />
         <ScrollProgress />
@@ -70,32 +96,39 @@ export function AppShell({ children }: { children: ReactNode }) {
           transition={{ duration: 0.35, ease: EASE }}
           className={cn(
             "fixed inset-x-0 top-0 z-40 border-b transition-[background-color,border-color,backdrop-filter] duration-300",
-            scrolled || menuOpen ? "border-border bg-background/75 backdrop-blur-xl" : "border-transparent",
+            scrolled || menuOpen ? "border-border bg-background/80 backdrop-blur-xl" : "border-transparent",
           )}
         >
           <div className="page-x flex h-17 items-center justify-between gap-6 md:h-20">
             <Brand className="font-display text-2xl font-extrabold tracking-[0.02em] uppercase md:text-[28px]" />
 
-            <nav aria-label="Main" className="hidden items-center gap-8 text-[15px] font-medium text-muted-foreground lg:flex">
-              {boards.map((board) => (
-                <Link key={board.anchor} to={`/#${board.anchor}`} className="link-draw pb-0.5 hover:text-foreground">
-                  {board.board}
-                </Link>
-              ))}
-              <Link to="/#how" className="link-draw pb-0.5 hover:text-foreground">
-                How it works
-              </Link>
-              <Link to="/alerts" className="link-draw pb-0.5 hover:text-foreground">
-                Alerts
-              </Link>
-              {hasPosts && (
-                <Link to="/my-posts" className="link-draw pb-0.5 hover:text-foreground">
-                  My posts
-                </Link>
+            <nav aria-label="Main" className="hidden items-center gap-1 lg:flex">
+              {[...PLACES.slice(1), { section: "help" as Section, to: "/help", label: "Help", short: "Help", icon: HelpCircle, tone: "board-site" }].map(
+                (place) => {
+                  const active = section === place.section;
+                  return (
+                    <Link
+                      key={place.to}
+                      to={place.to}
+                      aria-current={active ? "page" : undefined}
+                      className={cn(
+                        place.tone,
+                        "relative rounded-full px-3.5 py-2 text-[15px] font-medium transition-colors duration-150",
+                        active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      {active && (
+                        <motion.span
+                          layoutId="nav-here"
+                          className="absolute inset-x-3.5 -bottom-0.5 h-[3px] rounded-full bg-board"
+                          transition={{ type: "spring", stiffness: 480, damping: 36 }}
+                        />
+                      )}
+                      {place.label}
+                    </Link>
+                  );
+                },
               )}
-              <Link to="/keeper" className="link-draw pb-0.5 hover:text-foreground">
-                {profileLabel}
-              </Link>
             </nav>
 
             <div className="flex items-center gap-2.5">
@@ -123,7 +156,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 aria-expanded={menuOpen}
                 aria-controls="site-menu"
                 aria-label={menuOpen ? "Close menu" : "Open menu"}
-                className="inline-flex size-11 items-center justify-center rounded-full border border-line transition-colors hover:border-board hover:text-board lg:hidden"
+                className="inline-flex size-11 items-center justify-center rounded-full border border-line transition-colors hover:border-primary hover:text-primary lg:hidden"
               >
                 {menuOpen ? <X aria-hidden="true" className="size-5" /> : <Menu aria-hidden="true" className="size-5" />}
               </button>
@@ -132,76 +165,14 @@ export function AppShell({ children }: { children: ReactNode }) {
         </motion.header>
 
         <AnimatePresence>
-          {menuOpen && (
-            <motion.div
-              id="site-menu"
-              role="dialog"
-              aria-modal="true"
-              aria-label="Menu"
-              data-lenis-prevent
-              initial={{ clipPath: "circle(0% at calc(100% - 42px) 34px)" }}
-              animate={{ clipPath: "circle(150% at calc(100% - 42px) 34px)" }}
-              exit={{ clipPath: "circle(0% at calc(100% - 42px) 34px)" }}
-              transition={{ duration: 0.55, ease: EASE }}
-              className="fixed inset-0 z-30 overflow-y-auto bg-background pt-17 lg:hidden"
-            >
-              <nav aria-label="Menu" className="page-x flex min-h-full flex-col justify-between gap-10 pt-8 pb-10">
-                <ul className="flex flex-col">
-                  {[
-                    ...boards.map((b) => ({ to: `/#${b.anchor}`, label: b.board, hint: b.tagline })),
-                    { to: "/#how", label: "How it works", hint: "Three steps, no sign-up" },
-                    { to: "/alerts", label: "Alerts", hint: "Hear about new posts near you" },
-                    ...(hasPosts ? [{ to: "/my-posts", label: "My posts", hint: "Posts made on this phone" }] : []),
-                    { to: "/keeper", label: profileLabel, hint: "Save your details and get alerts" },
-                  ].map((item, i) => (
-                    <motion.li
-                      key={item.to}
-                      initial={{ y: 40, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      transition={{ duration: 0.5, delay: 0.12 + i * 0.06, ease: EASE }}
-                      className="border-b"
-                    >
-                      <Link to={item.to} onClick={() => setMenuOpen(false)} className="group flex items-end justify-between gap-4 py-4">
-                        <span>
-                          <span className="block font-display text-5xl leading-none font-extrabold uppercase transition-colors group-hover:text-board">
-                            {item.label}
-                          </span>
-                          <span className="mt-1.5 block text-sm text-subtle">{item.hint}</span>
-                        </span>
-                        <ArrowUpRight aria-hidden="true" className="size-6 shrink-0 text-subtle transition-transform group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-board" />
-                      </Link>
-                    </motion.li>
-                  ))}
-                </ul>
-                <motion.div
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ duration: 0.5, delay: 0.4, ease: EASE }}
-                  className="flex flex-col gap-2.5"
-                >
-                  <Link
-                    to={LISTINGS.gk_needed.newPath}
-                    onClick={() => setMenuOpen(false)}
-                    className="board-gk inline-flex h-14 items-center justify-center rounded-full bg-board text-[17px] font-semibold text-board-foreground"
-                  >
-                    {LISTINGS.gk_needed.postCta}
-                  </Link>
-                  <Link
-                    to={LISTINGS.opponent_needed.newPath}
-                    onClick={() => setMenuOpen(false)}
-                    className="board-opp inline-flex h-14 items-center justify-center rounded-full bg-board text-[17px] font-semibold text-board-foreground"
-                  >
-                    {LISTINGS.opponent_needed.postCta}
-                  </Link>
-                </motion.div>
-              </nav>
-            </motion.div>
-          )}
+          {menuOpen && <MobileMenu section={section} onClose={() => setMenuOpen(false)} />}
         </AnimatePresence>
 
         <motion.main
           key={path}
-          className="flex-1 pt-17 md:pt-20"
+          id="main"
+          tabIndex={-1}
+          className="flex-1 pt-17 outline-none md:pt-20"
           // Slide only: fading the whole page would empty it from the accessibility
           // tree (and hide everything if the animation ever stalled).
           initial={{ y: 18 }}
@@ -224,8 +195,158 @@ export function AppShell({ children }: { children: ReactNode }) {
         )}
 
         <Footer />
+        {/* Room for the phone tab bar, so it never covers the end of the page. */}
+        <div aria-hidden="true" className="h-[var(--tabbar-h)] md:hidden" />
+
+        <TabBar section={section} />
+        <AnimatePresence>
+          {farDown && (
+            <motion.button
+              type="button"
+              aria-label="Back to top"
+              onClick={() => scrollToTarget(0)}
+              initial={{ opacity: 0, scale: 0.6, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.6, y: 20 }}
+              whileHover={{ y: -3 }}
+              whileTap={{ scale: 0.92 }}
+              transition={{ type: "spring", stiffness: 420, damping: 26 }}
+              className="fixed right-4 bottom-[calc(var(--tabbar-h)+1rem)] z-30 inline-flex size-12 items-center justify-center rounded-full border border-line bg-card/90 text-foreground shadow-lg backdrop-blur hover:border-primary hover:text-primary md:right-8 md:bottom-8"
+            >
+              <ArrowUp aria-hidden="true" className="size-5" />
+            </motion.button>
+          )}
+        </AnimatePresence>
+        <Toaster />
       </div>
     </MotionConfig>
+  );
+}
+
+/**
+ * Phones: the five main places, always at the bottom within thumb reach, each an
+ * icon *and* a word. The current one is lit in its colour; the light slides over.
+ */
+function TabBar({ section }: { section: Section | null }) {
+  return (
+    <nav
+      aria-label="Main"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
+    >
+      <ul className="mx-auto grid h-17 max-w-lg grid-cols-5">
+        {PLACES.map((place) => {
+          const active = section === place.section;
+          const Icon = place.icon;
+          return (
+            <li key={place.to} className={place.tone}>
+              <Link
+                to={place.to}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "relative flex h-full flex-col items-center justify-center gap-1 text-[11px] font-semibold transition-colors duration-150",
+                  active ? "text-board" : "text-muted-foreground active:text-foreground",
+                )}
+              >
+                {active && (
+                  <motion.span
+                    layoutId="tab-here"
+                    className="absolute top-0 h-[3px] w-10 rounded-b-full bg-board"
+                    transition={{ type: "spring", stiffness: 480, damping: 36 }}
+                  />
+                )}
+                <motion.span
+                  className={cn("relative flex h-8 w-14 items-center justify-center rounded-full", active && "bg-board/15")}
+                  animate={active ? { scale: 1 } : { scale: 0.94 }}
+                  whileTap={{ scale: 0.86 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 28 }}
+                >
+                  <Icon aria-hidden="true" className="size-[22px]" strokeWidth={active ? 2.4 : 1.9} />
+                </motion.span>
+                {place.short}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  );
+}
+
+function MobileMenu({ section, onClose }: { section: Section | null; onClose: () => void }) {
+  const items: { to: string; label: string; hint: string; section?: Section; tone?: string }[] = [
+    { to: "/", label: "Home", hint: "Start here", section: "home" },
+    ...boards.map((b) => ({ to: b.path, label: b.board, hint: b.tagline, section: (b.tone === "board-gk" ? "gk" : "opp") as Section, tone: b.tone })),
+    { to: "/alerts", label: "Alerts", hint: "Hear about new posts near you", section: "alerts" },
+    { to: "/me", label: "Me", hint: "Your profile, posts and sign-in", section: "me" },
+    { to: "/help", label: "Help", hint: "Answers in plain words", section: "help" },
+  ];
+  return (
+    <motion.div
+      id="site-menu"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Menu"
+      data-lenis-prevent
+      initial={{ clipPath: "circle(0% at calc(100% - 42px) 34px)" }}
+      animate={{ clipPath: "circle(150% at calc(100% - 42px) 34px)" }}
+      exit={{ clipPath: "circle(0% at calc(100% - 42px) 34px)" }}
+      transition={{ duration: 0.55, ease: EASE }}
+      className="fixed inset-0 z-30 overflow-y-auto bg-background pt-17 lg:hidden"
+    >
+      <nav aria-label="Menu" className="page-x flex min-h-full flex-col justify-between gap-10 pt-6 pb-[calc(var(--tabbar-h)+2rem)]">
+        <ul className="flex flex-col">
+          {items.map((item, i) => {
+            const active = item.section === section;
+            return (
+              <motion.li
+                key={item.to}
+                initial={{ y: 40, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.1 + i * 0.05, ease: EASE }}
+                className={cn("border-b", item.tone ?? "board-site")}
+              >
+                <Link to={item.to} onClick={onClose} aria-current={active ? "page" : undefined} className="group flex items-end justify-between gap-4 py-4">
+                  <span>
+                    <span
+                      className={cn(
+                        "flex items-center gap-3 font-display text-[44px] leading-none font-extrabold uppercase transition-colors group-hover:text-board",
+                        active && "text-board",
+                      )}
+                    >
+                      {item.label}
+                      {active && (
+                        <span className="rounded-full border border-board px-2 py-0.5 font-sans text-[11px] font-semibold tracking-[0.12em] text-board">
+                          YOU'RE HERE
+                        </span>
+                      )}
+                    </span>
+                    <span className="mt-1.5 block text-sm text-muted-foreground">{item.hint}</span>
+                  </span>
+                  <ArrowUpRight aria-hidden="true" className="size-6 shrink-0 text-subtle transition-transform group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-board" />
+                </Link>
+              </motion.li>
+            );
+          })}
+        </ul>
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.4, ease: EASE }}
+          className="flex flex-col gap-2.5"
+        >
+          {boards.map((b) => (
+            <Link
+              key={b.newPath}
+              to={b.newPath}
+              onClick={onClose}
+              className={cn(b.tone, "inline-flex h-14 items-center justify-center rounded-full bg-board text-[17px] font-semibold text-board-foreground")}
+            >
+              {b.postCta}
+            </Link>
+          ))}
+        </motion.div>
+      </nav>
+    </motion.div>
   );
 }
 
@@ -237,7 +358,7 @@ function Footer() {
   const columns: { heading: string; links: { to: string; label: string; external?: boolean }[] }[] = [
     {
       heading: "Boards",
-      links: boards.map((b) => ({ to: `/#${b.anchor}`, label: b.board })),
+      links: boards.map((b) => ({ to: b.path, label: b.board })),
     },
     {
       heading: "Post",
@@ -247,8 +368,8 @@ function Footer() {
       heading: "More",
       links: [
         { to: "/alerts", label: "Alerts" },
-        { to: "/my-posts", label: "My posts" },
-        { to: "/keeper", label: "Keeper profile" },
+        { to: "/me", label: "Me: profile & posts" },
+        { to: "/help", label: "Help" },
         { to: "/cha", label: "Buy me a cha" },
         { to: "https://github.com/TIZadid/khelbinaki/issues", label: "Suggest a feature", external: true },
       ],
@@ -260,22 +381,22 @@ function Footer() {
       <div className="page-x grid gap-10 pt-14 pb-8 md:grid-cols-[1.4fr_repeat(3,1fr)] md:pt-20">
         <div>
           <Brand className="font-display text-[28px] font-extrabold uppercase" />
-          <p className="mt-3 max-w-72 text-[15px] leading-relaxed text-subtle">
+          <p className="mt-3 max-w-72 text-[15px] leading-relaxed text-muted-foreground">
             The free board for underground futsal across Bangladesh. No sign-up, no fees, no ads.
           </p>
         </div>
         {columns.map((column) => (
           <div key={column.heading}>
-            <h2 className="font-display text-lg font-bold tracking-[0.08em] text-board uppercase">{column.heading}</h2>
-            <ul className="mt-4 flex flex-col gap-2.5 text-[15px]">
+            <h2 className="font-display text-lg font-bold tracking-[0.08em] text-primary uppercase">{column.heading}</h2>
+            <ul className="mt-4 flex flex-col gap-1 text-[15px]">
               {column.links.map((link) => (
                 <li key={link.label}>
                   {link.external ? (
-                    <a href={link.to} target="_blank" rel="noopener noreferrer" className="link-draw text-foreground/85 hover:text-board">
+                    <a href={link.to} target="_blank" rel="noopener noreferrer" className="link-draw inline-flex min-h-9 items-center text-foreground/90 hover:text-primary">
                       {link.label}
                     </a>
                   ) : (
-                    <Link to={link.to} className="link-draw text-foreground/85 hover:text-board">
+                    <Link to={link.to} className="link-draw inline-flex min-h-9 items-center text-foreground/90 hover:text-primary">
                       {link.label}
                     </Link>
                   )}
@@ -300,13 +421,13 @@ function Footer() {
             clipPath: reduce || filled ? "inset(0 0 0 0)" : "inset(0 100% 0 0)",
             transition: reduce ? undefined : "clip-path 1.4s cubic-bezier(0.76, 0, 0.24, 1)",
           }}
-          className="absolute inset-y-0 left-5 md:left-10 font-display text-[15.5vw] leading-[0.92] font-extrabold whitespace-nowrap text-board uppercase xl:text-[11.5rem]"
+          className="absolute inset-y-0 left-5 font-display text-[15.5vw] leading-[0.92] font-extrabold whitespace-nowrap text-primary uppercase md:left-10 xl:text-[11.5rem]"
         >
           Khelbi Naki?
         </p>
       </div>
 
-      <div className="page-x flex flex-col gap-1 border-t py-6 text-[13px] text-subtle sm:flex-row sm:justify-between">
+      <div className="page-x flex flex-col gap-1 border-t py-6 text-[13px] text-muted-foreground sm:flex-row sm:justify-between">
         <span>Free forever. Made for futsal across Bangladesh.</span>
         <span>Contact happens on WhatsApp. Numbers are never listed on the board.</span>
       </div>

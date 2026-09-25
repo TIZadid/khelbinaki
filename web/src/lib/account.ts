@@ -1,6 +1,7 @@
 import { API_URL } from "./api";
 import { type KeeperProfile, loadKeeperProfile, saveKeeperProfile } from "./keeper";
 import { rememberMyPost } from "./myPosts";
+import { toast } from "./toast";
 
 // Optional "Continue with Telegram" accounts. The browser keeps a session token;
 // the account (name, verified phone, places, note) and owned posts live on the
@@ -79,6 +80,7 @@ async function adopt(session: string, account: Account): Promise<Account> {
   const me = await fetchMe();
   for (const post of me?.posts ?? []) rememberMyPost(post);
   setSession(session);
+  toast(`Signed in as ${merged.name || "you"}`);
   return merged;
 }
 
@@ -136,6 +138,7 @@ export async function saveAccount(profile: { name: string; note: string; regions
 export async function signOut(): Promise<void> {
   await request("/auth/logout", { method: "POST", body: "{}" }).catch(() => undefined);
   setSession(null);
+  toast("Signed out");
 }
 
 /** Delete my data: the account and everything tied to it, then sign out. */
@@ -143,5 +146,6 @@ export async function deleteAccount(): Promise<boolean> {
   const res = await request("/me", { method: "DELETE" }).catch(() => null);
   if (!res?.ok) return false;
   setSession(null);
+  toast("Your data was deleted");
   return true;
 }

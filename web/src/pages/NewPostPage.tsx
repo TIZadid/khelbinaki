@@ -3,6 +3,8 @@ import { type FormEvent, type ReactNode, useState } from "react";
 import { RegionSelect } from "@/components/RegionSelect";
 import { Turnstile } from "@/components/Turnstile";
 import { RevealWords } from "@/components/motion/RevealWords";
+import { Breadcrumbs } from "@/components/nav/Breadcrumbs";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { useKeeperProfile } from "@/hooks/useKeeperProfile";
 import { authHeaders } from "@/lib/account";
 import { type ContactMode, createPost } from "@/lib/api";
@@ -57,6 +59,7 @@ function Section({ n, title, children }: { n: string; title: string; children: R
 export function NewPostPage({ type = "gk_needed" }: { type?: ListingType }) {
   const copy = LISTINGS[type];
   const opponent = type === "opponent_needed";
+  usePageTitle(copy.postCta);
   // Name and number come from the profile (saved here, or the Telegram account's).
   const profile = useKeeperProfile();
   const [values, setValues] = useState({
@@ -148,6 +151,7 @@ export function NewPostPage({ type = "gk_needed" }: { type?: ListingType }) {
     <div className={cn("page-x pt-10 pb-24 md:pt-16", copy.tone)}>
       <div className="grid gap-12 lg:grid-cols-[minmax(0,36rem)_minmax(0,1fr)] lg:gap-20">
         <div>
+          <Breadcrumbs className="mb-6" items={[{ label: copy.board, to: copy.path }, { label: copy.postCta }]} />
           {/* Two separate boards, two separate forms: this just hops between them. */}
           <nav aria-label="What do you need?" className="inline-flex rounded-full border border-[#242a1f] p-1">
             {(["gk_needed", "opponent_needed"] as const).map((t) => (
@@ -460,6 +464,7 @@ function Preview({
 }) {
   const copy = LISTINGS[type];
   const opponent = type === "opponent_needed";
+  usePageTitle(copy.postCta);
   const valid = !Number.isNaN(start.getTime());
   const title = opponent ? values.team_name.trim() || "Your team" : values.area.trim() || "Your area";
   const place = [opponent ? values.area.trim() : null, values.turf_name.trim(), districtName(values.district)].filter(Boolean).join(" · ");

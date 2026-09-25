@@ -1,5 +1,7 @@
 import { Coffee } from "lucide-react";
 import { useState } from "react";
+import { Breadcrumbs } from "@/components/nav/Breadcrumbs";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { Link } from "@/lib/router";
 
 // The owner's personal bKash "My QR" image, dropped in as web/public/bkash-qr.png.
@@ -8,9 +10,11 @@ const QR_SRC = "/bkash-qr.png";
 
 export function ChaPage() {
   const [hasQr, setHasQr] = useState(true);
+  usePageTitle("Buy me a cha");
 
   return (
     <div className="mx-auto w-full max-w-xl px-5 pt-10 pb-20 md:px-10">
+      <Breadcrumbs className="mb-6" items={[{ label: "Buy me a cha" }]} />
       <p className="eyebrow text-primary">Optional, always</p>
       <h1 className="mt-3.5 flex items-center gap-3 font-display text-6xl leading-[0.88] font-extrabold uppercase">
         Buy me a cha

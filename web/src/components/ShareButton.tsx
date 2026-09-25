@@ -4,6 +4,7 @@ import type { PublicPost } from "@/lib/api";
 import { postUrl } from "@/lib/contact";
 import { canUseShareSheet, openShareSheet, shareTargets } from "@/lib/share";
 import { btn } from "@/lib/ui";
+import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
 /**
@@ -34,6 +35,7 @@ export function ShareButton({
     try {
       await navigator.clipboard.writeText(postUrl(post.id, origin));
       setCopied(true);
+      toast("Link copied");
       setTimeout(() => setCopied(false), 2000);
     } catch {
       setCopied(false);

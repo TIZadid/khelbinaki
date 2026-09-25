@@ -2,6 +2,9 @@ import { Check, X } from "lucide-react";
 import { useState } from "react";
 import { AlertChannels } from "@/components/alerts/AlertChannels";
 import { RevealWords } from "@/components/motion/RevealWords";
+import { Breadcrumbs } from "@/components/nav/Breadcrumbs";
+import { usePageTitle } from "@/hooks/usePageTitle";
+import { toast } from "@/lib/toast";
 import { RegionSelect } from "@/components/RegionSelect";
 import { syncAlerts } from "@/lib/alerts";
 import { type AlertPrefs, MAX_ALERT_REGIONS, defaultAlertPrefs, loadAlertPrefs, saveAlertPrefs } from "@/lib/alertPrefs";
@@ -40,13 +43,17 @@ export function AlertsPage() {
   const [prefs, setPrefs] = useState<AlertPrefs>(initialPrefs);
   const [regionDraft, setRegionDraft] = useState("");
   const [followed, setFollowed] = useState(false);
+  usePageTitle("Alerts");
 
   const update = (next: AlertPrefs) => {
     setPrefs(next);
     saveAlertPrefs(next);
     setFollowed(false);
     // Anything already on moves to the new choices.
-    syncAlerts(next).then((moved) => setFollowed(moved > 0));
+    syncAlerts(next).then((moved) => {
+      setFollowed(moved > 0);
+      if (moved > 0) toast("Alerts updated");
+    });
   };
 
   const toggleBoard = (board: ListingType) => {
@@ -62,7 +69,8 @@ export function AlertsPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-5 pt-10 pb-24 md:px-10">
+    <div className="mx-auto w-full max-w-2xl px-5 pt-8 pb-24 md:px-10 md:pt-10">
+      <Breadcrumbs className="mb-6" items={[{ label: "Alerts" }]} />
       <p className="eyebrow text-primary">Free · no account · stop any time</p>
       <h1 aria-label="Alerts" className="mt-3.5 font-display text-7xl leading-[0.86] font-extrabold uppercase md:text-8xl">
         <RevealWords text="Alerts" />

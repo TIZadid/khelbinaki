@@ -212,6 +212,20 @@ another sign-in method or ask for more personal data without the owner.
 - `TURNSTILE_SECRET`: local `api/.dev.vars` holds Cloudflare's always-pass test key; production has none yet, so
   creation returns `captcha_failed` until Feature 4 creates the real widget (`wrangler secret put TURNSTILE_SECRET`).
 
+## Wayfinding (refurbish 2026-09-25)
+
+People must always know where they are and how to get anywhere (NN/g "you are
+here"; GOV.UK plain language). Pages: `/` (home, board previews), `/gk-lagbe`,
+`/opponent-lagbe` (full boards with search + district chips), `/alerts`, `/me` (hub:
+account, keeper profile, my posts, alerts), `/help` (searchable plain-language
+answers), plus post/manage/new/keeper/my-posts/cha. Every inner page has
+`<Breadcrumbs>` and `usePageTitle`. Navigation marks the current section with
+`aria-current="page"` via `useSection` (post/manage pages report their board with
+`usePostSection`): desktop header underline, phone bottom tab bar (Home, GK Lagbe,
+Opponent, Alerts, Me — icon + word, `--tabbar-h` keeps fixed things above it).
+Confirm actions with `toast()`. Links in running text use `.link-inline`
+(underlined). Write short, plain sentences with the answer first.
+
 ## Frontend design (redesign 2026-09-23)
 
 Dark pitch + lime + Barlow stays the theme. Motion stack: `motion` (Framer Motion)

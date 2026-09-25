@@ -5,7 +5,11 @@ import { ShareButton } from "@/components/ShareButton";
 import { deletePost, fetchInterests, fetchPost, type Interest, type PublicPost, setPostStatus } from "@/lib/api";
 import { formatPhone, postUrl } from "@/lib/contact";
 import { formatLabel, isOpponent, listingOf } from "@/lib/listing";
+import { Breadcrumbs } from "@/components/nav/Breadcrumbs";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { forgetMyPost, rememberMyPost, tokenForPost } from "@/lib/myPosts";
+import { usePostSection } from "@/lib/nav";
+import { toast } from "@/lib/toast";
 import { Link } from "@/lib/router";
 import { formatDay, formatTime } from "@/lib/time";
 import { btn } from "@/lib/ui";
@@ -26,6 +30,8 @@ export function ManagePage({ id }: { id: string }) {
     if (token && tokenFromHash()) rememberMyPost({ id, token });
   }, [id, token]);
   const post = useAsync((signal) => fetchPost(id, signal), [id]);
+  usePageTitle("Manage your post");
+  usePostSection(post.state.status === "ready" && post.state.data ? post.state.data.listing_type : null);
   const interests = useAsync(
     (signal) => (token ? fetchInterests(id, token, signal) : Promise.resolve<Interest[]>([])),
     [id, token],
@@ -47,7 +53,8 @@ export function ManagePage({ id }: { id: string }) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-xl px-5 pt-10 pb-20 md:px-10">
+    <div className="mx-auto w-full max-w-xl px-5 pt-8 pb-20 md:px-10 md:pt-10">
+      <Breadcrumbs className="mb-6" items={[{ label: "Me", to: "/me" }, { label: "My posts", to: "/my-posts" }, { label: "Manage" }]} />
       {post.state.status === "loading" && (
         <div aria-busy="true" aria-label="Loading your post" className="h-40 rounded-2xl bg-muted motion-safe:animate-pulse" />
       )}
@@ -105,6 +112,7 @@ function ManageView({
       await deletePost(post.id, token);
       forgetMyPost(post.id);
       setDeleteStep("done");
+      toast("Post deleted");
     } catch {
       setDeleteStep("failed");
     }
@@ -120,6 +128,7 @@ function ManageView({
     try {
       await navigator.clipboard.writeText(text);
       setCopied(which);
+      toast(which === "manage" ? "Manage link copied — keep it private" : "Post link copied");
     } catch {
       setCopied(null);
     }

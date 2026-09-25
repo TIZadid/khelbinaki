@@ -63,7 +63,7 @@ describe("PostPage", () => {
     expect(screen.getByText("Cost per team")).toBeInTheDocument();
     expect(screen.getByText("6-a-side")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /contact team/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /opponent lagbe/i })).toHaveAttribute("href", "/#opponent-lagbe");
+    expect(screen.getByRole("link", { name: /opponent lagbe/i })).toHaveAttribute("href", "/opponent-lagbe");
     expect(screen.queryByText(/keepers needed/i)).toBeNull();
   });
 

@@ -1,4 +1,4 @@
-import { ChevronDown, Plus } from "lucide-react";
+import { ArrowRight, ChevronDown, Plus, Search, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { type CSSProperties, useMemo, useState } from "react";
 import { KeeperCount } from "@/components/KeeperCount";
@@ -8,6 +8,7 @@ import { RevealWords } from "@/components/motion/RevealWords";
 import type { AsyncState } from "@/hooks/useAsync";
 import { useKeeperProfile } from "@/hooks/useKeeperProfile";
 import type { PublicPost } from "@/lib/api";
+import { districtName } from "@/lib/bd";
 import { LISTINGS, type ListingType } from "@/lib/listing";
 import { Link } from "@/lib/router";
 import { formatDay, groupPosts, isStartingSoon } from "@/lib/time";
@@ -29,10 +30,16 @@ export function Feed({
   state,
   retry,
   now,
+  mode = "page",
 }: {
   type?: ListingType;
   /** "01", "02": the board's number in the big outlined index. */
   index?: string;
+  /**
+   * "preview": the home page's short version (a few rows and a "See all" link).
+   * "page": the board's own page — its heading is the page's h1 and it has search.
+   */
+  mode?: "preview" | "page";
   state: AsyncState<PublicPost[]>;
   retry: () => void;
   now: Date;
@@ -44,20 +51,35 @@ export function Feed({
   // undefined = nothing picked yet, so open on the keeper's places when those have games.
   const [area, setArea] = useState<string | null | undefined>(undefined);
   const [expanded, setExpanded] = useState(false);
+  const [query, setQuery] = useState("");
+  const preview = mode === "preview";
 
   const posts = state.status === "ready" ? state.data.filter((p) => (p.listing_type ?? "gk_needed") === type) : [];
   const openCount = posts.filter((p) => p.status === "open").length;
   const mine = (p: { district: string; division: string }) => myRegions.has(p.district) || myRegions.has(p.division);
   const hasMine = posts.some(mine);
   const selected = area !== undefined ? area : hasMine ? MY_AREAS_KEY : null;
-  const visible =
+  const inPlace =
     selected === MY_AREAS_KEY ? posts.filter(mine) : selected ? posts.filter((p) => p.district === selected) : posts;
-  const shown = expanded ? visible : visible.slice(0, FOLD_AT);
+  // Search matches the words people remember: area, turf, team, host or district.
+  const words = query.trim().toLowerCase();
+  const visible = words
+    ? inPlace.filter((p) =>
+        [p.area, p.turf_name, p.team_name, p.host_name, districtName(p.district)].some((field) =>
+          field?.toLowerCase().includes(words),
+        ),
+      )
+    : inPlace;
+  const shown = preview ? visible.slice(0, 4) : expanded ? visible : visible.slice(0, FOLD_AT);
   const soonest = visible.find((p) => p.status === "open" && isStartingSoon(new Date(p.start_datetime), now));
   const headingId = `${copy.anchor}-heading`;
 
   return (
-    <section id={copy.anchor} aria-labelledby={headingId} className={cn("page-x scroll-mt-20 py-20 md:py-28", copy.tone)}>
+    <section
+      id={copy.anchor}
+      aria-labelledby={headingId}
+      className={cn("page-x scroll-mt-20", preview ? "py-20 md:py-28" : "pt-6 pb-20 md:pt-8 md:pb-28", copy.tone)}
+    >
       <div className="grid gap-6 border-b pb-7 md:grid-cols-[1fr_auto] md:items-end md:pb-9">
         <div className="flex items-end gap-5 md:gap-8">
           {index && (
@@ -70,14 +92,14 @@ export function Feed({
             </span>
           )}
           <div>
-            <h2 id={headingId} className="on-pitch font-display text-[56px] leading-[0.86] font-extrabold uppercase md:text-[96px]">
+            <Heading id={headingId} level={preview ? 2 : 1}>
               <RevealWords text={copy.board} inView />
               {state.status === "ready" && (
                 <sup className="ml-2 align-super text-lg text-board md:text-3xl">
                   <CountUp value={openCount} />
                 </sup>
               )}
-            </h2>
+            </Heading>
             <p className="mt-3 text-[15px] text-muted-foreground md:text-[17px]">
               {copy.tagline}
               {" · "}
@@ -128,7 +150,35 @@ export function Feed({
 
       {state.status === "ready" && posts.length > 0 && (
         <>
-          <div className="mt-6">
+          {!preview && (
+            <div className="mt-6">
+              <label htmlFor={`${copy.anchor}-search`} className="sr-only">
+                Search {copy.board}
+              </label>
+              <div className="relative max-w-md">
+                <Search aria-hidden="true" className="pointer-events-none absolute top-1/2 left-4 size-[18px] -translate-y-1/2 text-subtle" />
+                <input
+                  id={`${copy.anchor}-search`}
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={copy.tone === "board-gk" ? "Search area, turf or host" : "Search team, area or turf"}
+                  className="h-12 w-full rounded-full border border-line bg-card/80 pr-11 pl-11 text-base outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-subtle focus-visible:border-board focus-visible:shadow-[0_0_0_4px_color-mix(in_srgb,var(--board)_18%,transparent)]"
+                />
+                {query && (
+                  <button
+                    type="button"
+                    onClick={() => setQuery("")}
+                    aria-label="Clear the search box"
+                    className="absolute top-1/2 right-2 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
+                  >
+                    <X aria-hidden="true" className="size-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+          <div className={preview ? "hidden" : "mt-4"}>
             <AreaChips
               layoutId={`${copy.anchor}-chip`}
               options={areaOptions(posts.map((p) => p.district))}
@@ -167,7 +217,24 @@ export function Feed({
               </ul>
             </div>
           ))}
-          {visible.length > FOLD_AT && (
+          {words && visible.length === 0 && (
+            <div className="mt-10 rounded-3xl border border-dashed border-line px-6 py-10 text-center">
+              <p className="text-muted-foreground">Nothing on {copy.board} matches "{query.trim()}".</p>
+              <button type="button" onClick={() => setQuery("")} className={cn(btn.outline, "mt-4")}>
+                Clear search
+              </button>
+            </div>
+          )}
+          {preview && (
+            <Link
+              to={copy.path}
+              className={cn(btn.outline, "group/all mt-8 h-12 w-full border-board px-6 text-board hover:bg-board hover:text-board-foreground sm:w-auto")}
+            >
+              {visible.length > shown.length ? `See all ${visible.length} on ${copy.board}` : `Open ${copy.board}`}
+              <ArrowRight aria-hidden="true" className="size-4 transition-transform group-hover/all:translate-x-1" />
+            </Link>
+          )}
+          {!preview && visible.length > FOLD_AT && (
             <button
               type="button"
               onClick={() => setExpanded((open) => !open)}
@@ -181,5 +248,19 @@ export function Feed({
         </>
       )}
     </section>
+  );
+}
+
+/** The board's name is the page's h1 on its own page, an h2 in the home page preview. */
+function Heading({ id, level, children }: { id: string; level: 1 | 2; children: React.ReactNode }) {
+  const className = "on-pitch font-display text-[56px] leading-[0.86] font-extrabold uppercase md:text-[96px]";
+  return level === 1 ? (
+    <h1 id={id} className={className}>
+      {children}
+    </h1>
+  ) : (
+    <h2 id={id} className={className}>
+      {children}
+    </h2>
   );
 }

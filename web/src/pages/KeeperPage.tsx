@@ -1,6 +1,9 @@
 import { X } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { TelegramAccount } from "@/components/account/TelegramAccount";
+import { Breadcrumbs } from "@/components/nav/Breadcrumbs";
+import { usePageTitle } from "@/hooks/usePageTitle";
+import { toast } from "@/lib/toast";
 import { useAccount } from "@/hooks/useAccount";
 import { useKeeperProfile } from "@/hooks/useKeeperProfile";
 import { type Account, saveAccount } from "@/lib/account";
@@ -33,9 +36,11 @@ function FieldError({ id, message }: { id: string; message?: string }) {
 export function KeeperPage() {
   const account = useAccount();
   const signedIn = account.status === "ready" ? account.account : null;
+  usePageTitle("Keeper profile");
 
   return (
-    <div className="board-gk mx-auto w-full max-w-xl px-5 pt-10 pb-20 md:px-10">
+    <div className="board-gk mx-auto w-full max-w-xl px-5 pt-8 pb-20 md:px-10 md:pt-10">
+      <Breadcrumbs className="mb-6" items={[{ label: "Me", to: "/me" }, { label: "Keeper profile" }]} />
       <p className="eyebrow text-board">GK Lagbe · for goalkeepers</p>
       <h1 className="mt-3.5 font-display text-6xl leading-[0.88] font-extrabold uppercase">Your keeper profile</h1>
       <p className="mt-3 text-muted-foreground">
@@ -106,6 +111,7 @@ function ProfileForm({ account }: { account: Account | null }) {
       return;
     }
     setStatus("saved");
+    toast("Profile saved");
     if (account) {
       const updated = await saveAccount({ name: value.name, note: value.note, regions: value.regions });
       if (!updated) setStatus("account_failed");
@@ -244,7 +250,7 @@ function ProfileForm({ account }: { account: Account | null }) {
           {status === "saved" && (
             <p role="status" className="text-sm">
               {account ? "Saved to your account." : "Saved on this phone."}{" "}
-              <Link to="/#gk-lagbe" className="font-semibold text-board underline-offset-4 hover:underline">
+              <Link to="/gk-lagbe" className="font-semibold text-board underline-offset-4 hover:underline">
                 See GK Lagbe in your places
               </Link>
             </p>

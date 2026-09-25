@@ -1,7 +1,9 @@
-import { ArrowLeft, MessageCircle, Share2 } from "lucide-react";
+import { MessageCircle, Share2 } from "lucide-react";
 import { AnimatePresence } from "motion/react";
 import { type CSSProperties, type ReactNode, useEffect, useState } from "react";
 import { Magnetic } from "@/components/motion/Magnetic";
+import { Breadcrumbs } from "@/components/nav/Breadcrumbs";
+import { usePostSection } from "@/lib/nav";
 import { ShareButton } from "@/components/ShareButton";
 import { ContactSheet } from "@/components/post/ContactSheet";
 import { InterestForm } from "@/components/post/InterestForm";
@@ -16,20 +18,25 @@ import { formatCountdown, formatDay, formatTime, isStartingSoon } from "@/lib/ti
 import { btn } from "@/lib/ui";
 import { cn } from "@/lib/utils";
 
+const postTitle = (post: PublicPost) =>
+  `${isOpponent(post) ? (post.team_name ?? post.host_name) : post.area} · ${formatTime(new Date(post.start_datetime))}`;
+
 export function PostPage({ id, now: fixedNow }: { id: string; now?: Date }) {
   const { state, retry } = useAsync((signal) => fetchPost(id, signal), [id]);
   const liveNow = useNow();
   const now = fixedNow ?? liveNow;
   const board = listingOf(state.status === "ready" && state.data ? state.data : { listing_type: "gk_needed" });
+  // Menus light up this post's board while it's open.
+  usePostSection(state.status === "ready" && state.data ? state.data.listing_type : null);
 
   return (
     <div className="mx-auto w-full max-w-4xl px-5 pt-6 pb-40 md:px-10 md:pt-10 md:pb-28">
-      <Link
-        to={`/#${board.anchor}`}
-        className="group inline-flex h-11 items-center gap-2 text-[15px] font-medium text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft aria-hidden="true" className="size-[18px] transition-transform group-hover:-translate-x-1" /> {board.board}
-      </Link>
+      <Breadcrumbs
+        items={[
+          { label: board.board, to: board.path },
+          { label: state.status === "ready" && state.data ? postTitle(state.data) : "Post" },
+        ]}
+      />
 
       {state.status === "loading" && (
         <div aria-busy="true" aria-label="Loading post" className="mt-8 space-y-4 motion-safe:animate-pulse">
@@ -175,7 +182,7 @@ function PostDetail({ post, now }: { post: PublicPost; now: Date }) {
         <>
           <p className="mt-8 text-[15px] leading-relaxed text-subtle">{contactHint}</p>
           {/* Sticky thumb bar on phones, inline row from tablets up. */}
-          <div className="fixed inset-x-0 bottom-0 z-20 border-t bg-[#0f120d]/95 px-5 pt-3.5 pb-[max(1.625rem,env(safe-area-inset-bottom))] backdrop-blur md:static md:mt-6 md:border-0 md:bg-transparent md:p-0">
+          <div className="fixed inset-x-0 bottom-[var(--tabbar-h)] z-20 border-t bg-[#0f120d]/95 px-5 pt-3.5 pb-4 backdrop-blur md:static md:mt-6 md:border-0 md:bg-transparent md:p-0">
             <div className="mx-auto flex max-w-4xl gap-2.5">
               <Magnetic className="flex flex-1 md:flex-none">
                 <button type="button" onClick={() => setSheetOpen(true)} className={cn(btn.primary, "w-full")}>

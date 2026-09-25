@@ -84,8 +84,8 @@ export function HomePage() {
         </section>
       )}
 
-      <Feed type="gk_needed" index="01" state={state} retry={retry} now={now} />
-      <Feed type="opponent_needed" index="02" state={state} retry={retry} now={now} />
+      <Feed type="gk_needed" index="01" mode="preview" state={state} retry={retry} now={now} />
+      <Feed type="opponent_needed" index="02" mode="preview" state={state} retry={retry} now={now} />
 
       <HowItWorks />
       <Closing />
@@ -170,6 +170,10 @@ function Hero({ state, openOf }: { state: AsyncState<PublicPost[]>; openOf: (typ
 
       <a
         href="#gk-lagbe"
+        onClick={(e) => {
+          e.preventDefault();
+          scrollToTarget("#gk-lagbe");
+        }}
         aria-label="Scroll to the boards"
         className="absolute right-10 bottom-8 hidden flex-col items-center gap-2 text-[11px] font-semibold tracking-[0.3em] text-subtle uppercase hover:text-foreground md:flex"
       >
@@ -197,7 +201,7 @@ function LaneCard({ type, count, n }: { type: ListingType; count: number | null;
       <p className="mt-1.5 text-[15px] text-muted-foreground">{copy.tagline}</p>
       {type === "gk_needed" && <KeeperCount className="mt-2.5 text-[13px]" />}
       <div className="mt-6 flex items-center justify-between gap-3 border-t pt-4">
-        <Link to={`/#${copy.anchor}`} className="link-draw inline-flex items-center gap-1.5 text-sm font-semibold">
+        <Link to={copy.path} className="link-draw inline-flex items-center gap-1.5 text-sm font-semibold">
           Browse <ArrowDown aria-hidden="true" className="size-4 transition-transform group-hover:translate-y-0.5" />
         </Link>
         <Link

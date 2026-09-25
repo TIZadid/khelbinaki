@@ -46,7 +46,7 @@ export function InterestForm({ post }: { post: PublicPost }) {
             ? "They'll WhatsApp you to fix the match. Nothing else to do — your number stays with them."
             : "They'll WhatsApp you if you're picked. Nothing else to do — your number stays with them."}
         </p>
-        <Link to={`/#${copy.anchor}`} className="link-draw mt-5 inline-block font-semibold text-board">
+        <Link to={copy.path} className="link-draw mt-5 inline-block font-semibold text-board">
           Back to {copy.board}
         </Link>
       </section>

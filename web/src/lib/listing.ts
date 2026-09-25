@@ -14,8 +14,12 @@ export function formatLabel(playersPerSide: number | null | undefined): string |
 export type ListingCopy = {
   /** Board name, as players say it. */
   board: string;
-  /** Hash on the home page where this board lives. */
+  /** Hash on the home page where this board's preview lives. */
   anchor: string;
+  /** The board's own page. */
+  path: string;
+  /** Label in the phone's bottom tab bar. */
+  short: string;
   tagline: string;
   /** The host's button: always specific, never a generic "Post a game". */
   postCta: string;
@@ -46,6 +50,8 @@ export const LISTINGS: Record<ListingType, ListingCopy> = {
   gk_needed: {
     board: "GK Lagbe",
     anchor: "gk-lagbe",
+    path: "/gk-lagbe",
+    short: "GK Lagbe",
     tagline: "Games looking for a goalkeeper",
     postCta: "Need a keeper",
     newPath: "/new",
@@ -68,6 +74,8 @@ export const LISTINGS: Record<ListingType, ListingCopy> = {
   opponent_needed: {
     board: "Opponent Lagbe",
     anchor: "opponent-lagbe",
+    path: "/opponent-lagbe",
+    short: "Opponent",
     tagline: "Teams looking for a match",
     postCta: "Need an opponent",
     newPath: "/new/opponent",

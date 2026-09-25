@@ -43,7 +43,7 @@ export function AreaChips({
         aria-pressed={active}
         onClick={() => onSelect(key)}
         className={cn(
-          "relative isolate h-10 shrink-0 rounded-full border px-[18px] text-sm font-medium transition-colors",
+          "relative isolate h-11 shrink-0 rounded-full border px-[18px] text-[15px] font-medium transition-colors",
           active ? "border-transparent text-background" : "border-[#242a1f] text-muted-foreground hover:border-line hover:text-foreground",
         )}
       >

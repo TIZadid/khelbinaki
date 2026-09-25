@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { Breadcrumbs } from "@/components/nav/Breadcrumbs";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { fetchMe } from "@/lib/account";
 import { type PublicPost, fetchPost } from "@/lib/api";
 import { LISTINGS, isOpponent, listingOf } from "@/lib/listing";
@@ -12,6 +14,7 @@ type Row = MyPost & { state: "loading" | "failed" | "cleared" | { post: PublicPo
 
 /** Posts made on this phone (or whose manage link was opened here). */
 export function MyPostsPage() {
+  usePageTitle("My posts");
   const [rows, setRows] = useState<Row[]>(() => loadMyPosts().map((p) => ({ ...p, state: "loading" as const })));
 
   useEffect(() => {
@@ -42,7 +45,8 @@ export function MyPostsPage() {
   }, []);
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-5 pt-10 pb-24 md:px-10">
+    <div className="mx-auto w-full max-w-2xl px-5 pt-8 pb-24 md:px-10 md:pt-10">
+      <Breadcrumbs className="mb-6" items={[{ label: "Me", to: "/me" }, { label: "My posts" }]} />
       <p className="eyebrow text-primary">Saved on this phone</p>
       <h1 className="mt-3.5 font-display text-7xl leading-[0.86] font-extrabold uppercase">My posts</h1>
       <p className="mt-3 text-muted-foreground">

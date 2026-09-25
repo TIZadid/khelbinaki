@@ -135,11 +135,29 @@
 
 /* Small uppercase section label. */
 @utility eyebrow {
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   font-weight: 600;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted-foreground);
+}
+
+/* Height of the phone tab bar (0 from tablets up); fixed things sit above it. */
+:root {
+  --tabbar-h: 0px;
+}
+@media (width < 48rem) {
+  :root {
+    --tabbar-h: calc(4.25rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* Links inside running text look like links (underlined), not only on hover. */
+.link-inline {
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 4px;
+  transition: color var(--hover) ease, text-decoration-color var(--hover) ease;
 }
 
 /* Motion timings follow NN/g: hover ~150ms, state changes ~250ms, overlays ~350ms. */
