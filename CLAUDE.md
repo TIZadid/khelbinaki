@@ -173,6 +173,8 @@ npx wrangler secret put <NAME>
 | `GET /posts/:id` | – | `200 {post}` (past/filled too) | `404` |
 | `POST /posts` | post fields + `listing_type` + `players_per_side` + `team_name` (opponent) + `district` + `contact_mode` + `turnstile_token` | `201 {post, edit_token}` | `400 invalid_json`, `400 validation {fields}`, `403 captcha_failed` |
 | `PATCH /posts/:id` | `{edit_token, status: "open"\|"filled"}` | `200 {post}` | `400`, `403 forbidden`, `404` |
+| `DELETE /posts/:id` | `Authorization: Bearer <edit_token>` | `200 {ok}` — post and its interests gone | `403`, `404` |
+| `GET /stats` | – | `200 {keepers}` — alerts following GK Lagbe (cached 5 min; the site shows it from 20 up) | – |
 | `POST /posts/:id/contact` | `{turnstile_token}` | `200 {phone}` (direct mode only) | `404`, `409 requests_only`, `410 closed`, `403 captcha_failed` |
 | `POST /posts/:id/interests` | `{name, phone, note?, turnstile_token}` | `201/200 {ok:true}` (requests mode) | `404`, `409 direct_only`, `410 closed`, `400`, `403`, `429 full` (30/post) |
 | `GET /posts/:id/interests` | `Authorization: Bearer <edit_token>` | `200 {interests}` | `403 forbidden`, `404` |

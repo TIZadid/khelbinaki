@@ -5,6 +5,7 @@ import { AlertsPage } from "@/pages/AlertsPage";
 import { ChaPage } from "@/pages/ChaPage";
 import { KeeperPage } from "@/pages/KeeperPage";
 import { ManagePage } from "@/pages/ManagePage";
+import { MyPostsPage } from "@/pages/MyPostsPage";
 import { NewPostPage } from "@/pages/NewPostPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { PostPage } from "@/pages/PostPage";
@@ -18,6 +19,7 @@ export default function App() {
   if (path === "/") page = <HomePage />;
   else if (path === "/keeper") page = <KeeperPage />;
   else if (path === "/alerts") page = <AlertsPage />;
+  else if (path === "/my-posts") page = <MyPostsPage />;
   else if (path === "/cha") page = <ChaPage />;
   else if (path === "/new" || path === "/new/keeper") page = <NewPostPage key="gk" type="gk_needed" />;
   else if (path === "/new/opponent") page = <NewPostPage key="opponent" type="opponent_needed" />;

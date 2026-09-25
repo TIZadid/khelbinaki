@@ -1,6 +1,7 @@
 import { ChevronDown, Plus } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { type CSSProperties, useMemo, useState } from "react";
+import { KeeperCount } from "@/components/KeeperCount";
 import { CountUp } from "@/components/motion/CountUp";
 import { Magnetic } from "@/components/motion/Magnetic";
 import { RevealWords } from "@/components/motion/RevealWords";
@@ -84,6 +85,7 @@ export function Feed({
                 {type === "gk_needed" ? "Get alerts for new games" : "Get alerts for new matches"}
               </Link>
             </p>
+            {type === "gk_needed" && <KeeperCount className="mt-3" />}
           </div>
         </div>
         <Magnetic className="inline-flex self-start md:self-end">

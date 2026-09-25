@@ -117,3 +117,21 @@ export async function setPostStatus(id: string, editToken: string, status: "open
   const data = (await res.json()) as { post: PublicPost };
   return data.post;
 }
+
+/** Host-only. "gone" when the post was already deleted (by the host or the hourly cleanup). */
+export async function deletePost(id: string, editToken: string): Promise<"deleted" | "gone"> {
+  const res = await fetch(`${API_URL}/posts/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${editToken}` },
+  });
+  if (res.status === 404) return "gone";
+  if (!res.ok) throw new Error(`Delete failed (${res.status})`);
+  return "deleted";
+}
+
+/** How many keepers get GK Lagbe alerts. */
+export async function fetchStats(signal?: AbortSignal): Promise<{ keepers: number }> {
+  const res = await fetch(`${API_URL}/stats`, { signal });
+  if (!res.ok) throw new Error(`Stats request failed (${res.status})`);
+  return (await res.json()) as { keepers: number };
+}

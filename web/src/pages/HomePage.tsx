@@ -9,6 +9,7 @@ import { Magnetic } from "@/components/motion/Magnetic";
 import { Marquee } from "@/components/motion/Marquee";
 import { RevealWords } from "@/components/motion/RevealWords";
 import { Spotlight } from "@/components/motion/Spotlight";
+import { KeeperCount } from "@/components/KeeperCount";
 import { NextUpTicket } from "@/components/NextUpTicket";
 import type { AsyncState } from "@/hooks/useAsync";
 import { useAsync } from "@/hooks/useAsync";
@@ -194,6 +195,7 @@ function LaneCard({ type, count, n }: { type: ListingType; count: number | null;
       </div>
       <h2 className="mt-5 font-display text-[40px] leading-[0.9] font-extrabold uppercase md:text-[46px]">{copy.board}</h2>
       <p className="mt-1.5 text-[15px] text-muted-foreground">{copy.tagline}</p>
+      {type === "gk_needed" && <KeeperCount className="mt-2.5 text-[13px]" />}
       <div className="mt-6 flex items-center justify-between gap-3 border-t pt-4">
         <Link to={`/#${copy.anchor}`} className="link-draw inline-flex items-center gap-1.5 text-sm font-semibold">
           Browse <ArrowDown aria-hidden="true" className="size-4 transition-transform group-hover:translate-y-0.5" />

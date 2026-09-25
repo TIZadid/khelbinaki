@@ -30,6 +30,15 @@ export function tokenForPost(id: string): string | null {
   return loadMyPosts().find((p) => p.id === id)?.token ?? null;
 }
 
-export function managePath(id: string, token: string): string {
-  return `/p/${id}/manage#t=${token}`;
+export function forgetMyPost(id: string): void {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(loadMyPosts().filter((p) => p.id !== id)));
+  } catch {
+    // Storage blocked: nothing was remembered here anyway.
+  }
+}
+
+/** `fresh` marks the link the host lands on right after posting (it asks them to save it). */
+export function managePath(id: string, token: string, fresh = false): string {
+  return `/p/${id}/manage#t=${token}${fresh ? "&new=1" : ""}`;
 }

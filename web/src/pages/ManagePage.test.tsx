@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Interest, PublicPost } from "@/lib/api";
+import { loadMyPosts } from "@/lib/myPosts";
 import { ManagePage } from "./ManagePage";
 
 const post: PublicPost = {
@@ -27,11 +28,12 @@ const interests: Interest[] = [
   { name: "Mehedi", phone: "8801912345678", note: "5 years in goal", created_at: "2026-10-01 12:00:00" },
 ];
 
-function serve(overrides: { post?: PublicPost; interests?: Interest[] } = {}) {
+function serve(overrides: { post?: PublicPost; interests?: Interest[]; deleteStatus?: number } = {}) {
   const calls: { url: string; init?: RequestInit }[] = [];
   const fn = vi.fn(async (url: string, init?: RequestInit) => {
     calls.push({ url, init });
     if (url.endsWith("/interests")) return new Response(JSON.stringify({ interests: overrides.interests ?? interests }), { status: 200 });
+    if (init?.method === "DELETE") return new Response(JSON.stringify({ ok: true }), { status: overrides.deleteStatus ?? 200 });
     if (init?.method === "PATCH") return new Response(JSON.stringify({ post: { ...post, status: "filled" } }), { status: 200 });
     return new Response(JSON.stringify({ post: overrides.post ?? post }), { status: 200 });
   });
@@ -96,5 +98,45 @@ describe("share card", () => {
     expect(dialog.getByRole("link", { name: "WhatsApp" }).getAttribute("href")).toMatch(/^https:\/\/wa\.me\/\?text=/);
     expect(dialog.getByRole("link", { name: "Facebook" }).getAttribute("href")).toMatch(/facebook\.com\/sharer/);
     expect(dialog.getByRole("link", { name: "Telegram" }).getAttribute("href")).toMatch(/t\.me\/share/);
+  });
+});
+
+describe("owning a post without an account", () => {
+  it("asks to save the manage link right after posting", async () => {
+    serve();
+    window.history.pushState(null, "", "/p/p1/manage#t=secret-token&new=1");
+    render(<ManagePage id="p1" />);
+    const banner = within(await screen.findByRole("region", { name: /save this page's link/i }));
+    expect(banner.getByRole("link", { name: /send to my whatsapp/i }).getAttribute("href")).toMatch(/^https:\/\/wa\.me\/\?text=.*manage/);
+  });
+
+  it("remembers a manage link opened on a new phone", async () => {
+    serve();
+    window.history.pushState(null, "", "/p/p1/manage#t=secret-token");
+    render(<ManagePage id="p1" />);
+    await screen.findByRole("heading", { level: 1 });
+    expect(loadMyPosts()).toEqual([{ id: "p1", token: "secret-token" }]);
+  });
+
+  it("deletes after confirming, and forgets the post", async () => {
+    const calls = serve();
+    window.history.pushState(null, "", "/p/p1/manage#t=secret-token");
+    render(<ManagePage id="p1" />);
+    fireEvent.click(await screen.findByRole("button", { name: /^delete post$/i }));
+    await screen.findByText(/also removes 1 request/i);
+    fireEvent.click(screen.getByRole("button", { name: /yes, delete/i }));
+    expect(await screen.findByRole("heading", { name: /deleted/i })).toBeInTheDocument();
+    const del = calls.find((c) => c.init?.method === "DELETE");
+    expect((del?.init?.headers as Record<string, string>).Authorization).toBe("Bearer secret-token");
+    expect(loadMyPosts()).toEqual([]);
+  });
+
+  it("treats a post the cleanup already removed as deleted", async () => {
+    serve({ deleteStatus: 404 });
+    window.history.pushState(null, "", "/p/p1/manage#t=secret-token");
+    render(<ManagePage id="p1" />);
+    fireEvent.click(await screen.findByRole("button", { name: /^delete post$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /yes, delete/i }));
+    expect(await screen.findByRole("heading", { name: /deleted/i })).toBeInTheDocument();
   });
 });

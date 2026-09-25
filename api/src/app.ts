@@ -21,6 +21,7 @@ import {
   addInterest,
   getContactInfo,
   getPost,
+  deletePost,
   insertPost,
   listFeed,
   listInterests,
@@ -68,7 +69,7 @@ export function createApp(deps: Deps) {
     "*",
     cors({
       origin: (origin, c) => (isAllowedOrigin(origin, c.env.ALLOWED_ORIGINS) ? origin : null),
-      allowMethods: ["GET", "POST", "PATCH", "OPTIONS"],
+      allowMethods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
       allowHeaders: ["Content-Type", "Authorization"],
       maxAge: 86400,
     }),
@@ -125,6 +126,24 @@ export function createApp(deps: Deps) {
     if (outcome === "not_found") return c.json({ error: "not_found" }, 404);
     if (outcome === "forbidden") return c.json({ error: "forbidden" }, 403);
     return c.json({ post: await getPost(c.env.DB, id) });
+  });
+
+  // Host only: gone for good, with any requests.
+  app.delete("/posts/:id", async (c) => {
+    const token = c.req.header("Authorization")?.replace(/^Bearer\s+/i, "") ?? "";
+    const outcome = await deletePost(c.env.DB, c.req.param("id"), token);
+    if (outcome === "not_found") return c.json({ error: "not_found" }, 404);
+    if (outcome === "forbidden") return c.json({ error: "forbidden" }, 403);
+    return c.json({ ok: true });
+  });
+
+  // How many keepers hear about new GK Lagbe games (every channel counts once).
+  app.get("/stats", async (c) => {
+    const row = await c.env.DB.prepare(
+      "SELECT COUNT(*) AS n FROM alerts WHERE instr(',' || boards || ',', ',gk_needed,') > 0",
+    ).first<{ n: number }>();
+    c.header("Cache-Control", "public, max-age=300");
+    return c.json({ keepers: row?.n ?? 0 });
   });
 
   // Direct mode: a spam-checked tap reveals the host's number.

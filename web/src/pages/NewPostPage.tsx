@@ -119,7 +119,7 @@ export function NewPostPage({ type = "gk_needed" }: { type?: ListingType }) {
 
     if (result.ok) {
       rememberMyPost({ id: result.post.id, token: result.editToken });
-      navigate(managePath(result.post.id, result.editToken));
+      navigate(managePath(result.post.id, result.editToken, true));
       return;
     }
     setStatus("error");
@@ -407,6 +407,10 @@ export function NewPostPage({ type = "gk_needed" }: { type?: ListingType }) {
                 setMessage("The spam check couldn't load. Check your connection.");
               }}
             />
+
+            <p className="text-[13px] leading-relaxed text-subtle">
+              After posting you get a private manage link — the only way to mark this post filled or delete it. Keep it.
+            </p>
 
             <button type="submit" disabled={!token || status === "sending"} className={cn(btn.primary, "disabled:opacity-60")}>
               {!token ? "Checking you're human…" : status === "sending" ? "Posting…" : `Post to ${copy.board}`}

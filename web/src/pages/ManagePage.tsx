@@ -2,10 +2,10 @@ import { Copy, MessageCircle, Share2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAsync } from "@/hooks/useAsync";
 import { ShareButton } from "@/components/ShareButton";
-import { fetchInterests, fetchPost, type Interest, type PublicPost, setPostStatus } from "@/lib/api";
+import { deletePost, fetchInterests, fetchPost, type Interest, type PublicPost, setPostStatus } from "@/lib/api";
 import { formatPhone, postUrl } from "@/lib/contact";
 import { formatLabel, isOpponent, listingOf } from "@/lib/listing";
-import { tokenForPost } from "@/lib/myPosts";
+import { forgetMyPost, rememberMyPost, tokenForPost } from "@/lib/myPosts";
 import { Link } from "@/lib/router";
 import { formatDay, formatTime } from "@/lib/time";
 import { btn } from "@/lib/ui";
@@ -19,6 +19,12 @@ function tokenFromHash(): string | null {
 export function ManagePage({ id }: { id: string }) {
   // The manage link carries the token; localStorage remembers it for later visits.
   const [token] = useState(() => tokenFromHash() ?? tokenForPost(id));
+  // Right after posting the link carries &new=1: ask the host to save it.
+  const [fresh] = useState(() => /(?:^|[#&])new=1/.test(window.location.hash));
+  // A manage link opened on another phone: remember it there too, for My posts.
+  useEffect(() => {
+    if (token && tokenFromHash()) rememberMyPost({ id, token });
+  }, [id, token]);
   const post = useAsync((signal) => fetchPost(id, signal), [id]);
   const interests = useAsync(
     (signal) => (token ? fetchInterests(id, token, signal) : Promise.resolve<Interest[]>([])),
@@ -59,6 +65,7 @@ export function ManagePage({ id }: { id: string }) {
         <ManageView
           post={post.state.data}
           token={token}
+          fresh={fresh}
           interests={interests.state.status === "ready" ? interests.state.data : []}
           interestsFailed={interests.state.status === "error"}
         />
@@ -70,11 +77,13 @@ export function ManagePage({ id }: { id: string }) {
 function ManageView({
   post: initial,
   token,
+  fresh,
   interests,
   interestsFailed,
 }: {
   post: PublicPost;
   token: string;
+  fresh: boolean;
   interests: Interest[];
   interestsFailed: boolean;
 }) {
@@ -86,6 +95,20 @@ function ManageView({
   const start = new Date(post.start_datetime);
   const origin = window.location.origin;
   const filled = post.status === "filled";
+  const manageUrl = `${origin}/p/${post.id}/manage#t=${token}`;
+  const [deleteStep, setDeleteStep] = useState<"idle" | "confirm" | "busy" | "done" | "failed">("idle");
+
+  const remove = async () => {
+    setDeleteStep("busy");
+    try {
+      // "gone" means the cleanup got there first: either way it's deleted.
+      await deletePost(post.id, token);
+      forgetMyPost(post.id);
+      setDeleteStep("done");
+    } catch {
+      setDeleteStep("failed");
+    }
+  };
 
   useEffect(() => {
     if (!copied) return;
@@ -112,8 +135,49 @@ function ManageView({
     setBusy(false);
   };
 
+  if (deleteStep === "done") {
+    return (
+      <div className={cn(board.tone, "py-6")}>
+        <h1 className="font-display text-6xl leading-[0.9] font-extrabold uppercase">Deleted</h1>
+        <p className="mt-3 text-muted-foreground">The post and any requests sent to it are gone for good.</p>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Link to="/my-posts" className={btn.outline}>
+            My posts
+          </Link>
+          <Link to={board.newPath} className={cn(btn.outline, "border-board text-board")}>
+            {board.postCta}
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={board.tone}>
+      {fresh && (
+        <section aria-labelledby="save-heading" className="mb-8 rounded-3xl border-2 border-board p-5 md:p-6">
+          <h2 id="save-heading" className="font-display text-[30px] leading-none font-extrabold uppercase">
+            Save this page's link
+          </h2>
+          <p className="mt-2 text-[15px] leading-snug text-muted-foreground">
+            It's the only way to mark this post filled or delete it — there's no account to log back into. Send it to
+            yourself now.
+          </p>
+          <div className="mt-4 flex flex-col gap-2.5 sm:flex-row">
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent(`My Khelbi Naki manage link (private, don't share): ${manageUrl}`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(btn.primary, "h-13 text-base")}
+            >
+              Send to my WhatsApp
+            </a>
+            <button type="button" onClick={() => copy(manageUrl, "manage")} className={cn(btn.outline, "h-13")}>
+              <Copy aria-hidden="true" className="size-4" /> {copied === "manage" ? "Copied" : "Copy link"}
+            </button>
+          </div>
+        </section>
+      )}
       <div className="flex items-center justify-between gap-4">
         <p className="eyebrow">Your post on {board.board} · {formatDay(start)}</p>
         <span className="flex items-center gap-2 text-xs font-semibold tracking-[0.16em] uppercase">
@@ -237,15 +301,58 @@ function ManageView({
           This page's link is your key
         </h2>
         <p className="mt-1.5 text-sm leading-snug text-muted-foreground">
-          Anyone with it can manage this post. It's saved on this phone — copy it if you'll switch devices.
+          Anyone with it can manage this post, so share the post link with players — never this one. It's saved on this
+          phone; copy it if you'll switch devices.
         </p>
         <button
           type="button"
-          onClick={() => copy(`${origin}/p/${post.id}/manage#t=${token}`, "manage")}
+          onClick={() => copy(manageUrl, "manage")}
           className={cn(btn.outline, "mt-3")}
         >
           <Copy aria-hidden="true" className="size-4" /> {copied === "manage" ? "Copied" : "Copy manage link"}
         </button>
+      </section>
+
+      <section aria-labelledby="delete-heading" className="mt-10 border-t pt-6">
+        <h2 id="delete-heading" className="eyebrow text-subtle">
+          Delete
+        </h2>
+        {deleteStep === "confirm" || deleteStep === "busy" ? (
+          <div className="mt-3 rounded-2xl border border-destructive/60 p-4">
+            <p className="font-semibold">Delete for good?</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {interests.length > 0
+                ? `This also removes ${interests.length} ${interests.length === 1 ? "request" : "requests"} sent to it.`
+                : "It disappears from the board and its link stops working."}
+            </p>
+            <div className="mt-3 flex gap-2">
+              <button
+                type="button"
+                onClick={remove}
+                disabled={deleteStep === "busy"}
+                className={cn(btn.outline, "border-destructive text-destructive hover:border-destructive hover:text-destructive disabled:opacity-60")}
+              >
+                {deleteStep === "busy" ? "Deleting…" : "Yes, delete"}
+              </button>
+              <button type="button" onClick={() => setDeleteStep("idle")} className={btn.outline}>
+                Keep it
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setDeleteStep("confirm")}
+            className={cn(btn.outline, "mt-3 hover:border-destructive hover:text-destructive")}
+          >
+            Delete post
+          </button>
+        )}
+        {deleteStep === "failed" && (
+          <p role="alert" className="mt-2 text-sm text-destructive">
+            Couldn't delete. Check your connection and try again.
+          </p>
+        )}
       </section>
     </div>
   );

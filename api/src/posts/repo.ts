@@ -155,3 +155,16 @@ export async function listInterests(
     .all<Interest>();
   return results;
 }
+
+/** Removes a post and every request sent to it. The edit token proves ownership. */
+export async function deletePost(db: D1Database, id: string, token: string): Promise<"ok" | "not_found" | "forbidden"> {
+  const owner = await db.prepare("SELECT edit_token FROM posts WHERE id = ?").bind(id).first<{ edit_token: string }>();
+  if (!owner) return "not_found";
+  if (!token || owner.edit_token !== token) return "forbidden";
+  // Requests first, so this never depends on foreign-key cascades being on.
+  await db.batch([
+    db.prepare("DELETE FROM interests WHERE post_id = ?").bind(id),
+    db.prepare("DELETE FROM posts WHERE id = ?").bind(id),
+  ]);
+  return "ok";
+}

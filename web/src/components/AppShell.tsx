@@ -14,6 +14,7 @@ import { Magnetic } from "@/components/motion/Magnetic";
 import { ScrollProgress } from "@/components/motion/ScrollProgress";
 import { useKeeperProfile } from "@/hooks/useKeeperProfile";
 import { LISTINGS } from "@/lib/listing";
+import { loadMyPosts } from "@/lib/myPosts";
 import { Link, usePath } from "@/lib/router";
 import { lockScroll, startSmoothScroll } from "@/lib/smoothScroll";
 import { cn } from "@/lib/utils";
@@ -54,6 +55,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   });
 
   const profileLabel = keeper ? "My profile" : "I'm a keeper";
+  // Read on every render (each page change re-renders), so a new post shows up at once.
+  const hasPosts = loadMyPosts().length > 0;
 
   return (
     <MotionConfig reducedMotion="user">
@@ -85,6 +88,11 @@ export function AppShell({ children }: { children: ReactNode }) {
               <Link to="/alerts" className="link-draw pb-0.5 hover:text-foreground">
                 Alerts
               </Link>
+              {hasPosts && (
+                <Link to="/my-posts" className="link-draw pb-0.5 hover:text-foreground">
+                  My posts
+                </Link>
+              )}
               <Link to="/keeper" className="link-draw pb-0.5 hover:text-foreground">
                 {profileLabel}
               </Link>
@@ -143,6 +151,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                     ...boards.map((b) => ({ to: `/#${b.anchor}`, label: b.board, hint: b.tagline })),
                     { to: "/#how", label: "How it works", hint: "Three steps, no sign-up" },
                     { to: "/alerts", label: "Alerts", hint: "Hear about new posts near you" },
+                    ...(hasPosts ? [{ to: "/my-posts", label: "My posts", hint: "Posts made on this phone" }] : []),
                     { to: "/keeper", label: profileLabel, hint: "Save your details and get alerts" },
                   ].map((item, i) => (
                     <motion.li
@@ -238,6 +247,7 @@ function Footer() {
       heading: "More",
       links: [
         { to: "/alerts", label: "Alerts" },
+        { to: "/my-posts", label: "My posts" },
         { to: "/keeper", label: "Keeper profile" },
         { to: "/cha", label: "Buy me a cha" },
         { to: "https://github.com/TIZadid/khelbinaki/issues", label: "Suggest a feature", external: true },

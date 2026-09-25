@@ -27,7 +27,8 @@ it("fetches both boards in one request", async () => {
   render(<App />);
   await screen.findByText(/no games need a keeper/i);
   const calls = (fetch as unknown as { mock: { calls: [string][] } }).mock.calls;
-  expect(calls.map(([url]) => url)).toEqual([expect.stringMatching(/\/posts\?type=all$/)]);
+  // Posts come in one request for both boards (the keeper count is fetched separately).
+  expect(calls.map(([url]) => url).filter((url) => url.includes("/posts"))).toEqual([expect.stringMatching(/\/posts\?type=all$/)]);
 });
 
 it("never calls a board 'open games'", async () => {

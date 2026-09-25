@@ -157,6 +157,44 @@ describe("PATCH /posts/:id", () => {
   });
 });
 
+describe("DELETE /posts/:id", () => {
+  it("deletes the post and its requests with the right token", async () => {
+    const { post, edit_token } = await create({ contact_mode: "requests" });
+    await env.DB.prepare("INSERT INTO interests (id, post_id, name, phone) VALUES ('i1', ?, 'Mehedi', '8801912345678')")
+      .bind(post.id)
+      .run();
+
+    const res = await send("DELETE", `/posts/${post.id}`, undefined, { Authorization: `Bearer ${edit_token}` });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true });
+    expect((await send("GET", `/posts/${post.id}`)).status).toBe(404);
+    const { results } = await env.DB.prepare("SELECT id FROM interests").all();
+    expect(results).toHaveLength(0);
+  });
+
+  it("refuses a wrong or missing token, and 404s an unknown post", async () => {
+    const { post } = await create();
+    expect((await send("DELETE", `/posts/${post.id}`, undefined, { Authorization: "Bearer wrong" })).status).toBe(403);
+    expect((await send("DELETE", `/posts/${post.id}`)).status).toBe(403);
+    expect((await send("DELETE", "/posts/nope", undefined, { Authorization: "Bearer x" })).status).toBe(404);
+    expect((await send("GET", `/posts/${post.id}`)).status).toBe(200);
+  });
+});
+
+describe("GET /stats", () => {
+  it("counts alerts that follow GK Lagbe", async () => {
+    await env.DB.prepare("DELETE FROM alerts").run();
+    await env.DB.prepare(
+      `INSERT INTO alerts (id, channel, address, regions, boards) VALUES
+        ('a', 'push', 'https://p/1', '', 'gk_needed'),
+        ('b', 'telegram', '1', '', 'gk_needed'),
+        ('c', 'push', 'https://p/2', '', 'gk_needed,opponent_needed'),
+        ('d', 'telegram_opp', '2', '', 'opponent_needed')`,
+    ).run();
+    expect(await (await send("GET", "/stats")).json()).toEqual({ keepers: 3 });
+  });
+});
+
 describe("CORS", () => {
   it("allows the site and its previews, not other origins", async () => {
     const allowed = await send("GET", "/posts", undefined, { Origin: "https://khelbinaki.zlabz.workers.dev" });
@@ -175,5 +213,6 @@ describe("CORS", () => {
     );
     expect(res.status).toBe(204);
     expect(res.headers.get("Access-Control-Allow-Methods")).toContain("PATCH");
+    expect(res.headers.get("Access-Control-Allow-Methods")).toContain("DELETE");
   });
 });
