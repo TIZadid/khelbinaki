@@ -15,7 +15,7 @@ it("renders the brand, hero, both boards and three how-it-works steps", async ()
   expect(screen.getByRole("heading", { level: 1, name: /khelbi naki/i })).toBeInTheDocument();
   expect(await screen.findByText(/no games need a keeper/i)).toBeInTheDocument();
   expect(screen.getByText(/no teams are looking for a match/i)).toBeInTheDocument();
-  expect(screen.getByRole("heading", { level: 2, name: /^gk lagbe$/i, hidden: false })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { level: 2, name: /^gk lagbe/i })).toBeInTheDocument();
   expect(document.getElementById("gk-lagbe")).not.toBeNull();
   expect(document.getElementById("opponent-lagbe")).not.toBeNull();
   const steps = screen.getByRole("list", { name: /how it works/i });
@@ -100,7 +100,10 @@ it("gives each board its own page, with breadcrumbs, search and a page title", a
 it("shows only a preview of each board on the home page, with a way to see all", async () => {
   render(<App />);
   await screen.findByText(/no games need a keeper/i);
-  expect(screen.getByRole("heading", { level: 2, name: /^gk lagbe$/i })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { level: 2, name: /^gk lagbe/i })).toBeInTheDocument();
+  // Each board card on top is one big tap target to its board.
+  expect(screen.getByRole("link", { name: "Open GK Lagbe" })).toHaveAttribute("href", "/gk-lagbe");
+  expect(screen.getByRole("link", { name: "Open Opponent Lagbe" })).toHaveAttribute("href", "/opponent-lagbe");
 });
 
 it("routes /me to a hub of your things", () => {

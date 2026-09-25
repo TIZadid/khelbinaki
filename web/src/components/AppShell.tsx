@@ -211,7 +211,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               whileHover={{ y: -3 }}
               whileTap={{ scale: 0.92 }}
               transition={{ type: "spring", stiffness: 420, damping: 26 }}
-              className="fixed right-4 bottom-[calc(var(--tabbar-h)+1rem)] z-30 inline-flex size-12 items-center justify-center rounded-full border border-line bg-card/90 text-foreground shadow-lg backdrop-blur hover:border-primary hover:text-primary md:right-8 md:bottom-8"
+              className="fixed bottom-[calc(var(--tabbar-h)+1rem)] left-4 z-30 inline-flex size-12 items-center justify-center rounded-full border border-line bg-card/90 text-foreground shadow-lg backdrop-blur hover:border-primary hover:text-primary md:right-8 md:bottom-8 md:left-auto"
             >
               <ArrowUp aria-hidden="true" className="size-5" />
             </motion.button>
@@ -243,7 +243,7 @@ function TabBar({ section }: { section: Section | null }) {
                 to={place.to}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "relative flex h-full flex-col items-center justify-center gap-1 text-[11px] font-semibold transition-colors duration-150",
+                  "relative flex h-full flex-col items-center justify-center gap-1 text-[12px] font-semibold transition-colors duration-150",
                   active ? "text-board" : "text-muted-foreground active:text-foreground",
                 )}
               >

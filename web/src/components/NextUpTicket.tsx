@@ -62,8 +62,8 @@ export function NextUpTicket({ post, now }: { post: PublicPost; now: Date }) {
             <Link to={postPath(post.id)} className="font-display text-[38px] leading-none font-bold hover:text-board md:text-[44px]">
               {formatTime(start)}
             </Link>
-            <p className="mt-2 truncate font-semibold">{title}</p>
-            <p className="mt-0.5 truncate text-muted-foreground">{[format, place].filter(Boolean).join(" · ")}</p>
+            <p className="mt-2 line-clamp-2 font-semibold">{title}</p>
+            <p className="mt-0.5 line-clamp-2 text-muted-foreground">{[format, place].filter(Boolean).join(" · ")}</p>
           </div>
           {post.cost_per_head != null && (
             <div className="text-right">

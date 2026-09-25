@@ -73,7 +73,7 @@ function Row({ to, icon, title, detail, tone = "board-site" }: { to: string; ico
         </span>
         <span className="min-w-0 flex-1">
           <span className="block font-display text-2xl leading-none font-bold uppercase">{title}</span>
-          <span className="mt-1.5 block truncate text-[15px] text-muted-foreground">{detail}</span>
+          <span className="mt-1.5 line-clamp-2 block text-[15px] text-muted-foreground">{detail}</span>
         </span>
         <ChevronRight aria-hidden="true" className={cn("size-5 shrink-0 text-subtle transition-transform group-hover:translate-x-1 group-hover:text-board")} />
       </Link>

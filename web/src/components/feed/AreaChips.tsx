@@ -43,7 +43,7 @@ export function AreaChips({
         aria-pressed={active}
         onClick={() => onSelect(key)}
         className={cn(
-          "relative isolate h-11 shrink-0 rounded-full border px-[18px] text-[15px] font-medium transition-colors",
+          "relative isolate h-11 shrink-0 snap-start rounded-full border px-[18px] text-[15px] font-medium whitespace-nowrap transition-[color,border-color,transform] active:scale-[0.96]",
           active ? "border-transparent text-background" : "border-[#242a1f] text-muted-foreground hover:border-line hover:text-foreground",
         )}
       >
@@ -61,7 +61,13 @@ export function AreaChips({
   };
 
   return (
-    <div role="group" aria-label="Filter by district" className="flex flex-wrap gap-2">
+    // Phones: one row that scrolls sideways (with room above and below so focus
+    // rings aren't cropped), faded at the edges. Wider screens: chips wrap.
+    <div
+      role="group"
+      aria-label="Filter by district"
+      className="-mx-5 flex snap-x scroll-px-5 gap-2 overflow-x-auto px-5 py-1.5 [mask-image:linear-gradient(to_right,transparent,black_1.25rem,black_calc(100%-1.25rem),transparent)] [scrollbar-width:none] md:mx-0 md:flex-wrap md:overflow-visible md:px-0 md:[mask-image:none] [&::-webkit-scrollbar]:hidden"
+    >
       {chip(null, "All of Bangladesh")}
       {showMine && chip(MY_AREAS_KEY, "My places")}
       {options.map((o) => chip(o.key, o.label, o.count))}

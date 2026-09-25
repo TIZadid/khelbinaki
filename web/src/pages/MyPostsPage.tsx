@@ -98,7 +98,7 @@ function PostLine({ post, manage }: { post: PublicPost; manage: string }) {
         <p className="eyebrow">
           <span className="text-board">{copy.board}</span> · {formatDay(start)} · {state}
         </p>
-        <p className="mt-1.5 truncate text-lg font-semibold">{isOpponent(post) ? (post.team_name ?? post.area) : post.area}</p>
+        <p className="mt-1.5 line-clamp-2 text-lg font-semibold">{isOpponent(post) ? (post.team_name ?? post.area) : post.area}</p>
         <p className="text-sm text-muted-foreground">{formatTime(start)}</p>
       </div>
       <Link to={manage} className={cn(btn.outline, copy.tone, "shrink-0 border-board text-board")}>

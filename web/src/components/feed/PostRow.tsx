@@ -48,11 +48,11 @@ export function PostRow({ post, now, soonest = false }: { post: PublicPost; now:
       {/* Hover wash + a lime edge that grows in from the middle. */}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute inset-y-0 -inset-x-3 -z-10 rounded-xl bg-foreground/[0.025] opacity-0 transition-opacity duration-300 group-hover:opacity-100 md:-inset-x-5"
+        className="pointer-events-none absolute inset-y-0 -inset-x-3 -z-10 rounded-xl bg-foreground/[0.035] opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-active:opacity-100 group-active:duration-75 md:-inset-x-5"
       />
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute top-3 bottom-3 -left-3 w-[3px] scale-y-0 rounded-full bg-board transition-transform duration-300 ease-out group-hover:scale-y-100 md:-left-5"
+        className="pointer-events-none absolute top-3 bottom-3 -left-3 w-[3px] scale-y-0 rounded-full bg-board transition-transform duration-300 ease-out group-hover:scale-y-100 group-active:scale-y-100 md:-left-5"
       />
 
       <p
@@ -77,7 +77,7 @@ export function PostRow({ post, now, soonest = false }: { post: PublicPost; now:
           {soon && <span className={cn(pill, "border-board text-board")}>{formatCountdown(start, now).replace(/^in/, "In")}</span>}
           {filled && <span className={cn(pill, "border-[#3a4233] text-muted-foreground")}>{copy.filledBadge}</span>}
         </div>
-        <p className="mt-1 truncate text-sm text-subtle md:text-[15px]">
+        <p className="mt-1 line-clamp-2 text-sm text-subtle md:truncate md:text-[15px]">
           {detail}
           {extras.length > 0 && <span className="md:hidden"> · {extras.join(" · ")}</span>}
         </p>

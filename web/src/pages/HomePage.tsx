@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUpRight, Plus } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Plus } from "lucide-react";
 import { type MotionValue, motion, useReducedMotion, useScroll, useTransform } from "motion/react";
 import { type CSSProperties, useEffect, useRef } from "react";
 import { Feed } from "@/components/feed/Feed";
@@ -107,14 +107,14 @@ function Hero({ state, openOf }: { state: AsyncState<PublicPost[]>; openOf: (typ
     <section ref={ref} aria-labelledby="hero-heading" className="relative isolate overflow-hidden">
       <motion.div
         style={reduce ? undefined : { y: ballY, scale: ballScale }}
-        className="absolute inset-x-0 top-0 -z-10 mx-auto size-[96vw] max-h-[680px] max-w-[680px] sm:inset-x-auto sm:-right-[8%] sm:mx-0 sm:size-[62vw] md:top-[8%] md:right-0 md:size-[46vw] xl:right-[2%]"
+        className="absolute inset-x-0 top-0 -z-10 mx-auto size-[82vw] max-h-[680px] max-w-[680px] sm:inset-x-auto sm:-right-[8%] sm:mx-0 sm:size-[62vw] md:top-[8%] md:right-0 md:size-[46vw] xl:right-[2%]"
       >
         <HeroBall className="size-full" />
       </motion.div>
 
       <motion.div
         style={reduce ? undefined : { y: textY }}
-        className="page-x pointer-events-none flex min-h-[calc(100svh-4.25rem)] flex-col justify-end gap-7 pt-[84vw] pb-14 sm:pt-[30vw] md:min-h-[calc(100svh-5rem)] md:justify-center md:gap-7 md:pt-8 md:pb-20"
+        className="page-x pointer-events-none flex min-h-[calc(100svh-4.25rem)] flex-col justify-end gap-5 pt-[70vw] pb-10 sm:gap-7 sm:pt-[30vw] md:min-h-[calc(100svh-5rem)] md:justify-center md:gap-7 md:pt-8 md:pb-20"
       >
         <FadeUp>
           <p className="eyebrow flex items-center gap-3">
@@ -131,7 +131,7 @@ function Hero({ state, openOf }: { state: AsyncState<PublicPost[]>; openOf: (typ
               ) : (
                 "Live board"
               )}{" "}
-              · underground futsal · Bangladesh
+              <span className="hidden sm:inline"> · underground futsal</span> · Bangladesh
             </span>
           </p>
         </FadeUp>
@@ -140,21 +140,26 @@ function Hero({ state, openOf }: { state: AsyncState<PublicPost[]>; openOf: (typ
         <h1
           id="hero-heading"
           aria-label="Khelbi Naki?"
-          className="on-pitch font-display text-[clamp(5.75rem,21vw,13rem)] md:text-[14vw] xl:text-[13rem] leading-[0.8] font-extrabold tracking-[-0.015em] uppercase"
+          className="on-pitch font-display text-[clamp(4.5rem,21vw,13rem)] md:text-[14vw] xl:text-[13rem] leading-[0.8] font-extrabold tracking-[-0.015em] uppercase"
         >
           <RevealWords text="Khelbi" className="block" />
           <RevealWords text="Naki?" className="glow block" wordClassName="text-primary" delay={0.12} />
         </h1>
 
         <FadeUp delay={0.15}>
-          <p className="max-w-[34rem] text-[17px] leading-relaxed text-muted-foreground md:text-xl">
+          {/* Phones get the short version: what it is and what to do, before the fold. */}
+          <p className="max-w-[34rem] text-[17px] leading-relaxed text-muted-foreground sm:hidden">
+            Free futsal board for Bangladesh. <span className="text-foreground">Need a keeper or a match?</span> Post it,
+            settle it on WhatsApp.
+          </p>
+          <p className="hidden max-w-[34rem] text-[17px] leading-relaxed text-muted-foreground sm:block md:text-xl">
             The free board for underground futsal. <span className="text-foreground">Need a keeper?</span> Post it on GK
             Lagbe. <span className="text-foreground">Looking for a team to play?</span> Post it on Opponent Lagbe. Settle
             it on WhatsApp. No sign-up.
           </p>
         </FadeUp>
 
-        <div className="pointer-events-auto grid gap-3 sm:grid-cols-2 md:max-w-[46rem]">
+        <div className="pointer-events-auto grid grid-cols-2 gap-2.5 sm:gap-3 md:max-w-[46rem]">
           {(["gk_needed", "opponent_needed"] as const).map((type, i) => (
             <motion.div
               key={type}
@@ -186,29 +191,43 @@ function Hero({ state, openOf }: { state: AsyncState<PublicPost[]>; openOf: (typ
   );
 }
 
+/**
+ * One board on the home page. The top of the card opens the board (the whole area
+ * is one big tap target); the button underneath posts to it.
+ */
 function LaneCard({ type, count, n }: { type: ListingType; count: number | null; n: string }) {
   const copy = LISTINGS[type];
   return (
-    <Spotlight className={cn(copy.tone, "group flex h-full flex-col rounded-3xl border border-[#242a1f] bg-card/80 p-5 backdrop-blur-md transition-colors duration-300 hover:border-line md:p-6")}>
-      <div className="flex items-center justify-between text-[11px] font-semibold tracking-[0.18em] uppercase">
-        <span className="flex items-center gap-2 text-muted-foreground">
-          <span aria-hidden="true" className={cn("size-[7px] rounded-full", count ? "bg-board" : "bg-line")} />
-          {count === null ? "Loading" : `${count} open`}
+    <Spotlight
+      className={cn(
+        copy.tone,
+        "group flex h-full flex-col rounded-3xl border border-[#242a1f] bg-card/85 backdrop-blur-md transition-[border-color,transform] duration-300 hover:border-line has-[a:active]:scale-[0.985]",
+      )}
+    >
+      <Link to={copy.path} className="flex flex-1 flex-col rounded-t-3xl p-4 sm:p-5 md:p-6" aria-label={`Open ${copy.board}`}>
+        <span className="flex items-center justify-between text-[11px] font-semibold tracking-[0.14em] uppercase">
+          <span className="flex items-center gap-2 text-muted-foreground">
+            <span aria-hidden="true" className={cn("size-[7px] rounded-full", count ? "bg-board" : "bg-line")} />
+            {count === null ? "Loading" : `${count} open`}
+          </span>
+          <span className="hidden text-subtle sm:inline">{n}</span>
         </span>
-        <span className="text-subtle">{n}</span>
-      </div>
-      <h2 className="mt-5 font-display text-[40px] leading-[0.9] font-extrabold uppercase md:text-[46px]">{copy.board}</h2>
-      <p className="mt-1.5 text-[15px] text-muted-foreground">{copy.tagline}</p>
-      {type === "gk_needed" && <KeeperCount className="mt-2.5 text-[13px]" />}
-      <div className="mt-6 flex items-center justify-between gap-3 border-t pt-4">
-        <Link to={copy.path} className="link-draw inline-flex items-center gap-1.5 text-sm font-semibold">
-          Browse <ArrowDown aria-hidden="true" className="size-4 transition-transform group-hover:translate-y-0.5" />
-        </Link>
+        <span className="mt-3 flex items-end justify-between gap-2 sm:mt-5">
+          <span className="font-display text-[28px] leading-[0.9] font-extrabold uppercase sm:text-[40px] md:text-[46px]">
+            {copy.board}
+          </span>
+          <ArrowRight
+            aria-hidden="true"
+            className="mb-1 size-5 shrink-0 text-board transition-transform duration-200 group-hover:translate-x-1"
+          />
+        </span>
+        <span className="mt-1.5 text-[13px] leading-snug text-muted-foreground sm:text-[15px]">{copy.tagline}</span>
+        {type === "gk_needed" && <KeeperCount className="mt-2.5 text-[13px]" />}
+      </Link>
+      <div className="px-4 pb-4 sm:px-5 sm:pb-5 md:px-6 md:pb-6">
         <Link
           to={copy.newPath}
-          className={cn(
-            "inline-flex h-10 items-center gap-1.5 rounded-full bg-board px-4 text-sm font-semibold text-board-foreground transition-[background-color,transform] duration-150 hover:bg-board/90 active:scale-[0.97]",
-          )}
+          className="inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-full bg-board px-4 text-sm font-semibold text-board-foreground transition-[background-color,transform] duration-150 hover:bg-board/90 active:scale-[0.97] sm:w-auto"
         >
           <Plus aria-hidden="true" className="size-4" /> {copy.postCta}
         </Link>
@@ -280,7 +299,7 @@ function Step({ step, i, progress }: { step: (typeof steps)[number]; i: number; 
 
 function Closing() {
   return (
-    <section aria-labelledby="closing-heading" className="relative overflow-hidden border-t">
+    <section aria-labelledby="closing-heading" className="relative border-t">
       <div className="page-x flex flex-col items-center py-24 text-center md:py-36">
         <p className="eyebrow text-board">Your move</p>
         <h2 id="closing-heading" className="on-pitch mt-5 font-display text-[clamp(3.25rem,11vw,8rem)] leading-[0.84] font-extrabold uppercase">

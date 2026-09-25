@@ -1,5 +1,6 @@
 import { Feed } from "@/components/feed/Feed";
 import { Breadcrumbs } from "@/components/nav/Breadcrumbs";
+import { PostFab } from "@/components/nav/PostFab";
 import { useAsync } from "@/hooks/useAsync";
 import { useNow } from "@/hooks/useNow";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -19,6 +20,7 @@ export function BoardPage({ type }: { type: ListingType }) {
         <Breadcrumbs items={[{ label: copy.board }]} />
       </div>
       <Feed type={type} mode="page" state={state} retry={retry} now={now} />
+      <PostFab type={type} />
     </>
   );
 }

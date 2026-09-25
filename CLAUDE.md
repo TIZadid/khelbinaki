@@ -223,7 +223,12 @@ answers), plus post/manage/new/keeper/my-posts/cha. Every inner page has
 `aria-current="page"` via `useSection` (post/manage pages report their board with
 `usePostSection`): desktop header underline, phone bottom tab bar (Home, GK Lagbe,
 Opponent, Alerts, Me — icon + word, `--tabbar-h` keeps fixed things above it).
-Confirm actions with `toast()`. Links in running text use `.link-inline`
+Confirm actions with `toast()`. **Phone first**: most visitors are on phones —
+check every change at 390px wide; the key action must be on the first screen;
+chips scroll sideways; board pages have a floating post button; nothing fixed may
+cover the tab bar (use `--tabbar-h`). **Never crop effects**: masks and
+`overflow-hidden` only while animating (see `RevealWords`), so glows, shadows and
+focus rings always show; prefer wrapping (`line-clamp-2`) over truncating on phones. Links in running text use `.link-inline`
 (underlined). Write short, plain sentences with the answer first.
 
 ## Frontend design (redesign 2026-09-23)
