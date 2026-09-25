@@ -43,10 +43,14 @@ export async function fetchPost(id: string, signal?: AbortSignal): Promise<Publi
 
 export type ApiFailure = { error: string; fields?: Record<string, string> };
 
-async function postJson(path: string, body: unknown): Promise<{ ok: true; data: unknown } | { ok: false; failure: ApiFailure }> {
+async function postJson(
+  path: string,
+  body: unknown,
+  headers: Record<string, string> = {},
+): Promise<{ ok: true; data: unknown } | { ok: false; failure: ApiFailure }> {
   const res = await fetch(`${API_URL}${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...headers },
     body: JSON.stringify(body),
   });
   const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
@@ -87,8 +91,9 @@ export type NewPostInput = {
   turnstile_token: string;
 };
 
-export async function createPost(input: NewPostInput) {
-  const result = await postJson("/posts", input);
+/** `headers` carries the Telegram session when signed in, so the post belongs to the account. */
+export async function createPost(input: NewPostInput, headers: Record<string, string> = {}) {
+  const result = await postJson("/posts", input, headers);
   if (!result.ok) return result;
   const data = result.data as { post: PublicPost; edit_token: string };
   return { ok: true as const, post: data.post, editToken: data.edit_token };

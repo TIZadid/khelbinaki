@@ -57,3 +57,31 @@ describe("KeeperPage", () => {
     expect(screen.getByLabelText(/your name/i)).toHaveValue("");
   });
 });
+
+describe("KeeperPage signed in with Telegram", () => {
+  it("shows the account with its verified number, and Delete my data clears this phone too", async () => {
+    const { vi } = await import("vitest");
+    const { waitFor } = await import("@testing-library/react");
+    window.localStorage.setItem("khelbinaki.session.v1", "s".repeat(43));
+    saveKeeperProfile({ name: "Mehedi", phone: "8801912345678", regions: ["dhaka"], note: "" });
+    const account = { name: "Mehedi", phone: "8801912345678", note: "", regions: ["dhaka"] };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_url: string, init?: RequestInit) =>
+        init?.method === "DELETE" ? new Response(JSON.stringify({ ok: true })) : new Response(JSON.stringify({ account, posts: [] })),
+      ),
+    );
+    render(<KeeperPage />);
+
+    expect(await screen.findByText(/signed in with telegram/i)).toBeInTheDocument();
+    expect(await screen.findByText(/verified on telegram\. to change it/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/whatsapp number/i)).toHaveAttribute("readonly");
+
+    fireEvent.click(screen.getByRole("button", { name: /delete my data/i }));
+    fireEvent.click(screen.getByRole("button", { name: /yes, delete my data/i }));
+    await waitFor(() => expect(window.localStorage.getItem("khelbinaki.session.v1")).toBeNull());
+    expect(loadKeeperProfile()).toBeNull();
+    expect(await screen.findByRole("heading", { name: /continue with telegram/i })).toBeInTheDocument();
+    vi.unstubAllGlobals();
+  });
+});

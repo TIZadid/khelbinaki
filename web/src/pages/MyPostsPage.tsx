@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
+import { fetchMe } from "@/lib/account";
 import { type PublicPost, fetchPost } from "@/lib/api";
 import { LISTINGS, isOpponent, listingOf } from "@/lib/listing";
-import { type MyPost, forgetMyPost, loadMyPosts, managePath } from "@/lib/myPosts";
+import { type MyPost, forgetMyPost, loadMyPosts, managePath, rememberMyPost } from "@/lib/myPosts";
 import { Link } from "@/lib/router";
 import { formatDay, formatTime } from "@/lib/time";
 import { btn } from "@/lib/ui";
@@ -15,7 +16,16 @@ export function MyPostsPage() {
 
   useEffect(() => {
     const controller = new AbortController();
-    for (const mine of loadMyPosts()) {
+    const load = async () => {
+      // Signed in with Telegram? The account's posts join this phone's list first.
+      const me = await fetchMe().catch(() => null);
+      for (const post of me?.posts ?? []) rememberMyPost(post);
+      if (controller.signal.aborted) return;
+      const mine = loadMyPosts();
+      setRows(mine.map((p) => ({ ...p, state: "loading" as const })));
+      for (const post of mine) check(post);
+    };
+    const check = (mine: MyPost) => {
       fetchPost(mine.id, controller.signal).then(
         (post) => {
           // A 404 means it ended and was cleaned up, or was deleted: only then forget it.
@@ -26,7 +36,8 @@ export function MyPostsPage() {
           if (!controller.signal.aborted) setRows((all) => all.map((r) => (r.id === mine.id ? { ...r, state: "failed" } : r)));
         },
       );
-    }
+    };
+    load();
     return () => controller.abort();
   }, []);
 
@@ -35,7 +46,8 @@ export function MyPostsPage() {
       <p className="eyebrow text-primary">Saved on this phone</p>
       <h1 className="mt-3.5 font-display text-7xl leading-[0.86] font-extrabold uppercase">My posts</h1>
       <p className="mt-3 text-muted-foreground">
-        Posts made on this phone, or whose manage link you opened here. Each is cleared two days after its match.
+        Posts made on this phone, or whose manage link you opened here — and, if you continue with Telegram, every post
+        you made signed in. Each is cleared two days after its match.
       </p>
 
       {rows.length === 0 ? (

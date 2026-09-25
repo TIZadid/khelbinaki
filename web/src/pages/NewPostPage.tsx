@@ -3,7 +3,10 @@ import { type FormEvent, type ReactNode, useState } from "react";
 import { RegionSelect } from "@/components/RegionSelect";
 import { Turnstile } from "@/components/Turnstile";
 import { RevealWords } from "@/components/motion/RevealWords";
+import { useKeeperProfile } from "@/hooks/useKeeperProfile";
+import { authHeaders } from "@/lib/account";
 import { type ContactMode, createPost } from "@/lib/api";
+import { formatPhone } from "@/lib/contact";
 import { districtName } from "@/lib/bd";
 import { FORMATS, LISTINGS, type ListingType, formatLabel } from "@/lib/listing";
 import { managePath, rememberMyPost } from "@/lib/myPosts";
@@ -54,6 +57,8 @@ function Section({ n, title, children }: { n: string; title: string; children: R
 export function NewPostPage({ type = "gk_needed" }: { type?: ListingType }) {
   const copy = LISTINGS[type];
   const opponent = type === "opponent_needed";
+  // Name and number come from the profile (saved here, or the Telegram account's).
+  const profile = useKeeperProfile();
   const [values, setValues] = useState({
     team_name: "",
     district: "",
@@ -66,8 +71,8 @@ export function NewPostPage({ type = "gk_needed" }: { type?: ListingType }) {
     cost: "",
     slots: 1,
     notes: "",
-    host_name: "",
-    phone: "",
+    host_name: profile?.name ?? "",
+    phone: profile?.phone ? formatPhone(profile.phone) : "",
   });
   const [mode, setMode] = useState<ContactMode>("direct");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -115,7 +120,7 @@ export function NewPostPage({ type = "gk_needed" }: { type?: ListingType }) {
       notes: values.notes.trim() || undefined,
       contact_mode: mode,
       turnstile_token: token,
-    });
+    }, authHeaders());
 
     if (result.ok) {
       rememberMyPost({ id: result.post.id, token: result.editToken });

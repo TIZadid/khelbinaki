@@ -165,6 +165,18 @@ npx wrangler secret put <NAME>
 - Ask before adding any dependency that requires an account/API key on a
   non-Cloudflare, non-free service.
 
+## Optional accounts (Part 3, 2026-09-25)
+
+"Continue with Telegram" is **optional** — everything must keep working signed out
+(this-phone only). Sign-in: the site gets a link code (`/auth/start`), the person
+presses Start in either bot (`/start login_<code>`; Telegram vouches for `from.id`),
+the site polls `/auth/poll/:code` for a session; or `/login` in a bot sends a 6-digit
+code for `/auth/otp`. Sharing contact in a bot stores a **verified** Bangladeshi
+number (own number only). Tables `accounts`, `sessions` (token SHA-256 only),
+`login_codes`; `posts.owner_tg_id`. The browser keeps `khelbinaki.session.v1`.
+Retention: accounts unused 180 days, sessions 60 days, codes 1 day. Never add
+another sign-in method or ask for more personal data without the owner.
+
 ## API (Feature 1, `api/src/app.ts`)
 
 | Method & path | Body | Success | Errors |
@@ -178,6 +190,11 @@ npx wrangler secret put <NAME>
 | `POST /posts/:id/contact` | `{turnstile_token}` | `200 {phone}` (direct mode only) | `404`, `409 requests_only`, `410 closed`, `403 captcha_failed` |
 | `POST /posts/:id/interests` | `{name, phone, note?, turnstile_token}` | `201/200 {ok:true}` (requests mode) | `404`, `409 direct_only`, `410 closed`, `400`, `403`, `429 full` (30/post) |
 | `GET /posts/:id/interests` | `Authorization: Bearer <edit_token>` | `200 {interests}` | `403 forbidden`, `404` |
+| `POST /auth/start` | `{turnstile_token}` | `201 {code, links:{gk, opp}}` | `403` |
+| `GET /auth/poll/:code` | – | `200 {status:"waiting"}` or `200 {session, account}` once | `404` |
+| `POST /auth/otp` | `{code, turnstile_token}` | `200 {session, account}` | `400 bad_code`, `403` |
+| `POST /auth/logout` | session | `200 {ok}` | – |
+| `GET/PUT/DELETE /me` | session; PUT `{name, note, regions[]}` | `{account, posts}` / `{account}` / `{ok}` | `400`, `401` |
 | `POST /alerts` | `{subscription, regions[], boards[], turnstile_token}` | `201 {ok, regions, boards}` — browser push | `400`, `403 captcha_failed` |
 | `POST /alerts/off` | `{endpoint}` | `200 {ok}` | `400` |
 | `POST /alerts/regions` | `{endpoint, regions[], boards?[]}` | `200 {ok, regions}` — moves this browser's alert | `400`, `404` |

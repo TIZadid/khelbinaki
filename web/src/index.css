@@ -49,6 +49,13 @@
   --ring: var(--opp);
 }
 
+/* Back to the site's own colour inside a board page (e.g. the account card, which isn't one board's). */
+.board-site {
+  --board: var(--primary);
+  --board-foreground: var(--primary-foreground);
+  --ring: var(--primary);
+}
+
 /* The brand green glows a little where it matters (logo, headline, progress bar). */
 .glow {
   text-shadow: 0 0 28px color-mix(in srgb, var(--primary) 45%, transparent);
